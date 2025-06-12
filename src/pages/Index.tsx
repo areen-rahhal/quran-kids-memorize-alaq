@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,117 +8,79 @@ import { Play, Pause, RotateCcw, BookOpen, Star } from 'lucide-react';
 const AlAlaqVerses = [
   {
     id: 1,
-    arabic: "ٱقْرَأْ بِٱسْمِ رَبِّكَ ٱلَّذِى خَلَقَ",
-    transliteration: "اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ",
-    translation: "اقرأ باسم ربك الذي خلق"
+    arabic: "ٱقْرَأْ بِٱسْمِ رَبِّكَ ٱلَّذِى خَلَقَ"
   },
   {
     id: 2,
-    arabic: "خَلَقَ ٱلْإِنسَـٰنَ مِنْ عَلَقٍ",
-    transliteration: "خَلَقَ الْإِنْسَانَ مِنْ عَلَقٍ",
-    translation: "خلق الإنسان من علق"
+    arabic: "خَلَقَ ٱلْإِنسَـٰنَ مِنْ عَلَقٍ"
   },
   {
     id: 3,
-    arabic: "ٱقْرَأْ وَرَبُّكَ ٱلْأَكْرَمُ",
-    transliteration: "اقْرَأْ وَرَبُّكَ الْأَكْرَمُ",
-    translation: "اقرأ وربك الأكرم"
+    arabic: "ٱقْرَأْ وَرَبُّكَ ٱلْأَكْرَمُ"
   },
   {
     id: 4,
-    arabic: "ٱلَّذِى عَلَّمَ بِٱلْقَلَمِ",
-    transliteration: "الَّذِي عَلَّمَ بِالْقَلَمِ",
-    translation: "الذي علم بالقلم"
+    arabic: "ٱلَّذِى عَلَّمَ بِٱلْقَلَمِ"
   },
   {
     id: 5,
-    arabic: "عَلَّمَ ٱلْإِنسَـٰنَ مَا لَمْ يَعْلَمْ",
-    transliteration: "عَلَّمَ الْإِنْسَانَ مَا لَمْ يَعْلَمْ",
-    translation: "علم الإنسان ما لم يعلم"
+    arabic: "عَلَّمَ ٱلْإِنسَـٰنَ مَا لَمْ يَعْلَمْ"
   },
   {
     id: 6,
-    arabic: "كَلَّآ إِنَّ ٱلْإِنسَـٰنَ لَيَطْغَىٰٓ",
-    transliteration: "كَلَّا إِنَّ الْإِنْسَانَ لَيَطْغَى",
-    translation: "كلا إن الإنسان ليطغى"
+    arabic: "كَلَّآ إِنَّ ٱلْإِنسَـٰنَ لَيَطْغَىٰٓ"
   },
   {
     id: 7,
-    arabic: "أَن رَّءَاهُ ٱسْتَغْنَىٰ",
-    transliteration: "أَنْ رَآهُ اسْتَغْنَى",
-    translation: "أن رآه استغنى"
+    arabic: "أَن رَّءَاهُ ٱسْتَغْنَىٰ"
   },
   {
     id: 8,
-    arabic: "إِنَّ إِلَىٰ رَبِّكَ ٱلرُّجْعَىٰ",
-    transliteration: "إِنَّ إِلَى رَبِّكَ الرُّجْعَى",
-    translation: "إن إلى ربك الرجعى"
+    arabic: "إِنَّ إِلَىٰ رَبِّكَ ٱلرُّجْعَىٰ"
   },
   {
     id: 9,
-    arabic: "أَرَءَيْتَ ٱلَّذِى يَنْهَىٰ",
-    transliteration: "أَرَأَيْتَ الَّذِي يَنْهَى",
-    translation: "أرأيت الذي ينهى"
+    arabic: "أَرَءَيْتَ ٱلَّذِى يَنْهَىٰ"
   },
   {
     id: 10,
-    arabic: "عَبْدًا إِذَا صَلَّىٰ",
-    transliteration: "عَبْداً إِذَا صَلَّى",
-    translation: "عبداً إذا صلى"
+    arabic: "عَبْدًا إِذَا صَلَّىٰ"
   },
   {
     id: 11,
-    arabic: "أَرَءَيْتَ إِن كَانَ عَلَى ٱلْهُدَىٰٓ",
-    transliteration: "أَرَأَيْتَ إِنْ كَانَ عَلَى الْهُدَى",
-    translation: "أرأيت إن كان على الهدى"
+    arabic: "أَرَءَيْتَ إِن كَانَ عَلَى ٱلْهُدَىٰٓ"
   },
   {
     id: 12,
-    arabic: "أَوْ أَمَرَ بِٱلتَّقْوَىٰٓ",
-    transliteration: "أَوْ أَمَرَ بِالتَّقْوَى",
-    translation: "أو أمر بالتقوى"
+    arabic: "أَوْ أَمَرَ بِٱلتَّقْوَىٰٓ"
   },
   {
     id: 13,
-    arabic: "أَرَءَيْتَ إِن كَذَّبَ وَتَوَلَّىٰٓ",
-    transliteration: "أَرَأَيْتَ إِنْ كَذَّبَ وَتَوَلَّى",
-    translation: "أرأيت إن كذب وتولى"
+    arabic: "أَرَءَيْتَ إِن كَذَّبَ وَتَوَلَّىٰٓ"
   },
   {
     id: 14,
-    arabic: "أَلَمْ يَعْلَم بِأَنَّ ٱللَّهَ يَرَىٰ",
-    transliteration: "أَلَمْ يَعْلَمْ بِأَنَّ اللَّهَ يَرَى",
-    translation: "ألم يعلم بأن الله يرى"
+    arabic: "أَلَمْ يَعْلَم بِأَنَّ ٱللَّهَ يَرَىٰ"
   },
   {
     id: 15,
-    arabic: "كَلَّا لَئِن لَّمْ يَنتَهِ لَنَسْفَعًۢا بِٱلنَّاصِيَةِ",
-    transliteration: "كَلَّا لَئِنْ لَمْ يَنْتَهِ لَنَسْفَعاً بِالنَّاصِيَةِ",
-    translation: "كلا لئن لم ينته لنسفعاً بالناصية"
+    arabic: "كَلَّا لَئِن لَّمْ يَنتَهِ لَنَسْفَعًۢا بِٱلنَّاصِيَةِ"
   },
   {
     id: 16,
-    arabic: "نَاصِيَةٍ كَـٰذِبَةٍ خَاطِئَةٍ",
-    transliteration: "نَاصِيَةٍ كَاذِبَةٍ خَاطِئَةٍ",
-    translation: "ناصية كاذبة خاطئة"
+    arabic: "نَاصِيَةٍ كَـٰذِبَةٍ خَاطِئَةٍ"
   },
   {
     id: 17,
-    arabic: "فَلْيَدْعُ نَادِيَهُۥ",
-    transliteration: "فَلْيَدْعُ نَادِيَهُ",
-    translation: "فليدع ناديه"
+    arabic: "فَلْيَدْعُ نَادِيَهُۥ"
   },
   {
     id: 18,
-    arabic: "سَنَدْعُ ٱلزَّبَانِيَةَ",
-    transliteration: "سَنَدْعُ الزَّبَانِيَةَ",
-    translation: "سندع الزبانية"
+    arabic: "سَنَدْعُ ٱلزَّبَانِيَةَ"
   },
   {
     id: 19,
-    arabic: "كَلَّا لَا تُطِعْهُ وَٱسْجُدْ وَٱقْتَرِب ۩",
-    transliteration: "كَلَّا لَا تُطِعْهُ وَاسْجُدْ وَاقْتَرِبْ",
-    translation: "كلا لا تطعه واسجد واقترب"
+    arabic: "كَلَّا لَا تُطِعْهُ وَٱسْجُدْ وَٱقْتَرِب ۩"
   }
 ];
 
@@ -202,22 +165,10 @@ const Index = () => {
               </span>
             </div>
             
-            {/* Arabic Text */}
-            <div className="text-3xl leading-relaxed font-arabic text-gray-800 py-4" dir="rtl">
+            {/* Arabic Text - Single Display */}
+            <div className="text-4xl leading-relaxed font-arabic text-gray-800 py-8" dir="rtl">
               {AlAlaqVerses[currentVerse].arabic}
             </div>
-            
-            {/* Transliteration */}
-            <div className="text-lg text-emerald-700 font-medium font-arabic" dir="rtl">
-              {AlAlaqVerses[currentVerse].transliteration}
-            </div>
-            
-            {/* Translation */}
-            {showTranslation && (
-              <div className="text-gray-600 bg-gray-50 rounded-lg p-3 font-arabic" dir="rtl">
-                {AlAlaqVerses[currentVerse].translation}
-              </div>
-            )}
           </div>
 
           {/* Audio Controls */}
@@ -284,14 +235,6 @@ const Index = () => {
 
         {/* Practice Mode Toggle */}
         <div className="flex justify-center gap-4">
-          <Button
-            onClick={() => setShowTranslation(!showTranslation)}
-            variant="outline"
-            className="border-amber-300 text-amber-600 hover:bg-amber-50 font-arabic"
-          >
-            {showTranslation ? 'إخفاء' : 'إظهار'} المعنى
-          </Button>
-          
           <Button
             onClick={resetProgress}
             variant="outline"
