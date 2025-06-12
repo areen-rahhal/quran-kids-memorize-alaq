@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +34,90 @@ const AlAlaqVerses = [
     arabic: "عَلَّمَ ٱلْإِنسَـٰنَ مَا لَمْ يَعْلَمْ",
     transliteration: "عَلَّمَ الْإِنْسَانَ مَا لَمْ يَعْلَمْ",
     translation: "علم الإنسان ما لم يعلم"
+  },
+  {
+    id: 6,
+    arabic: "كَلَّآ إِنَّ ٱلْإِنسَـٰنَ لَيَطْغَىٰٓ",
+    transliteration: "كَلَّا إِنَّ الْإِنْسَانَ لَيَطْغَى",
+    translation: "كلا إن الإنسان ليطغى"
+  },
+  {
+    id: 7,
+    arabic: "أَن رَّءَاهُ ٱسْتَغْنَىٰ",
+    transliteration: "أَنْ رَآهُ اسْتَغْنَى",
+    translation: "أن رآه استغنى"
+  },
+  {
+    id: 8,
+    arabic: "إِنَّ إِلَىٰ رَبِّكَ ٱلرُّجْعَىٰ",
+    transliteration: "إِنَّ إِلَى رَبِّكَ الرُّجْعَى",
+    translation: "إن إلى ربك الرجعى"
+  },
+  {
+    id: 9,
+    arabic: "أَرَءَيْتَ ٱلَّذِى يَنْهَىٰ",
+    transliteration: "أَرَأَيْتَ الَّذِي يَنْهَى",
+    translation: "أرأيت الذي ينهى"
+  },
+  {
+    id: 10,
+    arabic: "عَبْدًا إِذَا صَلَّىٰ",
+    transliteration: "عَبْداً إِذَا صَلَّى",
+    translation: "عبداً إذا صلى"
+  },
+  {
+    id: 11,
+    arabic: "أَرَءَيْتَ إِن كَانَ عَلَى ٱلْهُدَىٰٓ",
+    transliteration: "أَرَأَيْتَ إِنْ كَانَ عَلَى الْهُدَى",
+    translation: "أرأيت إن كان على الهدى"
+  },
+  {
+    id: 12,
+    arabic: "أَوْ أَمَرَ بِٱلتَّقْوَىٰٓ",
+    transliteration: "أَوْ أَمَرَ بِالتَّقْوَى",
+    translation: "أو أمر بالتقوى"
+  },
+  {
+    id: 13,
+    arabic: "أَرَءَيْتَ إِن كَذَّبَ وَتَوَلَّىٰٓ",
+    transliteration: "أَرَأَيْتَ إِنْ كَذَّبَ وَتَوَلَّى",
+    translation: "أرأيت إن كذب وتولى"
+  },
+  {
+    id: 14,
+    arabic: "أَلَمْ يَعْلَم بِأَنَّ ٱللَّهَ يَرَىٰ",
+    transliteration: "أَلَمْ يَعْلَمْ بِأَنَّ اللَّهَ يَرَى",
+    translation: "ألم يعلم بأن الله يرى"
+  },
+  {
+    id: 15,
+    arabic: "كَلَّا لَئِن لَّمْ يَنتَهِ لَنَسْفَعًۢا بِٱلنَّاصِيَةِ",
+    transliteration: "كَلَّا لَئِنْ لَمْ يَنْتَهِ لَنَسْفَعاً بِالنَّاصِيَةِ",
+    translation: "كلا لئن لم ينته لنسفعاً بالناصية"
+  },
+  {
+    id: 16,
+    arabic: "نَاصِيَةٍ كَـٰذِبَةٍ خَاطِئَةٍ",
+    transliteration: "نَاصِيَةٍ كَاذِبَةٍ خَاطِئَةٍ",
+    translation: "ناصية كاذبة خاطئة"
+  },
+  {
+    id: 17,
+    arabic: "فَلْيَدْعُ نَادِيَهُۥ",
+    transliteration: "فَلْيَدْعُ نَادِيَهُ",
+    translation: "فليدع ناديه"
+  },
+  {
+    id: 18,
+    arabic: "سَنَدْعُ ٱلزَّبَانِيَةَ",
+    transliteration: "سَنَدْعُ الزَّبَانِيَةَ",
+    translation: "سندع الزبانية"
+  },
+  {
+    id: 19,
+    arabic: "كَلَّا لَا تُطِعْهُ وَٱسْجُدْ وَٱقْتَرِب ۩",
+    transliteration: "كَلَّا لَا تُطِعْهُ وَاسْجُدْ وَاقْتَرِبْ",
+    translation: "كلا لا تطعه واسجد واقترب"
   }
 ];
 
@@ -84,7 +167,7 @@ const Index = () => {
           <div className="text-right">
             <div className="flex items-center gap-1 text-amber-200">
               <Star className="h-5 w-5 fill-current" />
-              <span className="font-bold font-arabic">{completedVerses.length}/٥</span>
+              <span className="font-bold font-arabic">{completedVerses.length}/١٩</span>
             </div>
           </div>
         </div>
@@ -106,7 +189,7 @@ const Index = () => {
           <div className="text-center">
             <h2 className="text-2xl font-bold text-emerald-700 mb-2 font-arabic">سورة العلق</h2>
             <p className="text-amber-700 font-semibold font-arabic">سورة العلق</p>
-            <p className="text-sm text-gray-600 mt-1 font-arabic">٥ آيات • مكية</p>
+            <p className="text-sm text-gray-600 mt-1 font-arabic">١٩ آية • مكية</p>
           </div>
         </Card>
 
@@ -171,12 +254,12 @@ const Index = () => {
             السابق
           </Button>
           
-          <div className="flex gap-2">
+          <div className="flex gap-1 flex-wrap justify-center max-w-xs">
             {AlAlaqVerses.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentVerse(index)}
-                className={`w-8 h-8 rounded-full text-sm font-bold transition-all font-arabic ${
+                className={`w-7 h-7 rounded-full text-xs font-bold transition-all font-arabic ${
                   index === currentVerse
                     ? 'bg-emerald-600 text-white'
                     : completedVerses.includes(index + 1)
