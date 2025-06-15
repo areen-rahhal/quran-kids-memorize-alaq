@@ -30,7 +30,7 @@ const AlAlaqVerses = [
 // STUDY PLAN FOR THIS SURAH, dynamic for the surah & student, hardcoded here as requested
 const studyPhases = [
   { label: "المرحلة ١", description: "الآيات ١–٣", verses: [1, 2, 3] },
-  { label: "المرحلة ٢", description: "الآيات ٤–٥", verses: [4, 5] },
+  { label: "المرحلة ٢", description: "الآيات ٤–٤", verses: [4, 5] },
   { label: "المرحلة ٣", description: "الآيات ٦–٨", verses: [6, 7, 8] },
   { label: "المرحلة ٤", description: "الآيات ٩–١٤", verses: [9, 10, 11, 12, 13, 14] },
   { label: "المرحلة ٥", description: "الآيات ١٥–١٩", verses: [15, 16, 17, 18, 19] },
@@ -65,38 +65,50 @@ const Index = () => {
     });
   };
 
-  // Prepare continuous Arabic for phase, separated with ۝, and show verse number for each verse
+  // New: Seamless Arabic with one verse stop per verse, styled like Mushaf
   const continuousArabic = (
-    <span className="flex flex-wrap gap-x-3 gap-y-2 justify-center items-baseline" dir="rtl">
+    <span className="flex flex-wrap gap-x-1 gap-y-2 justify-center items-baseline font-arabic text-gray-900 bg-white rounded-xl text-[0.91rem] md:text-base leading-relaxed" dir="rtl">
       {phaseVerseObjs.map((v, idx) => (
-        <span key={v.id} className="inline-flex items-baseline">
-          <span className="relative flex items-baseline">
+        <span key={v.id} className="inline-flex items-baseline" dir="rtl">
+          {/* The verse text */}
+          <span
+            className="font-arabic px-0.5"
+            style={{
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              wordSpacing: '0.21em',
+            }}
+          >
+            {v.arabic}
+          </span>
+          {/* Mushaf-style single verse stop with number */}
+          <span
+            className="inline-flex items-center justify-center bg-white border border-amber-300 px-1 text-emerald-500 mx-1 text-lg font-extrabold rounded-full shadow-sm relative -top-0.5"
+            style={{
+              minWidth: 30,
+              minHeight: 30,
+              fontFamily: 'Amiri, serif',
+              fontSize: '1.23em',
+              marginRight: '0.30em',
+              marginLeft: '0.10em'
+            }}
+            aria-label={`تمت آية رقم ${v.id}`}
+          >
             <span
-              className="ml-1 px-1.5 py-0.5 rounded-lg bg-amber-100 text-amber-700 text-xs font-arabic border border-amber-200 align-middle"
-              style={{ fontWeight: 800, minWidth: 22, display: 'inline-block', lineHeight: 1.3 }}
-            >
+              className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+              style={{ fontSize: '1.48em', color: '#34d399', opacity: 0.22 }}
+            >۝</span>
+            {/* Verse number in center */}
+            <span className="relative z-10 text-amber-600 font-bold text-xs md:text-base" style={{fontFamily:'Amiri,serif'}}>
               {v.id}
             </span>
-            <span
-              className="font-arabic text-gray-900 bg-white rounded-xl px-0.5 text-[0.97rem] md:text-base"
-              style={{
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                wordSpacing: '0.21em',
-                lineHeight: 2,
-              }}
-            >
-              {v.arabic}
-            </span>
-            {(idx !== phaseVerseObjs.length - 1) && (
-              <span className="mx-1 text-emerald-400 text-lg">&#x6DD;{/* ۝ */}</span>
-            )}
           </span>
+          {/* No extra verse stop after the last verse of the phase */}
         </span>
       ))}
       {/* ۩ if last phase */}
       {currentPhaseIdx === totalPhases - 1 && (
-        <span className="mx-1 text-emerald-600 text-lg" style={{ fontWeight: 900 }}>۩</span>
+        <span className="mx-1 text-emerald-700 text-lg" style={{ fontWeight: 900 }}>۩</span>
       )}
     </span>
   );
@@ -179,6 +191,7 @@ const Index = () => {
 
         {/* Phase Verses */}
         <Card className="relative overflow-visible p-3 md:p-6 bg-white shadow-xl border-l-8 border-emerald-500 rounded-2xl flex flex-col justify-center items-center min-h-[70px]">
+          {/* Phase badge at the top */}
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-200 border-emerald-100 border px-4 py-1 rounded-full shadow-lg font-arabic text-emerald-700 text-xs md:text-sm font-bold flex items-center gap-2">
             <span>{phase.label}</span>
             <span>({phase.description})</span>
