@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,13 +31,12 @@ const AlAlaqVerses = [
 // STUDY PLAN FOR THIS SURAH, dynamic for the surah & student, hardcoded here as requested
 const studyPhases = [
   { label: "المرحلة ١", description: "الآيات ١–٣", verses: [1, 2, 3] },
-  { label: "المرحلة ٢", description: "الآيات ٤–٤", verses: [4, 5] },
+  { label: "المرحلة ٢", description: "الآيات ٤–٥", verses: [4, 5] },
   { label: "المرحلة ٣", description: "الآيات ٦–٨", verses: [6, 7, 8] },
   { label: "المرحلة ٤", description: "الآيات ٩–١٤", verses: [9, 10, 11, 12, 13, 14] },
   { label: "المرحلة ٥", description: "الآيات ١٥–١٩", verses: [15, 16, 17, 18, 19] },
 ];
 
-// Helpers: get phase data by phase index
 const getPhaseData = (phaseIdx: number) => studyPhases[phaseIdx] || studyPhases[0];
 
 const Index = () => {
@@ -49,13 +49,11 @@ const Index = () => {
     vnum => AlAlaqVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
-  // All *phases* that are fully completed:
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = studyPhases.filter(phase =>
     phase.verses.every(id => completedVerses.includes(id))
   ).length;
   const totalPhases = studyPhases.length;
-  // Progress: now phase-based
   const progress = (completedPhaseCount / totalPhases) * 100;
 
   const handleMarkPhaseComplete = () => {
@@ -65,180 +63,198 @@ const Index = () => {
     });
   };
 
-  // New: Seamless Arabic with one verse stop per verse, styled like Mushaf
-  const continuousArabic = (
-    <span className="flex flex-wrap gap-x-1 gap-y-2 justify-center items-baseline font-arabic text-gray-900 bg-white rounded-xl text-[0.91rem] md:text-base leading-relaxed" dir="rtl">
-      {phaseVerseObjs.map((v, idx) => (
-        <span key={v.id} className="inline-flex items-baseline" dir="rtl">
-          {/* The verse text */}
-          <span
-            className="font-arabic px-0.5"
-            style={{
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              wordSpacing: '0.21em',
-            }}
+  // --- New: Kid-friendly, colorful Duolingo-style Phase Stepper ---
+  const phasesStepper = (
+    <div className="flex justify-center mt-6 gap-3 md:gap-5 select-none">
+      {studyPhases.map((ph, idx) => {
+        const isCurrent = idx === currentPhaseIdx;
+        const isComplete = studyPhases[idx].verses.every(id => completedVerses.includes(id));
+        // Medals, balloons or coins style for phases
+        return (
+          <button
+            key={ph.label}
+            onClick={() => setCurrentPhaseIdx(idx)}
+            className={`
+              flex flex-col items-center transition-all duration-300 focus:outline-none group
+              ${isCurrent ? 'scale-125 z-20' : 'scale-95'}
+            `}
+            style={{ minWidth: 52 }}
+            aria-label={ph.label}
+            tabIndex={0}
           >
-            {v.arabic}
-          </span>
-          {/* Mushaf-style single verse stop with number */}
-          <span
-            className="inline-flex items-center justify-center bg-white border border-amber-300 px-1 text-emerald-500 mx-1 text-lg font-extrabold rounded-full shadow-sm relative -top-0.5"
+            <span className={`
+              rounded-full border-4 shadow-xl flex items-center justify-center
+              w-12 h-12 md:w-16 md:h-16 text-2xl md:text-3xl font-bold font-arabic
+              transition-all duration-300
+              ${isComplete && !isCurrent ? 'bg-amber-300 border-amber-200 text-white' : ''}
+              ${isCurrent ? 'bg-emerald-300 border-emerald-600 text-emerald-900 animate-bounce-custom drop-shadow-2xl' : ''}
+              ${!isComplete && !isCurrent ? 'bg-amber-100 border-amber-300 text-amber-500 group-hover:bg-amber-200' : ''}
+            `}
             style={{
-              minWidth: 30,
-              minHeight: 30,
+              boxShadow: isCurrent
+                ? '0 6px 32px 2px #43e9a0, 0 1.5px 0 #bbfacc'
+                : (isComplete ? '0 2px 16px #fef08a' : '0 2px 10px #fde68a99'),
+              outline: isCurrent ? '4px solid #059669aa' : 'none'
+            }}>
+              {idx + 1}
+            </span>
+            {/* Medal/star/emoji? */}
+            <span className="text-xs mt-1 font-bold font-arabic"
+              style={{ color: isCurrent ? '#059669' : (isComplete ? '#f59e42' : '#b58d2c'), letterSpacing: '-1px' }}
+            >{ph.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // --- New: Fun, colorful continuous Arabic with single numbered stop at the end of each verse ---
+  const continuousArabic = (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-4 justify-center mt-4">
+      {phaseVerseObjs.map((v, idx) => (
+        <div
+          key={v.id}
+          className={`relative group px-0.5 py-2 font-arabic rounded-3xl shadow bg-gradient-to-br from-white to-amber-50 border-2 border-amber-300/40 transition 
+            hover:bg-emerald-50 animate-fade-in`}
+          style={{
+            fontWeight: 700,
+            letterSpacing: '0.07em',
+            fontSize: '1.13em',
+            minWidth: 140,
+            minHeight: 54,
+            display: 'inline-block'
+          }}
+          dir="rtl"
+        >
+          <span className="inline">{v.arabic}</span>
+          {/* Single verse stop, looking like a badge */}
+          <span
+            className="absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full flex items-center justify-center bg-white border-2 border-amber-300 shadow-lg text-amber-700 font-bold"
+            style={{
               fontFamily: 'Amiri, serif',
-              fontSize: '1.23em',
-              marginRight: '0.30em',
-              marginLeft: '0.10em'
+              width: 36,
+              height: 36,
+              fontSize: '1.18em',
+              zIndex: 2
             }}
             aria-label={`تمت آية رقم ${v.id}`}
           >
-            <span
-              className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-              style={{ fontSize: '1.48em', color: '#34d399', opacity: 0.22 }}
-            >۝</span>
-            {/* Verse number in center */}
-            <span className="relative z-10 text-amber-600 font-bold text-xs md:text-base" style={{fontFamily:'Amiri,serif'}}>
+            <span className="text-emerald-400 mr-0.5 font-extrabold" style={{ fontSize: '1.57em', lineHeight: 1, opacity: 0.23 }}>
+              ۝
+            </span>
+            <span className="relative z-10 text-amber-700 font-bold text-base md:text-lg" style={{fontFamily:'Amiri,serif', paddingRight: 2}}>
               {v.id}
             </span>
           </span>
-          {/* No extra verse stop after the last verse of the phase */}
-        </span>
+        </div>
       ))}
-      {/* ۩ if last phase */}
+      {/* prostration sign for surahs that end with it */}
       {currentPhaseIdx === totalPhases - 1 && (
-        <span className="mx-1 text-emerald-700 text-lg" style={{ fontWeight: 900 }}>۩</span>
+        <span className="ml-3 mt-2 text-emerald-700 text-3xl font-extrabold animate-bounce" style={{ fontWeight: 900 }}>۩</span>
       )}
-    </span>
+    </div>
   );
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 flex flex-col justify-start transition-colors">
-      {/* Decorative background */}
-      <div className="absolute -top-24 -left-16 w-60 h-60 rounded-full bg-emerald-100 opacity-35 blur-3xl z-0 pointer-events-none" />
-      <div className="absolute -bottom-16 right-0 w-56 h-56 rounded-full bg-amber-100 opacity-40 blur-2xl z-0 pointer-events-none" />
+    <div className="relative min-h-screen bg-gradient-to-br from-[#daf7ee] via-[#f7f7fa] to-[#fffbe4] flex flex-col justify-start py-3 overflow-x-clip transition-colors duration-200">
+      {/* Fun, playful background blobs */}
+      <div className="absolute -top-24 left-6 w-72 h-72 rounded-full bg-amber-200 opacity-25 blur-3xl z-0 pointer-events-none" />
+      <div className="absolute -bottom-16 right-0 w-48 h-48 rounded-full bg-emerald-200 opacity-35 blur-2xl z-0 pointer-events-none" />
 
-      {/* Header with compact progress */}
-      <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-3 py-2 rounded-b-3xl shadow-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 font-arabic drop-shadow">
-              <BookOpen className="h-6 w-6 md:h-7 md:w-7" />
-              قرآن الأطفال
-            </h1>
-            <p className="text-emerald-100 text-xs font-arabic mt-0.5">تعلم سورة العلق</p>
-          </div>
-          <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
-            <Star className="h-5 w-5 fill-current" />
-            <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
-          </div>
+      {/* Header */}
+      <div className="relative z-10 text-center px-2 pt-0 pb-0">
+        <div className="flex items-center justify-center gap-2">
+          <BookOpen className="h-10 w-10 md:h-12 md:w-12 text-emerald-500 -mt-1 drop-shadow-lg" />
+          <h1 className="font-bold font-arabic text-2xl md:text-4xl drop-shadow-lg bg-gradient-to-r from-emerald-400 via-emerald-600 to-amber-500 bg-clip-text text-transparent mt-3 mb-2">
+            قرآن الأطفال
+          </h1>
         </div>
-        {/* Progress: smaller, phase-based, even more compact */}
-        <div className="mt-0">
-          <div className="flex justify-between text-xs text-emerald-100 mb-0 whitespace-nowrap font-arabic">
-            <span>التقدم</span>
-            <span>%{Math.round(progress)}</span>
-          </div>
-          <Progress value={progress} className="h-2 bg-emerald-800 rounded-full" />
+        <p className="text-emerald-700 text-sm font-arabic mb-1 drop-shadow font-semibold">تعلم سورة العلق</p>
+        {/* New: Playful Star Progress over colored bar */}
+        <div className="flex items-end justify-center gap-1 mt-2">
+          <Star className="h-6 w-6 drop-shadow animate-pulse text-amber-400" />
+          <span className="font-arabic font-extrabold text-lg text-emerald-700 bg-amber-100 rounded-full px-3 py-0.5 shadow">
+            {completedPhaseCount} / {totalPhases}
+          </span>
+          <span className="text-amber-500 font-arabic text-xs">{`تمت المراحل`}</span>
         </div>
-        {/* Phase stepper menu */}
-        <div className="flex justify-center mt-1 gap-1">
-          {studyPhases.map((ph, idx) => {
-            // Only current phase animates, at slower speed
-            const isCurrent = idx === currentPhaseIdx;
-            const isComplete = studyPhases[idx].verses.every(id => completedVerses.includes(id));
-            return (
-              <button
-                key={ph.label}
-                onClick={() => setCurrentPhaseIdx(idx)}
-                className={`
-                  transition-all duration-300 w-7 h-7 md:w-9 md:h-9 rounded-full border-2 font-arabic font-bold text-xs md:text-sm focus:outline-none
-                  ${isCurrent ? 'bg-amber-100 text-amber-700 border-amber-400 scale-110 shadow-md animate-bounce-gentler' : ''}
-                  ${isComplete && !isCurrent ? 'bg-amber-400 text-white border-amber-100' : ''}
-                  ${!isComplete && !isCurrent ? 'bg-gray-100 text-gray-400 hover:bg-emerald-50' : ''}
-                `}
-                style={{
-                  transform: isCurrent ? 'scale(1.13)' : undefined,
-                  animationDuration: isCurrent ? '3.5s' : undefined, // SLOWER
-                  animationIterationCount: isCurrent ? 'infinite' : undefined
-                }}
-                aria-label={ph.label}
-                tabIndex={0}
-              >{idx + 1}</button>
-            );
-          })}
+        <div className="mt-1 pt-0 flex flex-col md:flex-row md:items-center md:gap-2">
+          <Progress value={progress} className="h-3 w-full bg-emerald-100 rounded-full border-2 border-emerald-300 shadow-inner" />
+          <span className="ml-2 text-xs text-emerald-800 font-bold font-arabic">{Math.round(progress)}%</span>
         </div>
+        {/* Colorful, kid-friendly phase stepper */}
+        {phasesStepper}
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 px-3 py-4 md:p-7 space-y-6 md:space-y-9 max-w-2xl mx-auto w-full flex-grow">
-        {/* Surah Title & Phase Info */}
-        <Card className="p-4 md:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-sm mb-1">
-          <div className="text-center">
-            <h2 className="text-lg md:text-xl font-bold text-emerald-700 mb-0.5 font-arabic">سورة العلق</h2>
-            <div className="flex items-center justify-center space-x-1 gap-1 flex-wrap mt-2">
-              <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-white shadow text-emerald-700 border border-amber-100">
-                {phase.label}
-              </span>
-              <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-amber-50 text-amber-700 border border-amber-100">
-                {phase.description}
-              </span>
+      <div className="relative z-10 px-2 py-1 md:p-7 space-y-6 md:space-y-9 max-w-lg mx-auto w-full flex-grow">
+        {/* Surah Title & Phase Info card */}
+        <div className="mx-auto max-w-xs mt-3 mb-1 py-4">
+          <Card className="bg-gradient-to-br from-emerald-100/60 to-amber-50 border-2 border-amber-200 shadow-lg p-3 rounded-3xl">
+            <div className="text-center">
+              <h2 className="text-xl md:text-2xl font-bold text-emerald-800 mb-0 font-arabic drop-shadow">سورة العلق</h2>
+              <div className="flex items-center justify-center gap-2 flex-wrap mt-1">
+                <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-white shadow text-emerald-700 border border-amber-100 font-bold">{phase.label}</span>
+                <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-amber-50 text-amber-700 border border-amber-100">{phase.description}</span>
+              </div>
+              <p className="text-xs text-gray-600 mt-0.5 font-arabic">١٩ آية • مكية</p>
             </div>
-            <p className="text-xs text-gray-600 mt-1 font-arabic">١٩ آية • مكية</p>
-          </div>
-        </Card>
+          </Card>
+        </div>
 
-        {/* Phase Verses */}
-        <Card className="relative overflow-visible p-3 md:p-6 bg-white shadow-xl border-l-8 border-emerald-500 rounded-2xl flex flex-col justify-center items-center min-h-[70px]">
-          {/* Phase badge at the top */}
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-200 border-emerald-100 border px-4 py-1 rounded-full shadow-lg font-arabic text-emerald-700 text-xs md:text-sm font-bold flex items-center gap-2">
+        {/* Phase verses, fun Duolingo style */}
+        <Card className="relative px-4 py-9 md:px-7 md:py-12 bg-gradient-to-br from-white via-emerald-50 to-amber-50 shadow-2xl border-l-8 border-emerald-400/70 rounded-3xl flex flex-col justify-center items-center min-h-[90px]">
+          {/* Cute phase bubble badge at the top */}
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gradient-to-tr from-amber-100 to-amber-300 border-2 border-emerald-200 px-7 py-2 rounded-full shadow-2xl font-arabic text-emerald-800 text-sm md:text-base font-bold flex items-center gap-2 uppercase tracking-wide animate-bounce-custom2">
             <span>{phase.label}</span>
             <span>({phase.description})</span>
           </div>
-          {/* Continuous verses, flowing, with numbers */}
-          <div className="w-full items-center justify-center text-center overflow-x-auto">
-            {continuousArabic}
-          </div>
-          {/* Audio/Mark Controls */}
-          <div className="flex justify-center gap-4 mt-4 items-center">
+          {/* Verses themselves */}
+          {continuousArabic}
+          {/* Audio and Complete controls - Duolingo style */}
+          <div className="flex justify-center gap-4 mt-10 items-center">
             <Button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all"
+              className="bg-emerald-400/90 hover:bg-emerald-600 text-white rounded-full p-3 drop-shadow-2xl scale-125 transition-all border-4 border-emerald-200 outline-none ring-emerald-300 ring-0"
               size="icon"
               aria-label={isPlaying ? "إيقاف الصوت" : "تشغيل الصوت"}
             >
-              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
             </Button>
             <Button
               onClick={handleMarkPhaseComplete}
               disabled={isPhaseComplete}
-              className={`bg-amber-400 hover:bg-amber-500 text-white px-6 py-2 font-arabic text-base rounded-full shadow-md transition-all
-                ${isPhaseComplete ? 'opacity-70 scale-95' : 'animate-bounce-gentle'}
-              `}
+              className={`relative bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-400 hover:bg-yellow-400 text-white px-8 py-3 font-arabic text-base rounded-3xl shadow-lg border-2 border-yellow-200 transition-all font-bold tracking-wide
+                  ${isPhaseComplete ? 'opacity-70 scale-100' : 'animate-bounce-custom2'}
+                `}
+              style={{
+                fontSize: '1.18em',
+                minWidth: 120
+              }}
             >
-              <Star className="h-4 w-4 ml-2 fill-current" />
+              <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-amber-400 text-2xl drop-shadow animate-spin-slow">
+                <Star className="h-8 w-8 fill-current" />
+              </span>
               {isPhaseComplete ? "تمت المرحلة!" : "تم الحفظ"}
             </Button>
           </div>
         </Card>
-        {/* Phase navigation */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center justify-center gap-2">
+
+        {/* Fun phase nav controls (arrows, pill) */}
+        <div className="flex flex-col items-center gap-3 mt-1">
+          <div className="flex items-center justify-center gap-3">
             <Button
               onClick={() => setCurrentPhaseIdx(i => Math.max(0, i - 1))}
               disabled={currentPhaseIdx === 0}
               variant="outline"
-              className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
+              className="rounded-full border-4 border-emerald-400 text-emerald-700 hover:bg-emerald-100 font-arabic p-0 w-12 h-12 flex items-center justify-center shadow-md bg-white"
               size="icon"
               aria-label="السابق"
             >
-              <CircleArrowRight className="h-6 w-6" />
+              <CircleArrowRight className="h-7 w-7" />
             </Button>
             <span
-              className={`text-base font-arabic font-bold px-2 rounded-full
-                ${true ? 'bg-amber-100 text-amber-700 border border-amber-300' : ''}
-              `}
+              className="text-lg font-arabic font-extrabold px-4 py-1 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 text-amber-700 shadow-lg"
             >
               {phase.label}
             </span>
@@ -246,23 +262,24 @@ const Index = () => {
               onClick={() => setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1))}
               disabled={currentPhaseIdx === totalPhases - 1}
               variant="outline"
-              className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
+              className="rounded-full border-4 border-emerald-400 text-emerald-700 hover:bg-emerald-100 font-arabic p-0 w-12 h-12 flex items-center justify-center shadow-md bg-white"
               size="icon"
               aria-label="التالي"
             >
-              <CircleArrowLeft className="h-6 w-6" />
+              <CircleArrowLeft className="h-7 w-7" />
             </Button>
           </div>
         </div>
-        {/* Completion Message */}
+
+        {/* Celebration message, confetti emoji */}
         {completedVerses.length === AlAlaqVerses.length && (
-          <Card className="p-7 relative mt-7 bg-gradient-to-r from-amber-100 to-yellow-100 border-amber-300 animate-enter rounded-2xl shadow-2xl ring-4 ring-amber-200">
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-              <span className="text-6xl animate-bounce">🎉</span>
+          <Card className="p-8 relative mt-7 bg-gradient-to-r from-yellow-50 to-yellow-200 border-amber-300 animate-enter rounded-3xl shadow-2xl ring-8 ring-yellow-100 ring-offset-4">
+            <div className="absolute -top-10 left-1/2 -translate-x-1/2">
+              <span className="text-7xl animate-bounce">🎉</span>
             </div>
-            <div className="text-center space-y-2 mt-4">
-              <h3 className="text-xl md:text-2xl font-bold text-amber-700 font-arabic mb-1">مبروك!</h3>
-              <p className="text-amber-600 font-arabic text-base" dir="rtl">
+            <div className="text-center space-y-2 mt-4 font-arabic">
+              <h3 className="text-2xl md:text-3xl font-bold text-amber-700 mb-1">مبروك!</h3>
+              <p className="text-amber-600 text-base" dir="rtl">
                 لقد أكملت حفظ سورة العلق! بارك الله في جهودك في حفظ كلام الله
               </p>
             </div>
@@ -273,16 +290,36 @@ const Index = () => {
   );
 };
 
-// Add custom slower "bounce" animation (gentler) to tailwind via inline global style
-// You may want to move this to your main CSS file if you keep it
+// Custom fun bounce animations for phase stepper, completion, etc
 const style = document.createElement('style');
 style.textContent = `
-  @keyframes bounce-gentler {
-    0%, 100% { transform: translateY(0);}
-    50% { transform: translateY(-4px);}
+  @keyframes bounce-custom {
+    0%,100% { transform: translateY(0);}
+    50% { transform: translateY(-17px);}
   }
-  .animate-bounce-gentler {
-    animation: bounce-gentler 3.5s infinite;
+  .animate-bounce-custom {
+    animation: bounce-custom 2.9s cubic-bezier(.29,.67,.53,1.45) infinite;
+  }
+  @keyframes bounce-custom2 {
+    0%,100% { transform: translateY(0);}
+    40% { transform: translateY(-8px);}
+    60% { transform: translateY(2px);}
+  }
+  .animate-bounce-custom2 {
+    animation: bounce-custom2 3s cubic-bezier(.2,1.15,.4,.9) infinite;
+  }
+  @keyframes spin-slow {
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+  @keyframes fade-in {
+    from { opacity: 0;}
+    to { opacity: 1;}
+  }
+  .animate-fade-in {
+    animation: fade-in 0.7s ease;
   }
 `;
 if (!document.getElementById('gentleBounceStyle')) {
