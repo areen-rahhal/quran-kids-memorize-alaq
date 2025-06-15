@@ -65,9 +65,41 @@ const Index = () => {
     });
   };
 
-  // Prepare continuous Arabic for phase, separated with ۝
-  const continuousArabic =
-    phaseVerseObjs.map(v => v.arabic).join('  ۝  ');
+  // Prepare continuous Arabic for phase, separated with ۝, and show verse number for each verse
+  const continuousArabic = (
+    <span className="flex flex-wrap gap-x-3 gap-y-2 justify-center items-baseline" dir="rtl">
+      {phaseVerseObjs.map((v, idx) => (
+        <span key={v.id} className="inline-flex items-baseline">
+          <span className="relative flex items-baseline">
+            <span
+              className="ml-1 px-1.5 py-0.5 rounded-lg bg-amber-100 text-amber-700 text-xs font-arabic border border-amber-200 align-middle"
+              style={{ fontWeight: 800, minWidth: 22, display: 'inline-block', lineHeight: 1.3 }}
+            >
+              {v.id}
+            </span>
+            <span
+              className="font-arabic text-gray-900 bg-white rounded-xl px-0.5 text-[0.97rem] md:text-base"
+              style={{
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                wordSpacing: '0.21em',
+                lineHeight: 2,
+              }}
+            >
+              {v.arabic}
+            </span>
+            {(idx !== phaseVerseObjs.length - 1) && (
+              <span className="mx-1 text-emerald-400 text-lg">&#x6DD;{/* ۝ */}</span>
+            )}
+          </span>
+        </span>
+      ))}
+      {/* ۩ if last phase */}
+      {currentPhaseIdx === totalPhases - 1 && (
+        <span className="mx-1 text-emerald-600 text-lg" style={{ fontWeight: 900 }}>۩</span>
+      )}
+    </span>
+  );
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 flex flex-col justify-start transition-colors">
@@ -76,7 +108,7 @@ const Index = () => {
       <div className="absolute -bottom-16 right-0 w-56 h-56 rounded-full bg-amber-100 opacity-40 blur-2xl z-0 pointer-events-none" />
 
       {/* Header with compact progress */}
-      <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-3 rounded-b-3xl shadow-xl">
+      <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-3 py-2 rounded-b-3xl shadow-xl">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 font-arabic drop-shadow">
@@ -86,21 +118,20 @@ const Index = () => {
             <p className="text-emerald-100 text-xs font-arabic mt-0.5">تعلم سورة العلق</p>
           </div>
           <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
-            {/* Now show phase progress */}
             <Star className="h-5 w-5 fill-current" />
             <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
           </div>
         </div>
-        {/* Progress: smaller, phase-based, slower bounce */}
-        <div className="mt-1">
-          <div className="flex justify-between text-xs text-emerald-100 mb-0.5 whitespace-nowrap font-arabic">
+        {/* Progress: smaller, phase-based, even more compact */}
+        <div className="mt-0">
+          <div className="flex justify-between text-xs text-emerald-100 mb-0 whitespace-nowrap font-arabic">
             <span>التقدم</span>
             <span>%{Math.round(progress)}</span>
           </div>
           <Progress value={progress} className="h-2 bg-emerald-800 rounded-full" />
         </div>
         {/* Phase stepper menu */}
-        <div className="flex justify-center mt-2 gap-1">
+        <div className="flex justify-center mt-1 gap-1">
           {studyPhases.map((ph, idx) => {
             // Only current phase animates, at slower speed
             const isCurrent = idx === currentPhaseIdx;
@@ -111,12 +142,13 @@ const Index = () => {
                 onClick={() => setCurrentPhaseIdx(idx)}
                 className={`
                   transition-all duration-300 w-7 h-7 md:w-9 md:h-9 rounded-full border-2 font-arabic font-bold text-xs md:text-sm focus:outline-none
-                  ${isCurrent ? 'bg-emerald-600 text-white border-amber-300 scale-110 shadow-md animate-bounce-gentler' : ''}
-                  ${isComplete ? 'bg-amber-400 text-white border-amber-100' : 'bg-gray-100 text-gray-400 hover:bg-emerald-50'}
+                  ${isCurrent ? 'bg-amber-100 text-amber-700 border-amber-400 scale-110 shadow-md animate-bounce-gentler' : ''}
+                  ${isComplete && !isCurrent ? 'bg-amber-400 text-white border-amber-100' : ''}
+                  ${!isComplete && !isCurrent ? 'bg-gray-100 text-gray-400 hover:bg-emerald-50' : ''}
                 `}
                 style={{
                   transform: isCurrent ? 'scale(1.13)' : undefined,
-                  animationDuration: isCurrent ? '3.5s' : undefined, // <=== SLOWER!
+                  animationDuration: isCurrent ? '3.5s' : undefined, // SLOWER
                   animationIterationCount: isCurrent ? 'infinite' : undefined
                 }}
                 aria-label={ph.label}
@@ -146,32 +178,14 @@ const Index = () => {
         </Card>
 
         {/* Phase Verses */}
-        <Card className="relative overflow-visible p-4 md:p-7 bg-white shadow-xl border-l-8 border-emerald-500 rounded-2xl flex flex-col justify-center items-center min-h-[90px]">
+        <Card className="relative overflow-visible p-3 md:p-6 bg-white shadow-xl border-l-8 border-emerald-500 rounded-2xl flex flex-col justify-center items-center min-h-[70px]">
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-200 border-emerald-100 border px-4 py-1 rounded-full shadow-lg font-arabic text-emerald-700 text-xs md:text-sm font-bold flex items-center gap-2">
             <span>{phase.label}</span>
             <span>({phase.description})</span>
           </div>
-          {/* Continuous verses, flowing */}
-          <div
-            className="w-full items-center justify-center text-center"
-          >
-            <span
-              className="block font-arabic text-gray-800 bg-white border border-emerald-100 rounded-xl py-4 px-2 md:px-3 leading-loose text-base md:text-lg"
-              style={{
-                fontSize: '1.08rem',
-                letterSpacing: '0.08em',
-                lineHeight: 2,
-                fontWeight: 700,
-                wordSpacing: '0.25em',
-              }}
-              dir="rtl"
-            >
-              {continuousArabic}
-              {/* Optionally a ۩ at the end of last phase */}
-              {currentPhaseIdx === totalPhases - 1 && (
-                <span className="mx-1"> ۩</span>
-              )}
-            </span>
+          {/* Continuous verses, flowing, with numbers */}
+          <div className="w-full items-center justify-center text-center overflow-x-auto">
+            {continuousArabic}
           </div>
           {/* Audio/Mark Controls */}
           <div className="flex justify-center gap-4 mt-4 items-center">
@@ -208,7 +222,13 @@ const Index = () => {
             >
               <CircleArrowRight className="h-6 w-6" />
             </Button>
-            <span className="text-base font-arabic font-bold text-emerald-900 px-2">{phase.label}</span>
+            <span
+              className={`text-base font-arabic font-bold px-2 rounded-full
+                ${true ? 'bg-amber-100 text-amber-700 border border-amber-300' : ''}
+              `}
+            >
+              {phase.label}
+            </span>
             <Button
               onClick={() => setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1))}
               disabled={currentPhaseIdx === totalPhases - 1}
