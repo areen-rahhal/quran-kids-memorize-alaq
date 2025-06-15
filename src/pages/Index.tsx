@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -39,15 +39,68 @@ const studyPhases = [
 // Helpers: get phase data by phase index
 const getPhaseData = (phaseIdx: number) => studyPhases[phaseIdx] || studyPhases[0];
 
+// Mishary audio: 
+// We'll use public audio from https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/.
+// Every surah is 3-digits, every ayah is 3-digits, like 096001.mp3 for 96:1
+// Surah Al-Alaq is surah number 96
+function getAudioUrl(surah: number, ayah: number) {
+  const surahStr = surah.toString().padStart(3, '0');
+  const ayahStr = ayah.toString().padStart(3, '0');
+  return `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${surahStr}${ayahStr}.mp3`;
+}
+
+const SURAH_NUMBER = 96;
+
 const Index = () => {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
+  const [audioCurrentAyahIdx, setAudioCurrentAyahIdx] = useState(0);
 
   const phase = getPhaseData(currentPhaseIdx);
   const phaseVerseObjs = phase.verses.map(
     vnum => AlAlaqVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
+
+  // Audio ref and logic
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Start playing when play is pressed
+  useEffect(() => {
+    if (isPlaying && phase.verses.length > 0) {
+      setAudioCurrentAyahIdx(0);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [isPlaying, currentPhaseIdx]);
+
+  // Play ayah sequentially
+  useEffect(() => {
+    // Only load the ayah if playing state is true
+    if (!isPlaying) return;
+    if (audioCurrentAyahIdx >= phase.verses.length) {
+      setIsPlaying(false);
+      return;
+    }
+    // Set audio src and play
+    const ayahId = phase.verses[audioCurrentAyahIdx];
+    const url = getAudioUrl(SURAH_NUMBER, ayahId);
+    if (audioRef.current) {
+      audioRef.current.src = url;
+      audioRef.current.load();
+      audioRef.current.play();
+    }
+    // ... pause logic handled on isPlaying change/effect
+  }, [audioCurrentAyahIdx, isPlaying, phase.verses]);
+
+  // When an ayah finishes, move to the next
+  const onAudioEnded = () => {
+    if (!isPlaying) return;
+    setAudioCurrentAyahIdx(idx => idx + 1);
+  };
 
   // All *phases* that are fully completed:
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
@@ -200,10 +253,16 @@ const Index = () => {
           <div className="w-full items-center justify-center text-center overflow-x-auto">
             {continuousArabic}
           </div>
+          {/* AUDIO element, visually hidden */}
+          <audio
+            ref={audioRef}
+            onEnded={onAudioEnded}
+            style={{ display: "none" }}
+          />
           {/* Audio/Mark Controls */}
           <div className="flex justify-center gap-4 mt-4 items-center">
             <Button
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={() => setIsPlaying(p => !p)}
               className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all"
               size="icon"
               aria-label={isPlaying ? "إيقاف الصوت" : "تشغيل الصوت"}
@@ -274,7 +333,6 @@ const Index = () => {
 };
 
 // Add custom slower "bounce" animation (gentler) to tailwind via inline global style
-// You may want to move this to your main CSS file if you keep it
 const style = document.createElement('style');
 style.textContent = `
   @keyframes bounce-gentler {
