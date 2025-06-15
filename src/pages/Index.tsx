@@ -49,11 +49,13 @@ const Index = () => {
     vnum => AlAlaqVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
+  // All *phases* that are fully completed:
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = studyPhases.filter(phase =>
     phase.verses.every(id => completedVerses.includes(id))
   ).length;
   const totalPhases = studyPhases.length;
+  // Progress: now phase-based
   const progress = (completedPhaseCount / totalPhases) * 100;
 
   const handleMarkPhaseComplete = () => {
@@ -63,6 +65,10 @@ const Index = () => {
     });
   };
 
+  // Prepare continuous Arabic for phase, separated with ۝
+  const continuousArabic =
+    phaseVerseObjs.map(v => v.arabic).join('  ۝  ');
+
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 flex flex-col justify-start transition-colors">
       {/* Decorative background */}
@@ -70,7 +76,7 @@ const Index = () => {
       <div className="absolute -bottom-16 right-0 w-56 h-56 rounded-full bg-amber-100 opacity-40 blur-2xl z-0 pointer-events-none" />
 
       {/* Header with compact progress */}
-      <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-4 rounded-b-3xl shadow-xl">
+      <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-3 rounded-b-3xl shadow-xl">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 font-arabic drop-shadow">
@@ -80,33 +86,44 @@ const Index = () => {
             <p className="text-emerald-100 text-xs font-arabic mt-0.5">تعلم سورة العلق</p>
           </div>
           <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
+            {/* Now show phase progress */}
             <Star className="h-5 w-5 fill-current" />
-            <span className="text-base font-bold">{completedVerses.length}/١٩</span>
+            <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
           </div>
         </div>
-        {/* Progress: smaller and more compact */}
-        <div className="mt-2">
-          <div className="flex justify-between text-xs text-emerald-100 mb-1 whitespace-nowrap font-arabic">
+        {/* Progress: smaller, phase-based, slower bounce */}
+        <div className="mt-1">
+          <div className="flex justify-between text-xs text-emerald-100 mb-0.5 whitespace-nowrap font-arabic">
             <span>التقدم</span>
             <span>%{Math.round(progress)}</span>
           </div>
           <Progress value={progress} className="h-2 bg-emerald-800 rounded-full" />
         </div>
         {/* Phase stepper menu */}
-        <div className="flex justify-center mt-4 gap-2">
-          {studyPhases.map((ph, idx) => (
-            <button
-              key={ph.label}
-              onClick={() => setCurrentPhaseIdx(idx)}
-              className={`transition-all duration-200 w-7 h-7 md:w-9 md:h-9 rounded-full border-2 font-arabic font-bold text-xs md:text-sm focus:outline-none
-                ${idx === currentPhaseIdx ? 'bg-emerald-600 text-white border-amber-300 scale-110 shadow-md animate-bounce-gentle' : ''}
-                ${studyPhases[idx].verses.every(id => completedVerses.includes(id)) ? 'bg-amber-400 text-white border-amber-100' : 'bg-gray-100 text-gray-400 hover:bg-emerald-50'}
-              `}
-              style={{transform: idx === currentPhaseIdx ? 'scale(1.13)' : undefined}}
-              aria-label={ph.label}
-              tabIndex={0}
-            >{idx + 1}</button>
-          ))}
+        <div className="flex justify-center mt-2 gap-1">
+          {studyPhases.map((ph, idx) => {
+            // Only current phase animates, at slower speed
+            const isCurrent = idx === currentPhaseIdx;
+            const isComplete = studyPhases[idx].verses.every(id => completedVerses.includes(id));
+            return (
+              <button
+                key={ph.label}
+                onClick={() => setCurrentPhaseIdx(idx)}
+                className={`
+                  transition-all duration-300 w-7 h-7 md:w-9 md:h-9 rounded-full border-2 font-arabic font-bold text-xs md:text-sm focus:outline-none
+                  ${isCurrent ? 'bg-emerald-600 text-white border-amber-300 scale-110 shadow-md animate-bounce-gentler' : ''}
+                  ${isComplete ? 'bg-amber-400 text-white border-amber-100' : 'bg-gray-100 text-gray-400 hover:bg-emerald-50'}
+                `}
+                style={{
+                  transform: isCurrent ? 'scale(1.13)' : undefined,
+                  animationDuration: isCurrent ? '3.5s' : undefined, // <=== SLOWER!
+                  animationIterationCount: isCurrent ? 'infinite' : undefined
+                }}
+                aria-label={ph.label}
+                tabIndex={0}
+              >{idx + 1}</button>
+            );
+          })}
         </div>
       </div>
 
@@ -129,60 +146,32 @@ const Index = () => {
         </Card>
 
         {/* Phase Verses */}
-        <Card className="relative overflow-visible p-6 md:p-8 bg-white shadow-xl border-l-8 border-emerald-500 rounded-2xl flex flex-col justify-center items-center min-h-[120px]">
+        <Card className="relative overflow-visible p-4 md:p-7 bg-white shadow-xl border-l-8 border-emerald-500 rounded-2xl flex flex-col justify-center items-center min-h-[90px]">
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-200 border-emerald-100 border px-4 py-1 rounded-full shadow-lg font-arabic text-emerald-700 text-xs md:text-sm font-bold flex items-center gap-2">
             <span>{phase.label}</span>
             <span>({phase.description})</span>
           </div>
-          <div className="flex flex-col gap-4 w-full items-center justify-center">
-            {phaseVerseObjs.map(verse => (
-              <div
-                key={verse.id}
-                className="flex items-center justify-center w-full py-2"
-                dir="rtl"
-              >
-                <span
-                  className={`flex-shrink-0 mr-2 md:mr-4 flex items-center justify-center 
-                  rounded-full bg-amber-200 border border-amber-300 text-amber-800
-                  font-bold font-arabic shadow-md`}
-                  style={{
-                    minWidth: '36px',
-                    minHeight: '36px',
-                    width: '36px',
-                    height: '36px',
-                    fontSize: '1rem',
-                    fontWeight: 800,
-                    background: completedVerses.includes(verse.id)
-                      ? 'linear-gradient(120deg,#fdf6b7,#fbe087 60%)'
-                      : undefined,
-                    boxShadow: completedVerses.includes(verse.id)
-                      ? '0 1px 6px #fae17455'
-                      : undefined,
-                  }}
-                  aria-label={`آية ${verse.id}`}
-                >
-                  {verse.id}
-                </span>
-                <span
-                  className={`transition-all font-arabic
-                   text-gray-800 px-2 py-1.5 rounded-lg
-                   bg-white border border-emerald-100 text-base md:text-lg leading-relaxed
-                  `}
-                  style={{
-                    fontSize: '1.1rem',
-                    borderColor: completedVerses.includes(verse.id)
-                      ? '#fbe087'
-                      : undefined,
-                    background: completedVerses.includes(verse.id)
-                      ? '#fcf6db'
-                      : undefined,
-                    fontWeight: 700,
-                  }}
-                >
-                  {verse.arabic}
-                </span>
-              </div>
-            ))}
+          {/* Continuous verses, flowing */}
+          <div
+            className="w-full items-center justify-center text-center"
+          >
+            <span
+              className="block font-arabic text-gray-800 bg-white border border-emerald-100 rounded-xl py-4 px-2 md:px-3 leading-loose text-base md:text-lg"
+              style={{
+                fontSize: '1.08rem',
+                letterSpacing: '0.08em',
+                lineHeight: 2,
+                fontWeight: 700,
+                wordSpacing: '0.25em',
+              }}
+              dir="rtl"
+            >
+              {continuousArabic}
+              {/* Optionally a ۩ at the end of last phase */}
+              {currentPhaseIdx === totalPhases - 1 && (
+                <span className="mx-1"> ۩</span>
+              )}
+            </span>
           </div>
           {/* Audio/Mark Controls */}
           <div className="flex justify-center gap-4 mt-4 items-center">
@@ -250,5 +239,22 @@ const Index = () => {
     </div>
   );
 };
+
+// Add custom slower "bounce" animation (gentler) to tailwind via inline global style
+// You may want to move this to your main CSS file if you keep it
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes bounce-gentler {
+    0%, 100% { transform: translateY(0);}
+    50% { transform: translateY(-4px);}
+  }
+  .animate-bounce-gentler {
+    animation: bounce-gentler 3.5s infinite;
+  }
+`;
+if (!document.getElementById('gentleBounceStyle')) {
+  style.id = 'gentleBounceStyle';
+  document.head.appendChild(style);
+}
 
 export default Index;
