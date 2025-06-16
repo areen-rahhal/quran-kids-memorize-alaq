@@ -56,6 +56,7 @@ const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
   const [audioCurrentAyahIdx, setAudioCurrentAyahIdx] = useState(0);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   const phase = getPhaseData(currentPhaseIdx);
   const phaseVerseObjs = phase.verses.map(
@@ -65,41 +66,89 @@ const Index = () => {
   // Audio ref and logic
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Start playing when play is pressed
-  useEffect(() => {
-    if (isPlaying && phase.verses.length > 0) {
-      setAudioCurrentAyahIdx(0);
-    } else {
+  // Play audio function with error handling
+  const playAudio = async () => {
+    if (!audioRef.current) return;
+    
+    try {
+      setAudioError(null);
+      console.log('Attempting to play audio:', audioRef.current.src);
+      await audioRef.current.play();
+      console.log('Audio playing successfully');
+    } catch (error) {
+      console.error('Audio play failed:', error);
+      setAudioError('Audio playback failed. Please try again.');
+      setIsPlaying(false);
+    }
+  };
+
+  // Load and play current ayah
+  const loadAndPlayAyah = async (ayahIndex: number) => {
+    if (!audioRef.current || ayahIndex >= phase.verses.length) return;
+    
+    const ayahId = phase.verses[ayahIndex];
+    const url = getAudioUrl(SURAH_NUMBER, ayahId);
+    
+    console.log(`Loading ayah ${ayahId} from: ${url}`);
+    
+    audioRef.current.src = url;
+    audioRef.current.load();
+    
+    // Wait a moment for the audio to load
+    setTimeout(() => {
+      playAudio();
+    }, 100);
+  };
+
+  // Handle play button click
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      // Pause audio
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.currentTime = 0;
       }
-    }
-  }, [isPlaying, currentPhaseIdx]);
-
-  // Play ayah sequentially
-  useEffect(() => {
-    // Only load the ayah if playing state is true
-    if (!isPlaying) return;
-    if (audioCurrentAyahIdx >= phase.verses.length) {
       setIsPlaying(false);
-      return;
+    } else {
+      // Start playing from beginning of phase
+      setIsPlaying(true);
+      setAudioCurrentAyahIdx(0);
+      loadAndPlayAyah(0);
     }
-    // Set audio src and play
-    const ayahId = phase.verses[audioCurrentAyahIdx];
-    const url = getAudioUrl(SURAH_NUMBER, ayahId);
+  };
+
+  // When phase changes, reset audio
+  useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.src = url;
-      audioRef.current.load();
-      audioRef.current.play();
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
-    // ... pause logic handled on isPlaying change/effect
-  }, [audioCurrentAyahIdx, isPlaying, phase.verses]);
+    setIsPlaying(false);
+    setAudioCurrentAyahIdx(0);
+    setAudioError(null);
+  }, [currentPhaseIdx]);
 
   // When an ayah finishes, move to the next
   const onAudioEnded = () => {
-    if (!isPlaying) return;
-    setAudioCurrentAyahIdx(idx => idx + 1);
+    console.log('Audio ended, moving to next ayah');
+    const nextIndex = audioCurrentAyahIdx + 1;
+    
+    if (nextIndex >= phase.verses.length) {
+      // All ayahs in phase completed
+      console.log('Phase completed');
+      setIsPlaying(false);
+      setAudioCurrentAyahIdx(0);
+    } else {
+      // Play next ayah
+      setAudioCurrentAyahIdx(nextIndex);
+      loadAndPlayAyah(nextIndex);
+    }
+  };
+
+  // Handle audio errors
+  const onAudioError = (e: React.SyntheticEvent<HTMLAudioElement, Event>) => {
+    console.error('Audio error:', e);
+    setAudioError('Failed to load audio. Please check your internet connection.');
+    setIsPlaying(false);
   };
 
   // All *phases* that are fully completed:
@@ -253,16 +302,27 @@ const Index = () => {
           <div className="w-full items-center justify-center text-center overflow-x-auto">
             {continuousArabic}
           </div>
-          {/* AUDIO element, visually hidden */}
+          
+          {/* AUDIO element with proper attributes */}
           <audio
             ref={audioRef}
             onEnded={onAudioEnded}
+            onError={onAudioError}
+            preload="none"
             style={{ display: "none" }}
           />
+          
+          {/* Audio Error Display */}
+          {audioError && (
+            <div className="text-red-500 text-sm mb-2 text-center font-arabic">
+              {audioError}
+            </div>
+          )}
+          
           {/* Audio/Mark Controls */}
           <div className="flex justify-center gap-4 mt-4 items-center">
             <Button
-              onClick={() => setIsPlaying(p => !p)}
+              onClick={handlePlayPause}
               className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all"
               size="icon"
               aria-label={isPlaying ? "إيقاف الصوت" : "تشغيل الصوت"}
@@ -281,6 +341,7 @@ const Index = () => {
             </Button>
           </div>
         </Card>
+        
         {/* Phase navigation */}
         <div className="flex flex-col items-center gap-2">
           <div className="flex items-center justify-center gap-2">
