@@ -1,6 +1,6 @@
 
 import { useState, useRef, useCallback } from 'react';
-import { getAudioUrl, getAlternativeAudioUrl, testAudioUrl, SURAH_NUMBER } from '@/utils/audioUtils';
+import { getAudioUrl, getAlternativeAudioUrl, getThirdAudioUrl, testAudioUrl, SURAH_NUMBER } from '@/utils/audioUtils';
 
 export const useAudioPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -14,9 +14,14 @@ export const useAudioPlayer = () => {
     try {
       setAudioError(null);
       console.log('Attempting to play audio:', audioRef.current.src);
-      await audioRef.current.play();
-      console.log('Audio playing successfully');
-      setIsPlaying(true);
+      
+      // Add user interaction requirement handling
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        await playPromise;
+        console.log('Audio playing successfully');
+        setIsPlaying(true);
+      }
     } catch (error) {
       console.error('Audio play failed:', error);
       setAudioError('Audio playback failed. Please try again.');
@@ -28,24 +33,46 @@ export const useAudioPlayer = () => {
     if (!audioRef.current || ayahIndex >= verses.length) return;
     
     const ayahId = verses[ayahIndex];
-    const primaryUrl = getAudioUrl(SURAH_NUMBER, ayahId);
-    const fallbackUrl = getAlternativeAudioUrl(SURAH_NUMBER, ayahId);
+    const urls = [
+      getAudioUrl(SURAH_NUMBER, ayahId),
+      getAlternativeAudioUrl(SURAH_NUMBER, ayahId),
+      getThirdAudioUrl(SURAH_NUMBER, ayahId)
+    ];
     
-    console.log(`Loading ayah ${ayahId} from: ${primaryUrl}`);
+    console.log(`Loading ayah ${ayahId}, trying ${urls.length} sources`);
     
-    // Test primary URL first
-    const primaryWorks = await testAudioUrl(primaryUrl);
-    const urlToUse = primaryWorks ? primaryUrl : fallbackUrl;
+    let workingUrl = null;
     
-    console.log(`Using audio URL: ${urlToUse}`);
+    // Try each URL until we find one that works
+    for (const url of urls) {
+      console.log(`Testing URL: ${url}`);
+      const works = await testAudioUrl(url);
+      if (works) {
+        workingUrl = url;
+        console.log(`Working URL found: ${url}`);
+        break;
+      }
+    }
     
-    audioRef.current.src = urlToUse;
+    if (!workingUrl) {
+      console.error('No working audio URL found');
+      setAudioError('Unable to load audio. Please check your internet connection.');
+      setIsPlaying(false);
+      return;
+    }
+    
+    // Stop any current audio
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    
+    // Set the working URL
+    audioRef.current.src = workingUrl;
     audioRef.current.load();
     
-    // Wait for audio to be ready
+    // Wait a bit then try to play
     setTimeout(() => {
       playAudio();
-    }, 200);
+    }, 500);
   }, [playAudio]);
 
   const onAudioEnded = useCallback((verses: number[]) => {
@@ -84,6 +111,7 @@ export const useAudioPlayer = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.src = '';
     }
     setIsPlaying(false);
     setAudioCurrentAyahIdx(0);
