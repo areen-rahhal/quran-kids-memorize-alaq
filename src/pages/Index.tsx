@@ -1,163 +1,42 @@
-import { useState, useRef, useEffect } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Play, Pause, BookOpen, Star, CircleArrowLeft, CircleArrowRight } from 'lucide-react';
-
-// All verses, as before
-const AlAlaqVerses = [
-  { id: 1, arabic: "ٱقْرَأْ بِٱسْمِ رَبِّكَ ٱلَّذِى خَلَقَ" },
-  { id: 2, arabic: "خَلَقَ ٱلْإِنسَـٰنَ مِنْ عَلَقٍ" },
-  { id: 3, arabic: "ٱقْرَأْ وَرَبُّكَ ٱلْأَكْرَمُ" },
-  { id: 4, arabic: "ٱلَّذِى عَلَّمَ بِٱلْقَلَمِ" },
-  { id: 5, arabic: "عَلَّمَ ٱلْإِنسَـٰنَ مَا لَمْ يَعْلَمْ" },
-  { id: 6, arabic: "كَلَّآ إِنَّ ٱلْإِنسَـٰنَ لَيَطْغَىٰٓ" },
-  { id: 7, arabic: "أَن رَّءَاهُ ٱسْتَغْنَىٰ" },
-  { id: 8, arabic: "إِنَّ إِلَىٰ رَبِّكَ ٱلرُّجْعَىٰ" },
-  { id: 9, arabic: "أَرَءَيْتَ ٱلَّذِى يَنْهَىٰ" },
-  { id: 10, arabic: "عَبْدًا إِذَا صَلَّىٰ" },
-  { id: 11, arabic: "أَرَءَيْتَ إِن كَانَ عَلَى ٱلْهُدَىٰٓ" },
-  { id: 12, arabic: "أَوْ أَمَرَ بِٱلتَّقْوَىٰٓ" },
-  { id: 13, arabic: "أَرَءَيْتَ إِن كَذَّبَ وَتَوَلَّىٰٓ" },
-  { id: 14, arabic: "أَلَمْ يَعْلَم بِأَنَّ ٱللَّهَ يَرَىٰ" },
-  { id: 15, arabic: "كَلَّا لَئِن لَّمْ يَنتَهِ لَنَسْفَعًۢا بِٱلنَّاصِيَةِ" },
-  { id: 16, arabic: "نَاصِيَةٍ كَـٰذِبَةٍ خَاطِئَةٍ" },
-  { id: 17, arabic: "فَلْيَدْعُ نَادِيَهُۥ" },
-  { id: 18, arabic: "سَنَدْعُ ٱلزَّبَانِيَةَ" },
-  { id: 19, arabic: "كَلَّا لَا تُطِعْهُ وَٱسْجُدْ وَٱقْتَرِب ۩" }
-];
-
-// STUDY PLAN FOR THIS SURAH, dynamic for the surah & student, hardcoded here as requested
-const studyPhases = [
-  { label: "المرحلة ١", description: "الآيات ١–٣", verses: [1, 2, 3] },
-  { label: "المرحلة ٢", description: "الآيات ٤–٤", verses: [4, 5] },
-  { label: "المرحلة ٣", description: "الآيات ٦–٨", verses: [6, 7, 8] },
-  { label: "المرحلة ٤", description: "الآيات ٩–١٤", verses: [9, 10, 11, 12, 13, 14] },
-  { label: "المرحلة ٥", description: "الآيات ١٥–١٩", verses: [15, 16, 17, 18, 19] },
-];
-
-// Helpers: get phase data by phase index
-const getPhaseData = (phaseIdx: number) => studyPhases[phaseIdx] || studyPhases[0];
-
-// Mishary audio: 
-// We'll use public audio from https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/.
-// Every surah is 3-digits, every ayah is 3-digits, like 096001.mp3 for 96:1
-// Surah Al-Alaq is surah number 96
-function getAudioUrl(surah: number, ayah: number) {
-  const surahStr = surah.toString().padStart(3, '0');
-  const ayahStr = ayah.toString().padStart(3, '0');
-  return `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${surahStr}${ayahStr}.mp3`;
-}
-
-const SURAH_NUMBER = 96;
+import { CircleArrowLeft, CircleArrowRight } from 'lucide-react';
+import { AlAlaqVerses, studyPhases, getPhaseData } from '@/data/studyPhases';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { QuranHeader } from '@/components/QuranHeader';
+import { VerseDisplay } from '@/components/VerseDisplay';
+import { AudioControls } from '@/components/AudioControls';
 
 const Index = () => {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
-  const [audioCurrentAyahIdx, setAudioCurrentAyahIdx] = useState(0);
-  const [audioError, setAudioError] = useState<string | null>(null);
+  const {
+    isPlaying,
+    audioError,
+    audioRef,
+    handlePlayPause,
+    resetAudio,
+    onAudioEnded,
+    onAudioError
+  } = useAudioPlayer();
 
   const phase = getPhaseData(currentPhaseIdx);
   const phaseVerseObjs = phase.verses.map(
     vnum => AlAlaqVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
-  // Audio ref and logic
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Play audio function with error handling
-  const playAudio = async () => {
-    if (!audioRef.current) return;
-    
-    try {
-      setAudioError(null);
-      console.log('Attempting to play audio:', audioRef.current.src);
-      await audioRef.current.play();
-      console.log('Audio playing successfully');
-    } catch (error) {
-      console.error('Audio play failed:', error);
-      setAudioError('Audio playback failed. Please try again.');
-      setIsPlaying(false);
-    }
-  };
-
-  // Load and play current ayah
-  const loadAndPlayAyah = async (ayahIndex: number) => {
-    if (!audioRef.current || ayahIndex >= phase.verses.length) return;
-    
-    const ayahId = phase.verses[ayahIndex];
-    const url = getAudioUrl(SURAH_NUMBER, ayahId);
-    
-    console.log(`Loading ayah ${ayahId} from: ${url}`);
-    
-    audioRef.current.src = url;
-    audioRef.current.load();
-    
-    // Wait a moment for the audio to load
-    setTimeout(() => {
-      playAudio();
-    }, 100);
-  };
-
-  // Handle play button click
-  const handlePlayPause = () => {
-    if (isPlaying) {
-      // Pause audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      setIsPlaying(false);
-    } else {
-      // Start playing from beginning of phase
-      setIsPlaying(true);
-      setAudioCurrentAyahIdx(0);
-      loadAndPlayAyah(0);
-    }
-  };
-
   // When phase changes, reset audio
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setIsPlaying(false);
-    setAudioCurrentAyahIdx(0);
-    setAudioError(null);
-  }, [currentPhaseIdx]);
+    resetAudio();
+  }, [currentPhaseIdx, resetAudio]);
 
-  // When an ayah finishes, move to the next
-  const onAudioEnded = () => {
-    console.log('Audio ended, moving to next ayah');
-    const nextIndex = audioCurrentAyahIdx + 1;
-    
-    if (nextIndex >= phase.verses.length) {
-      // All ayahs in phase completed
-      console.log('Phase completed');
-      setIsPlaying(false);
-      setAudioCurrentAyahIdx(0);
-    } else {
-      // Play next ayah
-      setAudioCurrentAyahIdx(nextIndex);
-      loadAndPlayAyah(nextIndex);
-    }
-  };
-
-  // Handle audio errors
-  const onAudioError = (e: React.SyntheticEvent<HTMLAudioElement, Event>) => {
-    console.error('Audio error:', e);
-    setAudioError('Failed to load audio. Please check your internet connection.');
-    setIsPlaying(false);
-  };
-
-  // All *phases* that are fully completed:
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = studyPhases.filter(phase =>
     phase.verses.every(id => completedVerses.includes(id))
   ).length;
   const totalPhases = studyPhases.length;
-  // Progress: now phase-based
   const progress = (completedPhaseCount / totalPhases) * 100;
 
   const handleMarkPhaseComplete = () => {
@@ -167,111 +46,20 @@ const Index = () => {
     });
   };
 
-  // New: Seamless Arabic with one verse stop per verse, styled like Mushaf
-  const continuousArabic = (
-    <span className="flex flex-wrap gap-x-1 gap-y-2 justify-center items-baseline font-arabic text-gray-900 bg-white rounded-xl text-[0.91rem] md:text-base leading-relaxed" dir="rtl">
-      {phaseVerseObjs.map((v, idx) => (
-        <span key={v.id} className="inline-flex items-baseline" dir="rtl">
-          {/* The verse text */}
-          <span
-            className="font-arabic px-0.5"
-            style={{
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              wordSpacing: '0.21em',
-            }}
-          >
-            {v.arabic}
-          </span>
-          {/* Mushaf-style single verse stop with number */}
-          <span
-            className="inline-flex items-center justify-center bg-white border border-amber-300 px-1 text-emerald-500 mx-1 text-lg font-extrabold rounded-full shadow-sm relative -top-0.5"
-            style={{
-              minWidth: 30,
-              minHeight: 30,
-              fontFamily: 'Amiri, serif',
-              fontSize: '1.23em',
-              marginRight: '0.30em',
-              marginLeft: '0.10em'
-            }}
-            aria-label={`تمت آية رقم ${v.id}`}
-          >
-            <span
-              className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-              style={{ fontSize: '1.48em', color: '#34d399', opacity: 0.22 }}
-            >۝</span>
-            {/* Verse number in center */}
-            <span className="relative z-10 text-amber-600 font-bold text-xs md:text-base" style={{fontFamily:'Amiri,serif'}}>
-              {v.id}
-            </span>
-          </span>
-          {/* No extra verse stop after the last verse of the phase */}
-        </span>
-      ))}
-      {/* ۩ if last phase */}
-      {currentPhaseIdx === totalPhases - 1 && (
-        <span className="mx-1 text-emerald-700 text-lg" style={{ fontWeight: 900 }}>۩</span>
-      )}
-    </span>
-  );
-
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 flex flex-col justify-start transition-colors">
       {/* Decorative background */}
       <div className="absolute -top-24 -left-16 w-60 h-60 rounded-full bg-emerald-100 opacity-35 blur-3xl z-0 pointer-events-none" />
       <div className="absolute -bottom-16 right-0 w-56 h-56 rounded-full bg-amber-100 opacity-40 blur-2xl z-0 pointer-events-none" />
 
-      {/* Header with compact progress */}
-      <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-3 py-2 rounded-b-3xl shadow-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 font-arabic drop-shadow">
-              <BookOpen className="h-6 w-6 md:h-7 md:w-7" />
-              قرآن الأطفال
-            </h1>
-            <p className="text-emerald-100 text-xs font-arabic mt-0.5">تعلم سورة العلق</p>
-          </div>
-          <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
-            <Star className="h-5 w-5 fill-current" />
-            <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
-          </div>
-        </div>
-        {/* Progress: smaller, phase-based, even more compact */}
-        <div className="mt-0">
-          <div className="flex justify-between text-xs text-emerald-100 mb-0 whitespace-nowrap font-arabic">
-            <span>التقدم</span>
-            <span>%{Math.round(progress)}</span>
-          </div>
-          <Progress value={progress} className="h-2 bg-emerald-800 rounded-full" />
-        </div>
-        {/* Phase stepper menu */}
-        <div className="flex justify-center mt-1 gap-1">
-          {studyPhases.map((ph, idx) => {
-            // Only current phase animates, at slower speed
-            const isCurrent = idx === currentPhaseIdx;
-            const isComplete = studyPhases[idx].verses.every(id => completedVerses.includes(id));
-            return (
-              <button
-                key={ph.label}
-                onClick={() => setCurrentPhaseIdx(idx)}
-                className={`
-                  transition-all duration-300 w-7 h-7 md:w-9 md:h-9 rounded-full border-2 font-arabic font-bold text-xs md:text-sm focus:outline-none
-                  ${isCurrent ? 'bg-amber-100 text-amber-700 border-amber-400 scale-110 shadow-md animate-bounce-gentler' : ''}
-                  ${isComplete && !isCurrent ? 'bg-amber-400 text-white border-amber-100' : ''}
-                  ${!isComplete && !isCurrent ? 'bg-gray-100 text-gray-400 hover:bg-emerald-50' : ''}
-                `}
-                style={{
-                  transform: isCurrent ? 'scale(1.13)' : undefined,
-                  animationDuration: isCurrent ? '3.5s' : undefined, // SLOWER
-                  animationIterationCount: isCurrent ? 'infinite' : undefined
-                }}
-                aria-label={ph.label}
-                tabIndex={0}
-              >{idx + 1}</button>
-            );
-          })}
-        </div>
-      </div>
+      <QuranHeader
+        completedPhaseCount={completedPhaseCount}
+        totalPhases={totalPhases}
+        progress={progress}
+        currentPhaseIdx={currentPhaseIdx}
+        setCurrentPhaseIdx={setCurrentPhaseIdx}
+        completedVerses={completedVerses}
+      />
 
       {/* Main Content */}
       <div className="relative z-10 px-3 py-4 md:p-7 space-y-6 md:space-y-9 max-w-2xl mx-auto w-full flex-grow">
@@ -293,53 +81,27 @@ const Index = () => {
 
         {/* Phase Verses */}
         <Card className="relative overflow-visible p-3 md:p-6 bg-white shadow-xl border-l-8 border-emerald-500 rounded-2xl flex flex-col justify-center items-center min-h-[70px]">
-          {/* Phase badge at the top */}
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-200 border-emerald-100 border px-4 py-1 rounded-full shadow-lg font-arabic text-emerald-700 text-xs md:text-sm font-bold flex items-center gap-2">
             <span>{phase.label}</span>
             <span>({phase.description})</span>
           </div>
-          {/* Continuous verses, flowing, with numbers */}
-          <div className="w-full items-center justify-center text-center overflow-x-auto">
-            {continuousArabic}
-          </div>
           
-          {/* AUDIO element with proper attributes */}
-          <audio
-            ref={audioRef}
-            onEnded={onAudioEnded}
-            onError={onAudioError}
-            preload="none"
-            style={{ display: "none" }}
+          <VerseDisplay 
+            phaseVerseObjs={phaseVerseObjs}
+            currentPhaseIdx={currentPhaseIdx}
+            totalPhases={totalPhases}
           />
           
-          {/* Audio Error Display */}
-          {audioError && (
-            <div className="text-red-500 text-sm mb-2 text-center font-arabic">
-              {audioError}
-            </div>
-          )}
-          
-          {/* Audio/Mark Controls */}
-          <div className="flex justify-center gap-4 mt-4 items-center">
-            <Button
-              onClick={handlePlayPause}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all"
-              size="icon"
-              aria-label={isPlaying ? "إيقاف الصوت" : "تشغيل الصوت"}
-            >
-              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-            </Button>
-            <Button
-              onClick={handleMarkPhaseComplete}
-              disabled={isPhaseComplete}
-              className={`bg-amber-400 hover:bg-amber-500 text-white px-6 py-2 font-arabic text-base rounded-full shadow-md transition-all
-                ${isPhaseComplete ? 'opacity-70 scale-95' : 'animate-bounce-gentle'}
-              `}
-            >
-              <Star className="h-4 w-4 ml-2 fill-current" />
-              {isPhaseComplete ? "تمت المرحلة!" : "تم الحفظ"}
-            </Button>
-          </div>
+          <AudioControls
+            isPlaying={isPlaying}
+            audioError={audioError}
+            isPhaseComplete={isPhaseComplete}
+            onPlayPause={() => handlePlayPause(phase.verses)}
+            onMarkComplete={handleMarkPhaseComplete}
+            audioRef={audioRef}
+            onAudioEnded={() => onAudioEnded(phase.verses)}
+            onAudioError={onAudioError}
+          />
         </Card>
         
         {/* Phase navigation */}
@@ -355,11 +117,7 @@ const Index = () => {
             >
               <CircleArrowRight className="h-6 w-6" />
             </Button>
-            <span
-              className={`text-base font-arabic font-bold px-2 rounded-full
-                ${true ? 'bg-amber-100 text-amber-700 border border-amber-300' : ''}
-              `}
-            >
+            <span className="text-base font-arabic font-bold px-2 rounded-full bg-amber-100 text-amber-700 border border-amber-300">
               {phase.label}
             </span>
             <Button
@@ -374,6 +132,7 @@ const Index = () => {
             </Button>
           </div>
         </div>
+        
         {/* Completion Message */}
         {completedVerses.length === AlAlaqVerses.length && (
           <Card className="p-7 relative mt-7 bg-gradient-to-r from-amber-100 to-yellow-100 border-amber-300 animate-enter rounded-2xl shadow-2xl ring-4 ring-amber-200">
