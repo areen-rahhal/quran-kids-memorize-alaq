@@ -16,6 +16,7 @@ const Index = () => {
     isPlaying,
     audioError,
     audioRef,
+    currentAyahIdx,
     handlePlayPause,
     resetAudio,
     onAudioEnded,
@@ -90,6 +91,8 @@ const Index = () => {
             phaseVerseObjs={phaseVerseObjs}
             currentPhaseIdx={currentPhaseIdx}
             totalPhases={totalPhases}
+            currentAyahIdx={currentAyahIdx}
+            isPlaying={isPlaying}
           />
           
           <AudioControls
