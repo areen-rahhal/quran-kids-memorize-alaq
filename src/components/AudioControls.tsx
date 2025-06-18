@@ -6,6 +6,7 @@ interface AudioControlsProps {
   isPlaying: boolean;
   audioError: string | null;
   isPhaseComplete: boolean;
+  hasAttemptedPlay: boolean;
   onPlayPause: () => void;
   onMarkComplete: () => void;
   audioRef: React.RefObject<HTMLAudioElement>;
@@ -17,6 +18,7 @@ export const AudioControls = ({
   isPlaying,
   audioError,
   isPhaseComplete,
+  hasAttemptedPlay,
   onPlayPause,
   onMarkComplete,
   audioRef,
@@ -33,7 +35,7 @@ export const AudioControls = ({
         style={{ display: "none" }}
       />
       
-      {audioError && (
+      {audioError && hasAttemptedPlay && (
         <div className="text-red-500 text-sm mb-2 text-center font-arabic">
           {audioError}
         </div>

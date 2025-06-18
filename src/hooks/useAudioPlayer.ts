@@ -6,6 +6,7 @@ export const useAudioPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentAyahIdx, setCurrentAyahIdx] = useState(0);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [hasAttemptedPlay, setHasAttemptedPlay] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const loadAndPlayAyah = useCallback(async (ayahIndex: number, verses: number[]) => {
@@ -18,6 +19,7 @@ export const useAudioPlayer = () => {
     
     try {
       setAudioError(null);
+      setHasAttemptedPlay(true);
       setCurrentAyahIdx(ayahIndex);
       
       // Stop any current audio
@@ -33,7 +35,7 @@ export const useAudioPlayer = () => {
       
     } catch (error) {
       console.error('Audio play failed:', error);
-      setAudioError('Audio playback failed. Please try again.');
+      setAudioError('Failed to load audio. Please check your internet connection.');
       setIsPlaying(false);
     }
   }, []);
@@ -53,9 +55,11 @@ export const useAudioPlayer = () => {
 
   const onAudioError = useCallback(() => {
     console.error('Audio error occurred');
-    setAudioError('Failed to load audio. Please check your internet connection.');
+    if (hasAttemptedPlay) {
+      setAudioError('Failed to load audio. Please check your internet connection.');
+    }
     setIsPlaying(false);
-  }, []);
+  }, [hasAttemptedPlay]);
 
   const handlePlayPause = useCallback((verses: number[]) => {
     if (isPlaying) {
@@ -78,6 +82,7 @@ export const useAudioPlayer = () => {
     setIsPlaying(false);
     setCurrentAyahIdx(0);
     setAudioError(null);
+    setHasAttemptedPlay(false);
   }, []);
 
   return {
@@ -85,6 +90,7 @@ export const useAudioPlayer = () => {
     audioError,
     audioRef,
     currentAyahIdx,
+    hasAttemptedPlay,
     handlePlayPause,
     resetAudio,
     onAudioEnded,

@@ -17,6 +17,7 @@ const Index = () => {
     audioError,
     audioRef,
     currentAyahIdx,
+    hasAttemptedPlay,
     handlePlayPause,
     resetAudio,
     onAudioEnded,
@@ -99,6 +100,7 @@ const Index = () => {
             isPlaying={isPlaying}
             audioError={audioError}
             isPhaseComplete={isPhaseComplete}
+            hasAttemptedPlay={hasAttemptedPlay}
             onPlayPause={() => handlePlayPause(phase.verses)}
             onMarkComplete={handleMarkPhaseComplete}
             audioRef={audioRef}
