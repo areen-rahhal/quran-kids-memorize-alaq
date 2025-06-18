@@ -1,6 +1,6 @@
 
 import { useState, useRef, useCallback } from 'react';
-import { getAudioUrl, getAlternativeAudioUrl, getThirdAudioUrl, testAudioUrl, SURAH_NUMBER } from '@/utils/audioUtils';
+import { getAudioUrl, getAlternativeAudioUrl, getThirdAudioUrl, SURAH_NUMBER } from '@/utils/audioUtils';
 
 export const useAudioPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -15,13 +15,9 @@ export const useAudioPlayer = () => {
       setAudioError(null);
       console.log('Attempting to play audio:', audioRef.current.src);
       
-      // Add user interaction requirement handling
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        await playPromise;
-        console.log('Audio playing successfully');
-        setIsPlaying(true);
-      }
+      await audioRef.current.play();
+      console.log('Audio playing successfully');
+      setIsPlaying(true);
     } catch (error) {
       console.error('Audio play failed:', error);
       setAudioError('Audio playback failed. Please try again.');
@@ -39,40 +35,54 @@ export const useAudioPlayer = () => {
       getThirdAudioUrl(SURAH_NUMBER, ayahId)
     ];
     
-    console.log(`Loading ayah ${ayahId}, trying ${urls.length} sources`);
+    console.log(`Loading ayah ${ayahId}, trying sources`);
     
-    let workingUrl = null;
-    
-    // Try each URL until we find one that works
-    for (const url of urls) {
-      console.log(`Testing URL: ${url}`);
-      const works = await testAudioUrl(url);
-      if (works) {
-        workingUrl = url;
-        console.log(`Working URL found: ${url}`);
-        break;
+    // Try each URL until one works
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      console.log(`Trying URL ${i + 1}: ${url}`);
+      
+      try {
+        // Stop any current audio
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        
+        // Set new source
+        audioRef.current.src = url;
+        
+        // Wait for audio to load and then play
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Timeout'));
+          }, 5000);
+          
+          audioRef.current!.oncanplaythrough = () => {
+            clearTimeout(timeout);
+            resolve(true);
+          };
+          audioRef.current!.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error('Load failed'));
+          };
+          
+          audioRef.current!.load();
+        });
+        
+        // If we get here, the audio loaded successfully
+        console.log(`Successfully loaded: ${url}`);
+        await playAudio();
+        return;
+        
+      } catch (error) {
+        console.log(`Failed to load URL ${i + 1}:`, error);
+        continue;
       }
     }
     
-    if (!workingUrl) {
-      console.error('No working audio URL found');
-      setAudioError('Unable to load audio. Please check your internet connection.');
-      setIsPlaying(false);
-      return;
-    }
-    
-    // Stop any current audio
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-    
-    // Set the working URL
-    audioRef.current.src = workingUrl;
-    audioRef.current.load();
-    
-    // Wait a bit then try to play
-    setTimeout(() => {
-      playAudio();
-    }, 500);
+    // If we get here, all URLs failed
+    console.error('All audio sources failed');
+    setAudioError('Unable to load audio. Please check your internet connection.');
+    setIsPlaying(false);
   }, [playAudio]);
 
   const onAudioEnded = useCallback((verses: number[]) => {
