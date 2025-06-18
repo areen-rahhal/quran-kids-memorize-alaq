@@ -1,6 +1,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { getAudioUrl, SURAH_NUMBER } from '@/utils/audioUtils';
+import { useRecitingJourney } from './useRecitingJourney';
 
 export const useAudioPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -8,6 +9,17 @@ export const useAudioPlayer = () => {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [hasAttemptedPlay, setHasAttemptedPlay] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const {
+    isReciting,
+    currentStep,
+    isListening,
+    transcript,
+    startRecitingJourney,
+    stopRecitingJourney,
+    handleVerseEnded,
+    handleListeningComplete
+  } = useRecitingJourney();
 
   const loadAndPlayAyah = useCallback(async (ayahIndex: number, verses: number[]) => {
     if (!audioRef.current || ayahIndex >= verses.length) return;
@@ -41,17 +53,24 @@ export const useAudioPlayer = () => {
   }, []);
 
   const onAudioEnded = useCallback((verses: number[]) => {
-    console.log('Audio ended, moving to next ayah');
-    const nextIndex = currentAyahIdx + 1;
+    console.log('Audio ended');
+    setIsPlaying(false);
     
-    if (nextIndex >= verses.length) {
-      console.log('Phase completed');
-      setIsPlaying(false);
-      setCurrentAyahIdx(0);
+    if (isReciting) {
+      // Handle reciting journey flow
+      handleVerseEnded();
     } else {
-      loadAndPlayAyah(nextIndex, verses);
+      // Normal playback flow
+      const nextIndex = currentAyahIdx + 1;
+      
+      if (nextIndex >= verses.length) {
+        console.log('Phase completed');
+        setCurrentAyahIdx(0);
+      } else {
+        loadAndPlayAyah(nextIndex, verses);
+      }
     }
-  }, [currentAyahIdx, loadAndPlayAyah]);
+  }, [currentAyahIdx, loadAndPlayAyah, isReciting, handleVerseEnded]);
 
   const onAudioError = useCallback(() => {
     console.error('Audio error occurred');
@@ -73,6 +92,25 @@ export const useAudioPlayer = () => {
     }
   }, [isPlaying, loadAndPlayAyah]);
 
+  const handleStartReciting = useCallback((verses: number[]) => {
+    startRecitingJourney(verses, loadAndPlayAyah);
+  }, [startRecitingJourney, loadAndPlayAyah]);
+
+  const handleStopReciting = useCallback(() => {
+    stopRecitingJourney();
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setIsPlaying(false);
+  }, [stopRecitingJourney]);
+
+  // Auto-advance when user finishes reciting
+  const handleUserRecitingComplete = useCallback((verses: number[]) => {
+    if (transcript && isListening) {
+      handleListeningComplete(verses, loadAndPlayAyah);
+    }
+  }, [transcript, isListening, handleListeningComplete, loadAndPlayAyah]);
+
   const resetAudio = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -83,7 +121,8 @@ export const useAudioPlayer = () => {
     setCurrentAyahIdx(0);
     setAudioError(null);
     setHasAttemptedPlay(false);
-  }, []);
+    stopRecitingJourney();
+  }, [stopRecitingJourney]);
 
   return {
     isPlaying,
@@ -94,6 +133,13 @@ export const useAudioPlayer = () => {
     handlePlayPause,
     resetAudio,
     onAudioEnded,
-    onAudioError
+    onAudioError,
+    // Reciting journey props
+    isReciting,
+    isListening,
+    transcript,
+    handleStartReciting,
+    handleStopReciting,
+    handleUserRecitingComplete
   };
 };

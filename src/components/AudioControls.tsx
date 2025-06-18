@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Star } from 'lucide-react';
+import { Play, Pause, Star, Mic, MicOff } from 'lucide-react';
 
 interface AudioControlsProps {
   isPlaying: boolean;
@@ -12,6 +12,11 @@ interface AudioControlsProps {
   audioRef: React.RefObject<HTMLAudioElement>;
   onAudioEnded: () => void;
   onAudioError: () => void;
+  // New props for reciting journey
+  isReciting: boolean;
+  isListening: boolean;
+  onStartReciting: () => void;
+  onStopReciting: () => void;
 }
 
 export const AudioControls = ({
@@ -23,7 +28,11 @@ export const AudioControls = ({
   onMarkComplete,
   audioRef,
   onAudioEnded,
-  onAudioError
+  onAudioError,
+  isReciting,
+  isListening,
+  onStartReciting,
+  onStopReciting
 }: AudioControlsProps) => {
   return (
     <>
@@ -41,15 +50,37 @@ export const AudioControls = ({
         </div>
       )}
       
+      {/* Listening indicator */}
+      {isListening && (
+        <div className="text-blue-600 text-sm mb-2 text-center font-arabic animate-pulse">
+          🎤 جاري الاستماع... كرر الآية
+        </div>
+      )}
+      
       <div className="flex justify-center gap-4 mt-4 items-center">
         <Button
           onClick={onPlayPause}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all"
+          disabled={isReciting}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all disabled:opacity-50"
           size="icon"
           aria-label={isPlaying ? "إيقاف الصوت" : "تشغيل الصوت"}
         >
           {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
         </Button>
+        
+        <Button
+          onClick={isReciting ? onStopReciting : onStartReciting}
+          className={`${
+            isReciting 
+              ? 'bg-red-500 hover:bg-red-600' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          } text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all`}
+          size="icon"
+          aria-label={isReciting ? "إيقاف التلاوة" : "بدء التلاوة والتكرار"}
+        >
+          {isReciting ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+        </Button>
+        
         <Button
           onClick={onMarkComplete}
           disabled={isPhaseComplete}

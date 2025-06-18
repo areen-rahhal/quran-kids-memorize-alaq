@@ -21,7 +21,13 @@ const Index = () => {
     handlePlayPause,
     resetAudio,
     onAudioEnded,
-    onAudioError
+    onAudioError,
+    isReciting,
+    isListening,
+    transcript,
+    handleStartReciting,
+    handleStopReciting,
+    handleUserRecitingComplete
   } = useAudioPlayer();
 
   const phase = getPhaseData(currentPhaseIdx);
@@ -33,6 +39,18 @@ const Index = () => {
   useEffect(() => {
     resetAudio();
   }, [currentPhaseIdx, resetAudio]);
+
+  // Handle automatic progression in reciting mode
+  useEffect(() => {
+    if (transcript && isListening) {
+      // Wait a moment then auto-advance
+      const timer = setTimeout(() => {
+        handleUserRecitingComplete(phase.verses);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [transcript, isListening, handleUserRecitingComplete, phase.verses]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = studyPhases.filter(phase =>
@@ -93,7 +111,7 @@ const Index = () => {
             currentPhaseIdx={currentPhaseIdx}
             totalPhases={totalPhases}
             currentAyahIdx={currentAyahIdx}
-            isPlaying={isPlaying}
+            isPlaying={isPlaying || isReciting}
           />
           
           <AudioControls
@@ -106,6 +124,10 @@ const Index = () => {
             audioRef={audioRef}
             onAudioEnded={() => onAudioEnded(phase.verses)}
             onAudioError={onAudioError}
+            isReciting={isReciting}
+            isListening={isListening}
+            onStartReciting={() => handleStartReciting(phase.verses)}
+            onStopReciting={handleStopReciting}
           />
         </Card>
         
