@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { getAudioUrl, SURAH_NUMBER } from '@/utils/audioUtils';
 import { useRecitingJourney } from './useRecitingJourney';
@@ -17,6 +16,8 @@ export const useAudioPlayer = () => {
     currentVerseIndex,
     isListening,
     transcript,
+    feedback,
+    showFeedback,
     startRecitingJourney,
     stopRecitingJourney,
     handleVerseEnded,
@@ -112,9 +113,9 @@ export const useAudioPlayer = () => {
     setIsPlaying(false);
   }, [stopRecitingJourney]);
 
-  const handleListeningComplete = useCallback((verses: number[]) => {
-    console.log('Handling listening complete with verses:', verses);
-    handleListeningCompleteFromHook(verses, loadAndPlayAyah);
+  const handleListeningComplete = useCallback((verses: number[], verseText: string) => {
+    console.log('Handling listening complete with verses:', verses, 'and verse text:', verseText);
+    handleListeningCompleteFromHook(verses, verseText, loadAndPlayAyah);
   }, [handleListeningCompleteFromHook, loadAndPlayAyah]);
 
   const resetAudio = useCallback(() => {
@@ -147,6 +148,8 @@ export const useAudioPlayer = () => {
     currentStep,
     isListening,
     transcript,
+    feedback,
+    showFeedback,
     handleStartReciting,
     handleStopReciting,
     handleListeningComplete

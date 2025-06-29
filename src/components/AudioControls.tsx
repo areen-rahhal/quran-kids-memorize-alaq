@@ -18,6 +18,8 @@ interface AudioControlsProps {
   isListening: boolean;
   currentStep: 'playing' | 'listening' | 'completed';
   transcript: string;
+  feedback: 'correct' | 'incorrect' | null;
+  showFeedback: boolean;
   onStartReciting: () => void;
   onStopReciting: () => void;
 }
@@ -37,6 +39,8 @@ export const AudioControls = ({
   isListening,
   currentStep,
   transcript,
+  feedback,
+  showFeedback,
   onStartReciting,
   onStopReciting
 }: AudioControlsProps) => {
@@ -58,7 +62,7 @@ export const AudioControls = ({
       
       {/* Reciting journey status indicators */}
       {isReciting && (
-        <div className="text-center mb-2 space-y-1">
+        <div className="text-center mb-2 space-y-2">
           {currentStep === 'playing' && (
             <div className="text-blue-600 text-sm font-arabic animate-pulse">
               🔊 استمع للآية...
@@ -69,9 +73,28 @@ export const AudioControls = ({
               🎤 جاري الاستماع... كرر الآية
             </div>
           )}
-          {transcript && (
+          {transcript && !showFeedback && (
             <div className="text-gray-600 text-xs font-arabic bg-gray-50 p-2 rounded">
               سمعت: {transcript}
+            </div>
+          )}
+          {showFeedback && feedback && (
+            <div className={`text-sm font-arabic p-3 rounded-lg border-2 ${
+              feedback === 'correct' 
+                ? 'bg-green-50 border-green-200 text-green-700' 
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}>
+              {feedback === 'correct' ? (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-lg">✅</span>
+                  <span>أحسنت! انتقل للآية التالية</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-lg">❌</span>
+                  <span>حاول مرة أخرى</span>
+                </div>
+              )}
             </div>
           )}
         </div>

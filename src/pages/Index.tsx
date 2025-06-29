@@ -26,6 +26,8 @@ const Index = () => {
     currentStep,
     isListening,
     transcript,
+    feedback,
+    showFeedback,
     handleStartReciting,
     handleStopReciting,
     handleListeningComplete
@@ -47,14 +49,18 @@ const Index = () => {
     
     if (transcript && transcript.trim().length > 0 && !isListening && currentStep === 'listening') {
       console.log('Auto-advancing due to transcript completion');
+      // Get the current verse text for comparison
+      const currentVerse = phaseVerseObjs[currentAyahIdx];
+      const currentVerseText = currentVerse ? currentVerse.arabic : '';
+      
       // Wait a moment then auto-advance
       const timer = setTimeout(() => {
-        handleListeningComplete(phase.verses);
+        handleListeningComplete(phase.verses, currentVerseText);
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [transcript, isListening, currentStep, handleListeningComplete, phase.verses]);
+  }, [transcript, isListening, currentStep, handleListeningComplete, phase.verses, phaseVerseObjs, currentAyahIdx]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = studyPhases.filter(phase =>
@@ -133,6 +139,8 @@ const Index = () => {
             isListening={isListening}
             currentStep={currentStep}
             transcript={transcript}
+            feedback={feedback}
+            showFeedback={showFeedback}
             onStartReciting={() => handleStartReciting(phase.verses)}
             onStopReciting={handleStopReciting}
           />
