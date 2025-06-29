@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Star, Mic, MicOff } from 'lucide-react';
 
@@ -88,27 +87,30 @@ export const AudioControls = ({
             }`}>
               {feedback === 'correct' ? (
                 <div className="flex items-center justify-center gap-2">
-                  <span className="text-lg">✅</span>
-                  <span>أحسنت! انتقل للآية التالية</span>
+                  <span className="text-2xl">✅</span>
+                  <span className="text-lg font-bold">أحسنت! انتقل للآية التالية</span>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-lg">❌</span>
-                    <span className="font-bold">يرجى المحاولة مرة أخرى</span>
+                    <span className="text-2xl">❌</span>
+                    <span className="font-bold text-lg">يرجى المحاولة مرة أخرى</span>
                   </div>
                   {errorDetails && (
-                    <div className="text-xs bg-red-100 p-2 rounded border border-red-300">
-                      <div className="font-semibold mb-1">تفاصيل الخطأ:</div>
-                      <div>{errorDetails}</div>
+                    <div className="text-sm bg-red-100 p-3 rounded-lg border border-red-300">
+                      <div className="font-semibold mb-2 text-red-800">تفاصيل الخطأ:</div>
+                      <div className="text-red-700 leading-relaxed">{errorDetails}</div>
                     </div>
                   )}
                   {transcript && (
-                    <div className="text-xs bg-gray-100 p-2 rounded border">
-                      <div className="font-semibold mb-1">ما تم سماعه:</div>
-                      <div className="italic">"{transcript}"</div>
+                    <div className="text-sm bg-gray-100 p-3 rounded-lg border">
+                      <div className="font-semibold mb-2 text-gray-800">ما تم سماعه:</div>
+                      <div className="italic text-gray-700 bg-white p-2 rounded border">"{transcript}"</div>
                     </div>
                   )}
+                  <div className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                    💡 نصيحة: تأكد من النطق الواضح وقراءة الآية كاملة
+                  </div>
                 </div>
               )}
             </div>
