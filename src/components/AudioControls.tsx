@@ -79,6 +79,20 @@ export const AudioControls = ({
               سمعت: {transcript}
             </div>
           )}
+          
+          {/* Show error details persistently during listening phase */}
+          {errorDetails && currentStep === 'listening' && !showFeedback && (
+            <div className="text-sm font-arabic p-4 rounded-lg border-2 bg-yellow-50 border-yellow-200 text-yellow-800">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-lg">⚠️</span>
+                <span className="font-bold">من فضلك حاول مرة أخرى</span>
+              </div>
+              <div className="text-xs bg-yellow-100 p-3 rounded-lg border border-yellow-300 whitespace-pre-line leading-relaxed">
+                {errorDetails}
+              </div>
+            </div>
+          )}
+          
           {showFeedback && feedback && (
             <div className={`text-sm font-arabic p-4 rounded-lg border-2 ${
               feedback === 'correct' 
@@ -99,7 +113,7 @@ export const AudioControls = ({
                   {errorDetails && (
                     <div className="text-sm bg-red-100 p-3 rounded-lg border border-red-300">
                       <div className="font-semibold mb-2 text-red-800">تفاصيل الخطأ:</div>
-                      <div className="text-red-700 leading-relaxed">{errorDetails}</div>
+                      <div className="text-red-700 leading-relaxed whitespace-pre-line">{errorDetails}</div>
                     </div>
                   )}
                   {transcript && (
@@ -108,9 +122,6 @@ export const AudioControls = ({
                       <div className="italic text-gray-700 bg-white p-2 rounded border">"{transcript}"</div>
                     </div>
                   )}
-                  <div className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
-                    💡 نصيحة: تأكد من النطق الواضح وقراءة الآية كاملة
-                  </div>
                 </div>
               )}
             </div>

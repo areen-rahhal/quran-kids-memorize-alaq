@@ -17,7 +17,7 @@ export const useRecitingJourney = () => {
     resetTranscript
   } = useSpeechRecognition();
 
-  // Function to normalize Arabic text for comparison
+  // Enhanced function to normalize Arabic text for comparison
   const normalizeArabicText = (text: string) => {
     return text
       .replace(/[َُِّْ]/g, '') // Remove diacritics
@@ -32,45 +32,48 @@ export const useRecitingJourney = () => {
       .toLowerCase();
   };
 
-  // Enhanced function to check reciting accuracy with better feedback
+  // More lenient accuracy checking with detailed feedback
   const checkRecitingAccuracy = (userText: string, expectedText: string) => {
     const normalizedUser = normalizeArabicText(userText);
     const normalizedExpected = normalizeArabicText(expectedText);
     
-    console.log('Detailed comparison:', { 
-      originalUser: userText,
-      originalExpected: expectedText,
-      normalizedUser, 
-      normalizedExpected 
-    });
+    console.log('=== ACCURACY CHECK ===');
+    console.log('User text:', userText);
+    console.log('Expected text:', expectedText);
+    console.log('Normalized user:', normalizedUser);
+    console.log('Normalized expected:', normalizedExpected);
     
     // Check if user text is too short
-    if (normalizedUser.length < 5) {
-      setErrorDetails('التلاوة قصيرة جداً - يرجى قراءة الآية كاملة بوضوح');
+    if (normalizedUser.length < 3) {
+      setErrorDetails('التلاوة قصيرة جداً - يرجى قراءة الآية كاملة بوضوح (دقة: 0%)');
+      console.log('❌ Text too short');
       return false;
     }
     
-    // Check for exact match first (most lenient)
+    // Check for exact match first
     if (normalizedUser === normalizedExpected) {
-      console.log('✅ Exact match found');
+      console.log('✅ Exact match found (100%)');
       setErrorDetails('');
       return true;
     }
     
-    // Check if user text contains substantial part of expected text
+    // Check if one contains the other (very lenient)
     if (normalizedUser.includes(normalizedExpected) || normalizedExpected.includes(normalizedUser)) {
-      console.log('✅ Substantial match found');
+      console.log('✅ Containment match found (95%)');
       setErrorDetails('');
       return true;
     }
     
-    // Word-by-word comparison with more flexibility
+    // Word-by-word comparison with enhanced flexibility
     const expectedWords = normalizedExpected.split(' ').filter(word => word.length > 1);
-    const userWords = normalizedUser.split(' ');
+    const userWords = normalizedUser.split(' ').filter(word => word.length > 1);
+    
+    console.log('Expected words:', expectedWords);
+    console.log('User words:', userWords);
     
     let matchedWords = 0;
+    const matchedWordsList: string[] = [];
     const missingWords: string[] = [];
-    const foundWords: string[] = [];
     
     expectedWords.forEach(expectedWord => {
       let isMatched = false;
@@ -78,55 +81,67 @@ export const useRecitingJourney = () => {
       // Check for exact word match
       if (userWords.includes(expectedWord)) {
         isMatched = true;
+        matchedWordsList.push(expectedWord);
       } else {
-        // Check for partial matches (word contains or is contained)
+        // Check for partial matches with very lenient criteria
         const partialMatch = userWords.some(userWord => {
-          return userWord.length > 2 && (
-            userWord.includes(expectedWord) || 
-            expectedWord.includes(userWord) ||
-            // Check for similarity (allowing for 1-2 character differences)
-            Math.abs(userWord.length - expectedWord.length) <= 2 &&
-            (userWord.startsWith(expectedWord.substring(0, 3)) || 
-             expectedWord.startsWith(userWord.substring(0, 3)))
-          );
+          // More lenient matching criteria
+          if (userWord.length >= 2 && expectedWord.length >= 2) {
+            // Check if words share significant portion
+            const similarity = Math.max(
+              userWord.includes(expectedWord) ? expectedWord.length / userWord.length : 0,
+              expectedWord.includes(userWord) ? userWord.length / expectedWord.length : 0,
+              // Check if they start with same letters
+              userWord.substring(0, Math.min(3, userWord.length)) === expectedWord.substring(0, Math.min(3, expectedWord.length)) ? 0.7 : 0
+            );
+            
+            return similarity >= 0.5; // Very lenient threshold
+          }
+          return false;
         });
         
         if (partialMatch) {
           isMatched = true;
+          matchedWordsList.push(`${expectedWord} (متشابه)`);
         }
       }
       
       if (isMatched) {
         matchedWords++;
-        foundWords.push(expectedWord);
       } else {
         missingWords.push(expectedWord);
       }
     });
     
-    const accuracy = expectedWords.length > 0 ? matchedWords / expectedWords.length : 0;
-    console.log('Word matching results:', { 
-      accuracy, 
-      matchedWords, 
-      totalWords: expectedWords.length,
-      foundWords,
-      missingWords 
-    });
+    const accuracy = expectedWords.length > 0 ? (matchedWords / expectedWords.length) * 100 : 0;
     
-    // More lenient threshold (50% instead of 60%)
-    if (accuracy >= 0.5) {
-      console.log('✅ Sufficient accuracy achieved:', accuracy);
+    console.log('=== DETAILED RESULTS ===');
+    console.log('Matched words:', matchedWords, '/', expectedWords.length);
+    console.log('Accuracy percentage:', accuracy.toFixed(1) + '%');
+    console.log('Matched words list:', matchedWordsList);
+    console.log('Missing words:', missingWords);
+    
+    // Lowered threshold to 80% as requested
+    if (accuracy >= 80) {
+      console.log('✅ Accuracy sufficient:', accuracy.toFixed(1) + '%');
       setErrorDetails('');
       return true;
     } else {
-      // Provide specific feedback about what's missing
-      if (missingWords.length > 0 && foundWords.length > 0) {
-        setErrorDetails(`تم نطق بعض الكلمات بشكل صحيح، لكن هناك كلمات مفقودة أو غير واضحة: ${missingWords.slice(0, 5).join(' • ')}`);
-      } else if (missingWords.length > 0) {
-        setErrorDetails(`كلمات مفقودة أو غير واضحة: ${missingWords.slice(0, 5).join(' • ')}`);
-      } else {
-        setErrorDetails('التلاوة غير مطابقة للنص المطلوب - يرجى التأكد من النطق الواضح');
+      // Provide detailed feedback with accuracy percentage
+      let errorMessage = `دقة التلاوة: ${accuracy.toFixed(1)}% (مطلوب 80% أو أكثر)\n\n`;
+      
+      if (matchedWords > 0) {
+        errorMessage += `✅ كلمات صحيحة: ${matchedWordsList.join(' • ')}\n\n`;
       }
+      
+      if (missingWords.length > 0) {
+        errorMessage += `❌ كلمات مفقودة أو غير واضحة: ${missingWords.slice(0, 8).join(' • ')}\n\n`;
+      }
+      
+      errorMessage += '💡 نصيحة: تأكد من النطق الواضح وقراءة الآية كاملة';
+      
+      setErrorDetails(errorMessage);
+      console.log('❌ Accuracy insufficient:', accuracy.toFixed(1) + '%');
       return false;
     }
   };
@@ -209,16 +224,17 @@ export const useRecitingJourney = () => {
         }
       } else {
         console.log('Reciting is incorrect, asking to repeat');
-        // Wait longer for feedback display, then ask to repeat
+        // Keep error message visible and ask to repeat - DON'T clear error details
         setTimeout(() => {
           setFeedback(null);
           setShowFeedback(false);
           resetTranscript();
           setCurrentStep('listening');
+          // Keep errorDetails visible during retry
           setTimeout(() => {
             startListening();
           }, 800);
-        }, 6000); // Increased to 6 seconds for better error reading
+        }, 4000); // Show error for 4 seconds before retry
       }
     }
   }, [transcript, currentVerseIndex, stopListening, resetTranscript, startListening]);
