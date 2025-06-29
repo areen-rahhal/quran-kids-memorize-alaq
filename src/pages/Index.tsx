@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ const Index = () => {
   const {
     isPlaying,
     audioError,
+    showAudioError,
     audioRef,
     currentAyahIdx,
     hasAttemptedPlay,
@@ -23,11 +23,12 @@ const Index = () => {
     onAudioEnded,
     onAudioError,
     isReciting,
+    currentStep,
     isListening,
     transcript,
     handleStartReciting,
     handleStopReciting,
-    handleUserRecitingComplete
+    handleListeningComplete
   } = useAudioPlayer();
 
   const phase = getPhaseData(currentPhaseIdx);
@@ -42,15 +43,18 @@ const Index = () => {
 
   // Handle automatic progression in reciting mode
   useEffect(() => {
-    if (transcript && isListening) {
+    console.log('Effect triggered - transcript:', transcript, 'isListening:', isListening, 'currentStep:', currentStep);
+    
+    if (transcript && transcript.trim().length > 0 && !isListening && currentStep === 'listening') {
+      console.log('Auto-advancing due to transcript completion');
       // Wait a moment then auto-advance
       const timer = setTimeout(() => {
-        handleUserRecitingComplete(phase.verses);
-      }, 2000);
+        handleListeningComplete(phase.verses);
+      }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [transcript, isListening, handleUserRecitingComplete, phase.verses]);
+  }, [transcript, isListening, currentStep, handleListeningComplete, phase.verses]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = studyPhases.filter(phase =>
@@ -117,6 +121,7 @@ const Index = () => {
           <AudioControls
             isPlaying={isPlaying}
             audioError={audioError}
+            showAudioError={showAudioError}
             isPhaseComplete={isPhaseComplete}
             hasAttemptedPlay={hasAttemptedPlay}
             onPlayPause={() => handlePlayPause(phase.verses)}
@@ -126,6 +131,8 @@ const Index = () => {
             onAudioError={onAudioError}
             isReciting={isReciting}
             isListening={isListening}
+            currentStep={currentStep}
+            transcript={transcript}
             onStartReciting={() => handleStartReciting(phase.verses)}
             onStopReciting={handleStopReciting}
           />

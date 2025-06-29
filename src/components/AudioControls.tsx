@@ -5,6 +5,7 @@ import { Play, Pause, Star, Mic, MicOff } from 'lucide-react';
 interface AudioControlsProps {
   isPlaying: boolean;
   audioError: string | null;
+  showAudioError: boolean;
   isPhaseComplete: boolean;
   hasAttemptedPlay: boolean;
   onPlayPause: () => void;
@@ -12,9 +13,11 @@ interface AudioControlsProps {
   audioRef: React.RefObject<HTMLAudioElement>;
   onAudioEnded: () => void;
   onAudioError: () => void;
-  // New props for reciting journey
+  // Reciting journey props
   isReciting: boolean;
   isListening: boolean;
+  currentStep: 'playing' | 'listening' | 'completed';
+  transcript: string;
   onStartReciting: () => void;
   onStopReciting: () => void;
 }
@@ -22,6 +25,7 @@ interface AudioControlsProps {
 export const AudioControls = ({
   isPlaying,
   audioError,
+  showAudioError,
   isPhaseComplete,
   hasAttemptedPlay,
   onPlayPause,
@@ -31,6 +35,8 @@ export const AudioControls = ({
   onAudioError,
   isReciting,
   isListening,
+  currentStep,
+  transcript,
   onStartReciting,
   onStopReciting
 }: AudioControlsProps) => {
@@ -44,16 +50,30 @@ export const AudioControls = ({
         style={{ display: "none" }}
       />
       
-      {audioError && hasAttemptedPlay && (
+      {showAudioError && audioError && (
         <div className="text-red-500 text-sm mb-2 text-center font-arabic">
           {audioError}
         </div>
       )}
       
-      {/* Listening indicator */}
-      {isListening && (
-        <div className="text-blue-600 text-sm mb-2 text-center font-arabic animate-pulse">
-          🎤 جاري الاستماع... كرر الآية
+      {/* Reciting journey status indicators */}
+      {isReciting && (
+        <div className="text-center mb-2 space-y-1">
+          {currentStep === 'playing' && (
+            <div className="text-blue-600 text-sm font-arabic animate-pulse">
+              🔊 استمع للآية...
+            </div>
+          )}
+          {currentStep === 'listening' && isListening && (
+            <div className="text-green-600 text-sm font-arabic animate-pulse">
+              🎤 جاري الاستماع... كرر الآية
+            </div>
+          )}
+          {transcript && (
+            <div className="text-gray-600 text-xs font-arabic bg-gray-50 p-2 rounded">
+              سمعت: {transcript}
+            </div>
+          )}
         </div>
       )}
       
