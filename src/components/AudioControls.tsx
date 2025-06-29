@@ -20,6 +20,7 @@ interface AudioControlsProps {
   transcript: string;
   feedback: 'correct' | 'incorrect' | null;
   showFeedback: boolean;
+  errorDetails: string;
   onStartReciting: () => void;
   onStopReciting: () => void;
 }
@@ -41,6 +42,7 @@ export const AudioControls = ({
   transcript,
   feedback,
   showFeedback,
+  errorDetails,
   onStartReciting,
   onStopReciting
 }: AudioControlsProps) => {
@@ -79,7 +81,7 @@ export const AudioControls = ({
             </div>
           )}
           {showFeedback && feedback && (
-            <div className={`text-sm font-arabic p-3 rounded-lg border-2 ${
+            <div className={`text-sm font-arabic p-4 rounded-lg border-2 ${
               feedback === 'correct' 
                 ? 'bg-green-50 border-green-200 text-green-700' 
                 : 'bg-red-50 border-red-200 text-red-700'
@@ -90,9 +92,23 @@ export const AudioControls = ({
                   <span>أحسنت! انتقل للآية التالية</span>
                 </div>
               ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-lg">❌</span>
-                  <span>حاول مرة أخرى</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-lg">❌</span>
+                    <span className="font-bold">يرجى المحاولة مرة أخرى</span>
+                  </div>
+                  {errorDetails && (
+                    <div className="text-xs bg-red-100 p-2 rounded border border-red-300">
+                      <div className="font-semibold mb-1">تفاصيل الخطأ:</div>
+                      <div>{errorDetails}</div>
+                    </div>
+                  )}
+                  {transcript && (
+                    <div className="text-xs bg-gray-100 p-2 rounded border">
+                      <div className="font-semibold mb-1">ما تم سماعه:</div>
+                      <div className="italic">"{transcript}"</div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

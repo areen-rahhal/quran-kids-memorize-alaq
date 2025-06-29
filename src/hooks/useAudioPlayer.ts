@@ -18,6 +18,7 @@ export const useAudioPlayer = () => {
     transcript,
     feedback,
     showFeedback,
+    errorDetails,
     startRecitingJourney,
     stopRecitingJourney,
     handleVerseEnded,
@@ -150,6 +151,7 @@ export const useAudioPlayer = () => {
     transcript,
     feedback,
     showFeedback,
+    errorDetails,
     handleStartReciting,
     handleStopReciting,
     handleListeningComplete

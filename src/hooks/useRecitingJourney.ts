@@ -8,6 +8,7 @@ export const useRecitingJourney = () => {
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string>('');
   
   const {
     isListening,
@@ -32,30 +33,53 @@ export const useRecitingJourney = () => {
       .toLowerCase();
   };
 
-  // Function to check if reciting is correct
+  // Function to check if reciting is correct and provide detailed feedback
   const checkRecitingAccuracy = (userText: string, expectedText: string) => {
     const normalizedUser = normalizeArabicText(userText);
     const normalizedExpected = normalizeArabicText(expectedText);
     
     console.log('Comparing:', { normalizedUser, normalizedExpected });
     
+    // Check if user text is too short
+    if (normalizedUser.length < 3) {
+      setErrorDetails('التلاوة قصيرة جداً - يرجى قراءة الآية كاملة');
+      return false;
+    }
+    
     // Check if user text contains most of the expected words
     const expectedWords = normalizedExpected.split(' ').filter(word => word.length > 2);
     const userWords = normalizedUser.split(' ');
     
     let matchedWords = 0;
+    const missingWords: string[] = [];
+    
     expectedWords.forEach(expectedWord => {
-      if (userWords.some(userWord => 
+      const isMatched = userWords.some(userWord => 
         userWord.includes(expectedWord) || expectedWord.includes(userWord)
-      )) {
+      );
+      
+      if (isMatched) {
         matchedWords++;
+      } else {
+        missingWords.push(expectedWord);
       }
     });
     
     const accuracy = matchedWords / expectedWords.length;
     console.log('Accuracy:', accuracy, 'Matched words:', matchedWords, 'Total words:', expectedWords.length);
     
-    return accuracy >= 0.6; // 60% accuracy threshold
+    if (accuracy >= 0.6) {
+      setErrorDetails('');
+      return true;
+    } else {
+      // Provide specific feedback about what's missing
+      if (missingWords.length > 0) {
+        setErrorDetails(`كلمات مفقودة أو غير واضحة: ${missingWords.join(' • ')}`);
+      } else {
+        setErrorDetails('التلاوة غير مطابقة للنص المطلوب - يرجى المحاولة مرة أخرى');
+      }
+      return false;
+    }
   };
 
   const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
@@ -65,6 +89,7 @@ export const useRecitingJourney = () => {
     setCurrentVerseIndex(0);
     setFeedback(null);
     setShowFeedback(false);
+    setErrorDetails('');
     resetTranscript();
     
     // Start playing the first verse
@@ -77,6 +102,7 @@ export const useRecitingJourney = () => {
       setCurrentStep('listening');
       setFeedback(null);
       setShowFeedback(false);
+      setErrorDetails('');
       
       // Start listening after a short delay
       setTimeout(() => {
@@ -113,12 +139,13 @@ export const useRecitingJourney = () => {
             setCurrentStep('playing');
             setFeedback(null);
             setShowFeedback(false);
+            setErrorDetails('');
             
             setTimeout(() => {
               console.log('Playing next verse at index:', nextIndex);
               loadAndPlayAyah(nextIndex, verses);
             }, 500);
-          }, 2000);
+          }, 2500);
         } else {
           // All verses completed
           setTimeout(() => {
@@ -128,7 +155,8 @@ export const useRecitingJourney = () => {
             setCurrentVerseIndex(0);
             setFeedback(null);
             setShowFeedback(false);
-          }, 2000);
+            setErrorDetails('');
+          }, 2500);
         }
       } else {
         console.log('Reciting is incorrect, asking to repeat');
@@ -141,7 +169,7 @@ export const useRecitingJourney = () => {
           setTimeout(() => {
             startListening();
           }, 800);
-        }, 3000);
+        }, 5000); // Increased from 3000 to 5000ms (5 seconds)
       }
     }
   }, [transcript, currentVerseIndex, stopListening, resetTranscript, startListening]);
@@ -153,6 +181,7 @@ export const useRecitingJourney = () => {
     setCurrentVerseIndex(0);
     setFeedback(null);
     setShowFeedback(false);
+    setErrorDetails('');
     stopListening();
     resetTranscript();
   }, [stopListening, resetTranscript]);
@@ -165,6 +194,7 @@ export const useRecitingJourney = () => {
     transcript,
     feedback,
     showFeedback,
+    errorDetails,
     startRecitingJourney,
     stopRecitingJourney,
     handleVerseEnded,

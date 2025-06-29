@@ -28,6 +28,7 @@ const Index = () => {
     transcript,
     feedback,
     showFeedback,
+    errorDetails,
     handleStartReciting,
     handleStopReciting,
     handleListeningComplete
@@ -141,6 +142,7 @@ const Index = () => {
             transcript={transcript}
             feedback={feedback}
             showFeedback={showFeedback}
+            errorDetails={errorDetails}
             onStartReciting={() => handleStartReciting(phase.verses)}
             onStopReciting={handleStopReciting}
           />
