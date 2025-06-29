@@ -20,7 +20,7 @@ export const useAudioPlayer = () => {
     startRecitingJourney,
     stopRecitingJourney,
     handleVerseEnded,
-    handleListeningComplete
+    handleListeningComplete: handleListeningCompleteFromHook
   } = useRecitingJourney();
 
   const loadAndPlayAyah = useCallback(async (ayahIndex: number, verses: number[]) => {
@@ -111,6 +111,11 @@ export const useAudioPlayer = () => {
     }
     setIsPlaying(false);
   }, [stopRecitingJourney]);
+
+  const handleListeningComplete = useCallback((verses: number[]) => {
+    console.log('Handling listening complete with verses:', verses);
+    handleListeningCompleteFromHook(verses, loadAndPlayAyah);
+  }, [handleListeningCompleteFromHook, loadAndPlayAyah]);
 
   const resetAudio = useCallback(() => {
     if (audioRef.current) {
