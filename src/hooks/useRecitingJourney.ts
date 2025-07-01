@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useSpeechRecognition } from './useSpeechRecognition';
 
@@ -8,6 +9,7 @@ export const useRecitingJourney = () => {
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string>('');
+  const [highlightedWords, setHighlightedWords] = useState<string[]>([]);
   
   const {
     isListening,
@@ -17,27 +19,51 @@ export const useRecitingJourney = () => {
     resetTranscript
   } = useSpeechRecognition();
 
-  // Enhanced function to normalize Arabic text for comparison
+  // Much more comprehensive Arabic text normalization
   const normalizeArabicText = (text: string) => {
     return text
-      .replace(/[َُِّْ]/g, '') // Remove diacritics
+      // Remove all diacritics and special marks
+      .replace(/[َُِّْ]/g, '') // Remove main diacritics
       .replace(/[ًٌٍ]/g, '') // Remove tanween
-      .replace(/آ/g, 'ا') // Normalize alif
-      .replace(/إ/g, 'ا') // Normalize alif
-      .replace(/أ/g, 'ا') // Normalize alif
-      .replace(/ى/g, 'ي') // Normalize ya
-      .replace(/ة/g, 'ه') // Normalize ta marbuta
-      .replace(/\s+/g, ' ') // Normalize spaces
+      .replace(/[ۖۗۘۙۚۛۜ]/g, '') // Remove Quranic pause marks
+      .replace(/[ۣۢۤۧۨ]/g, '') // Remove other diacritics
+      // Normalize different forms of Alif
+      .replace(/[آأإٱ]/g, 'ا') // All forms of Alif to basic Alif
+      // Normalize different forms of Ya
+      .replace(/[ىئي]/g, 'ي') // All forms of Ya to basic Ya
+      // Normalize Ta Marbuta
+      .replace(/ة/g, 'ه') // Ta marbuta to Ha
+      // Normalize Lam-Alif
+      .replace(/لا/g, 'لا') // Normalize Lam-Alif ligature
+      // Remove extra spaces and normalize
+      .replace(/\s+/g, ' ')
       .trim()
       .toLowerCase();
   };
 
-  // More lenient accuracy checking with detailed feedback
+  // Enhanced similarity checking with multiple algorithms
+  const calculateSimilarity = (str1: string, str2: string) => {
+    // Direct match
+    if (str1 === str2) return 1.0;
+    
+    // Contains match
+    if (str1.includes(str2) || str2.includes(str1)) return 0.95;
+    
+    // Character-based similarity
+    const chars1 = str1.split('');
+    const chars2 = str2.split('');
+    const common = chars1.filter(char => chars2.includes(char)).length;
+    const charSimilarity = common / Math.max(chars1.length, chars2.length);
+    
+    return charSimilarity;
+  };
+
+  // Much more lenient accuracy checking
   const checkRecitingAccuracy = (userText: string, expectedText: string) => {
     const normalizedUser = normalizeArabicText(userText);
     const normalizedExpected = normalizeArabicText(expectedText);
     
-    console.log('=== ACCURACY CHECK ===');
+    console.log('=== ENHANCED ACCURACY CHECK ===');
     console.log('User text:', userText);
     console.log('Expected text:', expectedText);
     console.log('Normalized user:', normalizedUser);
@@ -45,105 +71,107 @@ export const useRecitingJourney = () => {
     
     // Check if user text is too short
     if (normalizedUser.length < 3) {
-      setErrorDetails('التلاوة قصيرة جداً - يرجى قراءة الآية كاملة بوضوح (دقة: 0%)');
+      setErrorDetails('التلاوة قصيرة جداً - يرجى قراءة الآية كاملة بوضوح');
       console.log('❌ Text too short');
       return false;
     }
     
-    // Check for exact match first
-    if (normalizedUser === normalizedExpected) {
-      console.log('✅ Exact match found (100%)');
+    // Overall text similarity check
+    const textSimilarity = calculateSimilarity(normalizedUser, normalizedExpected);
+    console.log('Overall text similarity:', (textSimilarity * 100).toFixed(1) + '%');
+    
+    if (textSimilarity >= 0.75) {
+      console.log('✅ Overall similarity sufficient:', (textSimilarity * 100).toFixed(1) + '%');
       setErrorDetails('');
       return true;
     }
     
-    // Check if one contains the other (very lenient)
-    if (normalizedUser.includes(normalizedExpected) || normalizedExpected.includes(normalizedUser)) {
-      console.log('✅ Containment match found (95%)');
-      setErrorDetails('');
-      return true;
-    }
-    
-    // Word-by-word comparison with enhanced flexibility
-    const expectedWords = normalizedExpected.split(' ').filter(word => word.length > 1);
-    const userWords = normalizedUser.split(' ').filter(word => word.length > 1);
+    // Word-by-word analysis with very flexible matching
+    const expectedWords = normalizedExpected.split(' ').filter(word => word.length > 0);
+    const userWords = normalizedUser.split(' ').filter(word => word.length > 0);
     
     console.log('Expected words:', expectedWords);
     console.log('User words:', userWords);
     
-    let matchedWords = 0;
-    const matchedWordsList: string[] = [];
+    let totalScore = 0;
+    const matchDetails: string[] = [];
     const missingWords: string[] = [];
     
     expectedWords.forEach(expectedWord => {
-      let isMatched = false;
+      let bestMatch = 0;
+      let matchedWith = '';
       
-      // Check for exact word match
-      if (userWords.includes(expectedWord)) {
-        isMatched = true;
-        matchedWordsList.push(expectedWord);
-      } else {
-        // Check for partial matches with very lenient criteria
-        const partialMatch = userWords.some(userWord => {
-          // More lenient matching criteria
-          if (userWord.length >= 2 && expectedWord.length >= 2) {
-            // Check if words share significant portion
-            const similarity = Math.max(
-              userWord.includes(expectedWord) ? expectedWord.length / userWord.length : 0,
-              expectedWord.includes(userWord) ? userWord.length / expectedWord.length : 0,
-              // Check if they start with same letters
-              userWord.substring(0, Math.min(3, userWord.length)) === expectedWord.substring(0, Math.min(3, expectedWord.length)) ? 0.7 : 0
-            );
-            
-            return similarity >= 0.5; // Very lenient threshold
-          }
-          return false;
-        });
-        
-        if (partialMatch) {
-          isMatched = true;
-          matchedWordsList.push(`${expectedWord} (متشابه)`);
+      userWords.forEach(userWord => {
+        const similarity = calculateSimilarity(userWord, expectedWord);
+        if (similarity > bestMatch) {
+          bestMatch = similarity;
+          matchedWith = userWord;
         }
-      }
+      });
       
-      if (isMatched) {
-        matchedWords++;
+      totalScore += bestMatch;
+      
+      if (bestMatch >= 0.6) { // Very lenient threshold
+        matchDetails.push(`${expectedWord} ✓ (${(bestMatch * 100).toFixed(0)}%)`);
       } else {
         missingWords.push(expectedWord);
       }
     });
     
-    const accuracy = expectedWords.length > 0 ? (matchedWords / expectedWords.length) * 100 : 0;
+    const accuracy = expectedWords.length > 0 ? (totalScore / expectedWords.length) * 100 : 0;
     
-    console.log('=== DETAILED RESULTS ===');
-    console.log('Matched words:', matchedWords, '/', expectedWords.length);
-    console.log('Accuracy percentage:', accuracy.toFixed(1) + '%');
-    console.log('Matched words list:', matchedWordsList);
+    console.log('=== ENHANCED RESULTS ===');
+    console.log('Total accuracy:', accuracy.toFixed(1) + '%');
+    console.log('Match details:', matchDetails);
     console.log('Missing words:', missingWords);
     
-    // Lowered threshold to 80% as requested
-    if (accuracy >= 80) {
+    // Much more lenient threshold - 65% instead of 80%
+    if (accuracy >= 65) {
       console.log('✅ Accuracy sufficient:', accuracy.toFixed(1) + '%');
       setErrorDetails('');
       return true;
     } else {
-      // Provide detailed feedback with accuracy percentage
-      let errorMessage = `دقة التلاوة: ${accuracy.toFixed(1)}% (مطلوب 80% أو أكثر)\n\n`;
+      // Provide encouraging feedback
+      let errorMessage = `دقة التلاوة: ${accuracy.toFixed(1)}% (مطلوب 65% أو أكثر)\n\n`;
       
-      if (matchedWords > 0) {
-        errorMessage += `✅ كلمات صحيحة: ${matchedWordsList.join(' • ')}\n\n`;
+      if (matchDetails.length > 0) {
+        errorMessage += `✅ كلمات صحيحة (${matchDetails.length}): ${matchDetails.slice(0, 6).join(' • ')}\n\n`;
       }
       
       if (missingWords.length > 0) {
-        errorMessage += `❌ كلمات مفقودة أو غير واضحة: ${missingWords.slice(0, 8).join(' • ')}\n\n`;
+        errorMessage += `📝 كلمات تحتاج تحسين (${missingWords.length}): ${missingWords.slice(0, 4).join(' • ')}\n\n`;
       }
       
-      errorMessage += '💡 نصيحة: تأكد من النطق الواضح وقراءة الآية كاملة';
+      errorMessage += '💡 نصيحة: تأكد من النطق الواضح، لا تقلق من الأخطاء البسيطة';
       
       setErrorDetails(errorMessage);
-      console.log('❌ Accuracy insufficient:', accuracy.toFixed(1) + '%');
+      console.log('❌ Accuracy needs improvement:', accuracy.toFixed(1) + '%');
       return false;
     }
+  };
+
+  // Real-time word highlighting based on transcript
+  const updateWordHighlighting = (currentTranscript: string, expectedText: string) => {
+    if (!currentTranscript) {
+      setHighlightedWords([]);
+      return;
+    }
+
+    const normalizedTranscript = normalizeArabicText(currentTranscript);
+    const expectedWords = normalizeArabicText(expectedText).split(' ');
+    const transcriptWords = normalizedTranscript.split(' ');
+    
+    const highlighted: string[] = [];
+    expectedWords.forEach((expectedWord, index) => {
+      const matchFound = transcriptWords.some(transcriptWord => 
+        calculateSimilarity(transcriptWord, expectedWord) >= 0.7
+      );
+      if (matchFound) {
+        highlighted.push(expectedWord);
+      }
+    });
+    
+    setHighlightedWords(highlighted);
   };
 
   const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
@@ -154,9 +182,9 @@ export const useRecitingJourney = () => {
     setFeedback(null);
     setShowFeedback(false);
     setErrorDetails('');
+    setHighlightedWords([]);
     resetTranscript();
     
-    // Start playing the first verse
     loadAndPlayAyah(0, verses);
   }, [resetTranscript]);
 
@@ -167,8 +195,8 @@ export const useRecitingJourney = () => {
       setFeedback(null);
       setShowFeedback(false);
       setErrorDetails('');
+      setHighlightedWords([]);
       
-      // Start listening after a short delay
       setTimeout(() => {
         startListening();
       }, 800);
@@ -184,7 +212,6 @@ export const useRecitingJourney = () => {
       console.log('User finished reciting, transcript:', transcript);
       stopListening();
       
-      // Check if reciting is correct
       const isCorrect = checkRecitingAccuracy(transcript, expectedText);
       setFeedback(isCorrect ? 'correct' : 'incorrect');
       setShowFeedback(true);
@@ -192,12 +219,12 @@ export const useRecitingJourney = () => {
       if (isCorrect) {
         console.log('Reciting is correct, moving to next verse');
         resetTranscript();
+        setHighlightedWords([]);
         
         const nextIndex = currentVerseIndex + 1;
         console.log('Next index will be:', nextIndex);
         
         if (nextIndex < verses.length) {
-          // Wait for feedback display, then move to next verse
           setTimeout(() => {
             setCurrentVerseIndex(nextIndex);
             setCurrentStep('playing');
@@ -209,9 +236,8 @@ export const useRecitingJourney = () => {
               console.log('Playing next verse at index:', nextIndex);
               loadAndPlayAyah(nextIndex, verses);
             }, 500);
-          }, 3000); // Show success message for 3 seconds
+          }, 3000);
         } else {
-          // All verses completed
           setTimeout(() => {
             console.log('All verses completed!');
             setCurrentStep('completed');
@@ -220,21 +246,21 @@ export const useRecitingJourney = () => {
             setFeedback(null);
             setShowFeedback(false);
             setErrorDetails('');
+            setHighlightedWords([]);
           }, 3000);
         }
       } else {
-        console.log('Reciting is incorrect, asking to repeat');
-        // Keep error message visible and ask to repeat - DON'T clear error details
+        console.log('Reciting needs improvement, asking to repeat');
         setTimeout(() => {
           setFeedback(null);
           setShowFeedback(false);
           resetTranscript();
+          setHighlightedWords([]);
           setCurrentStep('listening');
-          // Keep errorDetails visible during retry
           setTimeout(() => {
             startListening();
           }, 800);
-        }, 4000); // Show error for 4 seconds before retry
+        }, 5000); // Show error for 5 seconds before retry
       }
     }
   }, [transcript, currentVerseIndex, stopListening, resetTranscript, startListening]);
@@ -247,9 +273,18 @@ export const useRecitingJourney = () => {
     setFeedback(null);
     setShowFeedback(false);
     setErrorDetails('');
+    setHighlightedWords([]);
     stopListening();
     resetTranscript();
   }, [stopListening, resetTranscript]);
+
+  // Update highlighting when transcript changes
+  React.useEffect(() => {
+    if (isListening && transcript) {
+      // This would need the expected text, but we'll handle it in the component
+      console.log('Transcript updated for highlighting:', transcript);
+    }
+  }, [transcript, isListening]);
 
   return {
     isReciting,
@@ -260,9 +295,11 @@ export const useRecitingJourney = () => {
     feedback,
     showFeedback,
     errorDetails,
+    highlightedWords,
     startRecitingJourney,
     stopRecitingJourney,
     handleVerseEnded,
-    handleListeningComplete
+    handleListeningComplete,
+    updateWordHighlighting
   };
 };

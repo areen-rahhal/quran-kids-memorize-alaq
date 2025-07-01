@@ -29,9 +29,11 @@ const Index = () => {
     feedback,
     showFeedback,
     errorDetails,
+    highlightedWords,
     handleStartReciting,
     handleStopReciting,
-    handleListeningComplete
+    handleListeningComplete,
+    updateWordHighlighting
   } = useAudioPlayer();
 
   const phase = getPhaseData(currentPhaseIdx);
@@ -48,20 +50,26 @@ const Index = () => {
   useEffect(() => {
     console.log('Effect triggered - transcript:', transcript, 'isListening:', isListening, 'currentStep:', currentStep);
     
+    // Update word highlighting during listening
+    if (isListening && transcript && currentStep === 'listening') {
+      const currentVerse = phaseVerseObjs[currentAyahIdx];
+      if (currentVerse) {
+        updateWordHighlighting(transcript, currentVerse.arabic);
+      }
+    }
+    
     if (transcript && transcript.trim().length > 0 && !isListening && currentStep === 'listening') {
       console.log('Auto-advancing due to transcript completion');
-      // Get the current verse text for comparison
       const currentVerse = phaseVerseObjs[currentAyahIdx];
       const currentVerseText = currentVerse ? currentVerse.arabic : '';
       
-      // Wait a moment then auto-advance
       const timer = setTimeout(() => {
         handleListeningComplete(phase.verses, currentVerseText);
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [transcript, isListening, currentStep, handleListeningComplete, phase.verses, phaseVerseObjs, currentAyahIdx]);
+  }, [transcript, isListening, currentStep, handleListeningComplete, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = studyPhases.filter(phase =>
@@ -123,6 +131,9 @@ const Index = () => {
             totalPhases={totalPhases}
             currentAyahIdx={currentAyahIdx}
             isPlaying={isPlaying || isReciting}
+            highlightedWords={highlightedWords}
+            expectedText={phaseVerseObjs[currentAyahIdx]?.arabic || ''}
+            isListening={isListening}
           />
           
           <AudioControls

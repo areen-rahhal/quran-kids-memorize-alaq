@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { getAudioUrl, SURAH_NUMBER } from '@/utils/audioUtils';
 import { useRecitingJourney } from './useRecitingJourney';
 
@@ -19,10 +19,12 @@ export const useAudioPlayer = () => {
     feedback,
     showFeedback,
     errorDetails,
+    highlightedWords,
     startRecitingJourney,
     stopRecitingJourney,
     handleVerseEnded,
-    handleListeningComplete: handleListeningCompleteFromHook
+    handleListeningComplete: handleListeningCompleteFromHook,
+    updateWordHighlighting
   } = useRecitingJourney();
 
   const loadAndPlayAyah = useCallback(async (ayahIndex: number, verses: number[]) => {
@@ -119,6 +121,14 @@ export const useAudioPlayer = () => {
     handleListeningCompleteFromHook(verses, verseText, loadAndPlayAyah);
   }, [handleListeningCompleteFromHook, loadAndPlayAyah]);
 
+  // Update word highlighting when transcript changes
+  useEffect(() => {
+    if (isListening && transcript) {
+      // We'll pass the expected text from the component
+      console.log('Updating word highlighting for transcript:', transcript);
+    }
+  }, [transcript, isListening, updateWordHighlighting]);
+
   const resetAudio = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -152,8 +162,10 @@ export const useAudioPlayer = () => {
     feedback,
     showFeedback,
     errorDetails,
+    highlightedWords,
     handleStartReciting,
     handleStopReciting,
-    handleListeningComplete
+    handleListeningComplete,
+    updateWordHighlighting
   };
 };
