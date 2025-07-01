@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useSpeechRecognition } from './useSpeechRecognition';
 
 export const useRecitingJourney = () => {
