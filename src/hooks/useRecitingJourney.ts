@@ -146,24 +146,24 @@ export const useRecitingJourney = () => {
       setErrorDetails('');
       return true;
     } else {
-      // Enhanced encouraging feedback
-      let errorMessage = `🎯 دقة التلاوة: ${finalAccuracy.toFixed(0)}%\n(مطلوب 80% للانتقال للآية التالية)\n\n`;
+      // Categorize mistakes for better feedback
+      let errorMessage = '';
+      const correctWords = matchDetails.length;
+      const totalWords = expectedWords.length;
+      const incorrectWords = totalWords - correctWords - missingWords.length;
       
-      if (matchDetails.length > 0) {
-        errorMessage += `✅ أحسنت! تم نطق ${matchDetails.length} كلمة بشكل صحيح\n\n`;
+      // Main feedback without percentages
+      if (missingWords.length > 0) {
+        errorMessage += `📝 كلمات مفقودة: ${missingWords.slice(0, 3).join(' • ')}\n\n`;
       }
       
-      if (missingWords.length > 0 && missingWords.length <= 3) {
-        errorMessage += `📝 راجع نطق: ${missingWords.join(' • ')}\n\n`;
+      if (incorrectWords > 0) {
+        errorMessage += `🔄 بعض الكلمات تحتاج تصحيح\n\n`;
       }
       
-      if (finalAccuracy >= 60) {
-        errorMessage += '💪 أداء جيد! حاول مرة أخرى بنطق أوضح';
-      } else if (finalAccuracy >= 40) {
-        errorMessage += '🎵 اقرأ ببطء أكثر وركز على كل كلمة';
-      } else {
-        errorMessage += '🔊 تأكد من وضوح الصوت وكرر الآية كاملة';
-      }
+      // Encouraging message without "أحسنت" for mistakes
+      errorMessage += '🎵 اقرأ ببطء أكثر وركز على كل كلمة\n\n';
+      errorMessage += '🎤 حاول مرة أخرى';
       
       setErrorDetails(errorMessage);
       console.log('❌ Accuracy needs improvement:', finalAccuracy.toFixed(1) + '%');

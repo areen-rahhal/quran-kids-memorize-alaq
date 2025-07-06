@@ -90,9 +90,6 @@ export const AudioControls = ({
               <div className="text-sm bg-white/80 p-4 rounded-lg border border-orange-300 whitespace-pre-line leading-relaxed shadow-inner">
                 {errorDetails}
               </div>
-              <div className="mt-3 text-center text-xs text-orange-700 font-semibold">
-                🎤 استمر في القراءة - الرسالة ستبقى ظاهرة
-              </div>
             </div>
           )}
           
@@ -126,9 +123,9 @@ export const AudioControls = ({
                       <div className="italic text-gray-700 bg-gray-50 p-3 rounded border font-arabic text-right" dir="rtl">"{transcript}"</div>
                     </div>
                   )}
-                  <div className="text-center text-xs text-red-700 font-semibold">
-                    ستبدأ جلسة استماع جديدة خلال ثوانٍ...
-                  </div>
+                   <div className="text-center text-xs text-red-700 font-semibold">
+                     🎤 سيبدأ الاستماع مرة أخرى...
+                   </div>
                 </div>
               )}
             </div>
