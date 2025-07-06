@@ -41,29 +41,48 @@ export const useRecitingJourney = () => {
       .toLowerCase();
   };
 
-  // Enhanced similarity checking with multiple algorithms
+  // Improved Arabic similarity calculation with stricter matching
   const calculateSimilarity = (str1: string, str2: string) => {
-    // Direct match
+    // Direct match gets full score
     if (str1 === str2) return 1.0;
     
-    // Contains match
-    if (str1.includes(str2) || str2.includes(str1)) return 0.95;
+    // If one string is empty, no similarity
+    if (!str1 || !str2) return 0.0;
     
-    // Character-based similarity
-    const chars1 = str1.split('');
-    const chars2 = str2.split('');
-    const common = chars1.filter(char => chars2.includes(char)).length;
-    const charSimilarity = common / Math.max(chars1.length, chars2.length);
+    // Levenshtein distance for more accurate similarity
+    const getLevenshteinDistance = (a: string, b: string) => {
+      const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+      
+      for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+      for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+      
+      for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          matrix[j][i] = Math.min(
+            matrix[j][i - 1] + 1,
+            matrix[j - 1][i] + 1,
+            matrix[j - 1][i - 1] + cost
+          );
+        }
+      }
+      
+      return matrix[b.length][a.length];
+    };
     
-    return charSimilarity;
+    const distance = getLevenshteinDistance(str1, str2);
+    const maxLength = Math.max(str1.length, str2.length);
+    const similarity = 1 - (distance / maxLength);
+    
+    return Math.max(0, similarity);
   };
 
-  // Much more lenient accuracy checking
+  // Improved accuracy checking with stricter 80% threshold
   const checkRecitingAccuracy = (userText: string, expectedText: string) => {
     const normalizedUser = normalizeArabicText(userText);
     const normalizedExpected = normalizeArabicText(expectedText);
     
-    console.log('=== ENHANCED ACCURACY CHECK ===');
+    console.log('=== ARABIC ACCURACY CHECK ===');
     console.log('User text:', userText);
     console.log('Expected text:', expectedText);
     console.log('Normalized user:', normalizedUser);
@@ -71,27 +90,26 @@ export const useRecitingJourney = () => {
     
     // Check if user text is too short
     if (normalizedUser.length < 3) {
-      setErrorDetails('التلاوة قصيرة جداً - يرجى قراءة الآية كاملة بوضوح');
+      setErrorDetails('🎤 التلاوة قصيرة جداً\n\nيرجى قراءة الآية كاملة بصوت واضح ومسموع');
       console.log('❌ Text too short');
       return false;
     }
     
-    // Overall text similarity check
+    // Overall text similarity check with 80% threshold
     const textSimilarity = calculateSimilarity(normalizedUser, normalizedExpected);
-    console.log('Overall text similarity:', (textSimilarity * 100).toFixed(1) + '%');
+    const accuracyPercentage = textSimilarity * 100;
     
-    if (textSimilarity >= 0.75) {
-      console.log('✅ Overall similarity sufficient:', (textSimilarity * 100).toFixed(1) + '%');
+    console.log('Overall text similarity:', accuracyPercentage.toFixed(1) + '%');
+    
+    if (accuracyPercentage >= 80) {
+      console.log('✅ Accuracy excellent:', accuracyPercentage.toFixed(1) + '%');
       setErrorDetails('');
       return true;
     }
     
-    // Word-by-word analysis with very flexible matching
+    // Word-by-word analysis for detailed feedback
     const expectedWords = normalizedExpected.split(' ').filter(word => word.length > 0);
     const userWords = normalizedUser.split(' ').filter(word => word.length > 0);
-    
-    console.log('Expected words:', expectedWords);
-    console.log('User words:', userWords);
     
     let totalScore = 0;
     const matchDetails: string[] = [];
@@ -99,58 +117,61 @@ export const useRecitingJourney = () => {
     
     expectedWords.forEach(expectedWord => {
       let bestMatch = 0;
-      let matchedWith = '';
-      
       userWords.forEach(userWord => {
         const similarity = calculateSimilarity(userWord, expectedWord);
         if (similarity > bestMatch) {
           bestMatch = similarity;
-          matchedWith = userWord;
         }
       });
       
       totalScore += bestMatch;
       
-      if (bestMatch >= 0.6) { // Very lenient threshold
-        matchDetails.push(`${expectedWord} ✓ (${(bestMatch * 100).toFixed(0)}%)`);
+      if (bestMatch >= 0.7) {
+        matchDetails.push(expectedWord);
       } else {
         missingWords.push(expectedWord);
       }
     });
     
-    const accuracy = expectedWords.length > 0 ? (totalScore / expectedWords.length) * 100 : 0;
+    const wordAccuracy = expectedWords.length > 0 ? (totalScore / expectedWords.length) * 100 : 0;
+    const finalAccuracy = Math.max(accuracyPercentage, wordAccuracy);
     
-    console.log('=== ENHANCED RESULTS ===');
-    console.log('Total accuracy:', accuracy.toFixed(1) + '%');
-    console.log('Match details:', matchDetails);
-    console.log('Missing words:', missingWords);
+    console.log('=== ACCURACY RESULTS ===');
+    console.log('Text similarity:', accuracyPercentage.toFixed(1) + '%');
+    console.log('Word accuracy:', wordAccuracy.toFixed(1) + '%');
+    console.log('Final accuracy:', finalAccuracy.toFixed(1) + '%');
     
-    // Much more lenient threshold - 65% instead of 80%
-    if (accuracy >= 65) {
-      console.log('✅ Accuracy sufficient:', accuracy.toFixed(1) + '%');
+    if (finalAccuracy >= 80) {
+      console.log('✅ Final accuracy sufficient:', finalAccuracy.toFixed(1) + '%');
       setErrorDetails('');
       return true;
     } else {
-      // Provide encouraging feedback
-      let errorMessage = `دقة التلاوة: ${accuracy.toFixed(1)}% (مطلوب 65% أو أكثر)\n\n`;
+      // Enhanced encouraging feedback
+      let errorMessage = `🎯 دقة التلاوة: ${finalAccuracy.toFixed(0)}%\n(مطلوب 80% للانتقال للآية التالية)\n\n`;
       
       if (matchDetails.length > 0) {
-        errorMessage += `✅ كلمات صحيحة (${matchDetails.length}): ${matchDetails.slice(0, 6).join(' • ')}\n\n`;
+        errorMessage += `✅ أحسنت! تم نطق ${matchDetails.length} كلمة بشكل صحيح\n\n`;
       }
       
-      if (missingWords.length > 0) {
-        errorMessage += `📝 كلمات تحتاج تحسين (${missingWords.length}): ${missingWords.slice(0, 4).join(' • ')}\n\n`;
+      if (missingWords.length > 0 && missingWords.length <= 3) {
+        errorMessage += `📝 راجع نطق: ${missingWords.join(' • ')}\n\n`;
       }
       
-      errorMessage += '💡 نصيحة: تأكد من النطق الواضح، لا تقلق من الأخطاء البسيطة';
+      if (finalAccuracy >= 60) {
+        errorMessage += '💪 أداء جيد! حاول مرة أخرى بنطق أوضح';
+      } else if (finalAccuracy >= 40) {
+        errorMessage += '🎵 اقرأ ببطء أكثر وركز على كل كلمة';
+      } else {
+        errorMessage += '🔊 تأكد من وضوح الصوت وكرر الآية كاملة';
+      }
       
       setErrorDetails(errorMessage);
-      console.log('❌ Accuracy needs improvement:', accuracy.toFixed(1) + '%');
+      console.log('❌ Accuracy needs improvement:', finalAccuracy.toFixed(1) + '%');
       return false;
     }
   };
 
-  // Real-time word highlighting based on transcript
+  // Enhanced real-time word highlighting based on transcript
   const updateWordHighlighting = (currentTranscript: string, expectedText: string) => {
     if (!currentTranscript) {
       setHighlightedWords([]);
@@ -158,17 +179,41 @@ export const useRecitingJourney = () => {
     }
 
     const normalizedTranscript = normalizeArabicText(currentTranscript);
-    const expectedWords = normalizeArabicText(expectedText).split(' ');
-    const transcriptWords = normalizedTranscript.split(' ');
+    const expectedWords = normalizeArabicText(expectedText).split(' ').filter(word => word.length > 0);
+    const transcriptWords = normalizedTranscript.split(' ').filter(word => word.length > 0);
     
     const highlighted: string[] = [];
-    expectedWords.forEach((expectedWord, index) => {
-      const matchFound = transcriptWords.some(transcriptWord => 
-        calculateSimilarity(transcriptWord, expectedWord) >= 0.7
-      );
+    
+    // Enhanced matching algorithm for real-time highlighting
+    expectedWords.forEach((expectedWord) => {
+      const matchFound = transcriptWords.some(transcriptWord => {
+        // Direct match
+        if (transcriptWord === expectedWord) return true;
+        
+        // Partial match for longer words (minimum 3 characters)
+        if (expectedWord.length >= 3 && transcriptWord.length >= 3) {
+          return transcriptWord.includes(expectedWord) || expectedWord.includes(transcriptWord);
+        }
+        
+        // Character similarity for shorter words
+        if (expectedWord.length <= 3 || transcriptWord.length <= 3) {
+          const similarity = calculateSimilarity(transcriptWord, expectedWord);
+          return similarity >= 0.8;
+        }
+        
+        return false;
+      });
+      
       if (matchFound) {
         highlighted.push(expectedWord);
       }
+    });
+    
+    console.log('Real-time highlighting:', {
+      transcript: currentTranscript,
+      normalizedTranscript,
+      expectedWords: expectedWords.slice(0, 5),
+      highlighted: highlighted.slice(0, 5)
     });
     
     setHighlightedWords(highlighted);

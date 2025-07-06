@@ -34,15 +34,17 @@ export const VerseDisplay = ({
       .toLowerCase();
   };
 
-  // Check if a word should be highlighted
+  // Enhanced word highlighting check with better matching
   const isWordHighlighted = (word: string) => {
     if (!isListening || highlightedWords.length === 0) return false;
     
     const normalizedWord = normalizeArabicText(word);
     return highlightedWords.some(highlightedWord => {
       const normalizedHighlighted = normalizeArabicText(highlightedWord);
-      return normalizedWord.includes(normalizedHighlighted) || 
-             normalizedHighlighted.includes(normalizedWord);
+      // More strict matching for better accuracy
+      return normalizedWord === normalizedHighlighted || 
+             (normalizedWord.length > 2 && normalizedHighlighted.length > 2 && 
+              (normalizedWord.includes(normalizedHighlighted) || normalizedHighlighted.includes(normalizedWord)));
     });
   };
 
@@ -73,9 +75,9 @@ export const VerseDisplay = ({
                 return (
                   <span
                     key={wordIndex}
-                    className={`transition-all duration-300 ${
+                    className={`transition-all duration-500 ${
                       shouldHighlight 
-                        ? 'bg-blue-300 text-blue-900 rounded px-1 shadow-sm animate-pulse' 
+                        ? 'bg-blue-400 text-white rounded-md px-1.5 py-0.5 shadow-lg transform scale-105 animate-pulse ring-2 ring-blue-300' 
                         : ''
                     }`}
                   >

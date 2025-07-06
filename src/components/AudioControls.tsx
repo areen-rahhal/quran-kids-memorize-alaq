@@ -80,48 +80,55 @@ export const AudioControls = ({
             </div>
           )}
           
-          {/* Show error details persistently during listening phase */}
-          {errorDetails && currentStep === 'listening' && !showFeedback && (
-            <div className="text-sm font-arabic p-4 rounded-lg border-2 bg-yellow-50 border-yellow-200 text-yellow-800">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <span className="text-lg">⚠️</span>
-                <span className="font-bold">من فضلك حاول مرة أخرى</span>
+          {/* Enhanced error details with better visibility */}
+          {errorDetails && currentStep === 'listening' && (
+            <div className="text-sm font-arabic p-5 rounded-xl border-2 bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-200 text-orange-900 shadow-lg">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <span className="text-xl">📚</span>
+                <span className="font-bold text-lg">تحسين التلاوة</span>
               </div>
-              <div className="text-xs bg-yellow-100 p-3 rounded-lg border border-yellow-300 whitespace-pre-line leading-relaxed">
+              <div className="text-sm bg-white/80 p-4 rounded-lg border border-orange-300 whitespace-pre-line leading-relaxed shadow-inner">
                 {errorDetails}
+              </div>
+              <div className="mt-3 text-center text-xs text-orange-700 font-semibold">
+                🎤 استمر في القراءة - الرسالة ستبقى ظاهرة
               </div>
             </div>
           )}
           
           {showFeedback && feedback && (
-            <div className={`text-sm font-arabic p-4 rounded-lg border-2 ${
+            <div className={`text-sm font-arabic p-5 rounded-xl border-2 shadow-lg ${
               feedback === 'correct' 
-                ? 'bg-green-50 border-green-200 text-green-700' 
-                : 'bg-red-50 border-red-200 text-red-700'
+                ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800' 
+                : 'bg-gradient-to-br from-red-50 to-pink-50 border-red-300 text-red-800'
             }`}>
               {feedback === 'correct' ? (
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-2xl">✅</span>
-                  <span className="text-lg font-bold">أحسنت! انتقل للآية التالية</span>
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <span className="text-4xl animate-bounce">🎉</span>
+                  <span className="text-xl font-bold">ممتاز! بارك الله فيك</span>
+                  <span className="text-sm">الانتقال للآية التالية...</span>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-2xl">❌</span>
-                    <span className="font-bold text-lg">يرجى المحاولة مرة أخرى</span>
+                    <span className="text-3xl">🔄</span>
+                    <span className="font-bold text-xl">لا بأس - حاول مرة أخرى</span>
                   </div>
                   {errorDetails && (
-                    <div className="text-sm bg-red-100 p-3 rounded-lg border border-red-300">
-                      <div className="font-semibold mb-2 text-red-800">تفاصيل الخطأ:</div>
-                      <div className="text-red-700 leading-relaxed whitespace-pre-line">{errorDetails}</div>
+                    <div className="text-sm bg-white/80 p-4 rounded-lg border border-red-300 shadow-inner">
+                      <div className="font-semibold mb-2 text-red-900">التفاصيل:</div>
+                      <div className="text-red-800 leading-relaxed whitespace-pre-line">{errorDetails}</div>
                     </div>
                   )}
                   {transcript && (
-                    <div className="text-sm bg-gray-100 p-3 rounded-lg border">
+                    <div className="text-sm bg-white/80 p-4 rounded-lg border border-gray-300 shadow-inner">
                       <div className="font-semibold mb-2 text-gray-800">ما تم سماعه:</div>
-                      <div className="italic text-gray-700 bg-white p-2 rounded border">"{transcript}"</div>
+                      <div className="italic text-gray-700 bg-gray-50 p-3 rounded border font-arabic text-right" dir="rtl">"{transcript}"</div>
                     </div>
                   )}
+                  <div className="text-center text-xs text-red-700 font-semibold">
+                    ستبدأ جلسة استماع جديدة خلال ثوانٍ...
+                  </div>
                 </div>
               )}
             </div>
