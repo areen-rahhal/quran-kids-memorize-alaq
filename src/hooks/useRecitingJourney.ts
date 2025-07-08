@@ -4,12 +4,15 @@ import { useSpeechRecognition } from './useSpeechRecognition';
 
 export const useRecitingJourney = () => {
   const [isReciting, setIsReciting] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'playing' | 'listening' | 'completed'>('playing');
+  const [currentStep, setCurrentStep] = useState<'playing' | 'listening' | 'completed' | 'ready-check' | 'testing'>('playing');
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string>('');
   const [highlightedWords, setHighlightedWords] = useState<string[]>([]);
+  const [recitingMode, setRecitingMode] = useState<'learning' | 'testing'>('learning');
+  const [completedLearningVerses, setCompletedLearningVerses] = useState<number[]>([]);
+  const [revealedTestingVerses, setRevealedTestingVerses] = useState<number[]>([]);
   
   const {
     isListening,
@@ -266,28 +269,60 @@ export const useRecitingJourney = () => {
         resetTranscript();
         setHighlightedWords([]);
         
+        // In testing mode, reveal this verse
+        if (recitingMode === 'testing') {
+          setRevealedTestingVerses(prev => [...prev, verses[currentVerseIndex]]);
+        }
+        
+        // In learning mode, track completed verses
+        if (recitingMode === 'learning') {
+          setCompletedLearningVerses(prev => [...prev, verses[currentVerseIndex]]);
+        }
+        
         const nextIndex = currentVerseIndex + 1;
         console.log('Next index will be:', nextIndex);
         
         if (nextIndex < verses.length) {
           setTimeout(() => {
             setCurrentVerseIndex(nextIndex);
-            setCurrentStep('playing');
-            setFeedback(null);
-            setShowFeedback(false);
-            setErrorDetails('');
             
-            setTimeout(() => {
-              console.log('Playing next verse at index:', nextIndex);
-              loadAndPlayAyah(nextIndex, verses);
-            }, 500);
+            // In learning mode, proceed to next verse
+            if (recitingMode === 'learning') {
+              setCurrentStep('playing');
+              setFeedback(null);
+              setShowFeedback(false);
+              setErrorDetails('');
+              
+              setTimeout(() => {
+                console.log('Playing next verse at index:', nextIndex);
+                loadAndPlayAyah(nextIndex, verses);
+              }, 500);
+            } else {
+              // In testing mode, directly start listening for next verse
+              setCurrentStep('testing');
+              setFeedback(null);
+              setShowFeedback(false);
+              setErrorDetails('');
+              
+              setTimeout(() => {
+                startListening();
+              }, 800);
+            }
           }, 3000);
         } else {
           setTimeout(() => {
             console.log('All verses completed!');
-            setCurrentStep('completed');
-            setIsReciting(false);
-            setCurrentVerseIndex(0);
+            
+            // If learning mode and all verses completed, ask if ready for testing
+            if (recitingMode === 'learning') {
+              setCurrentStep('ready-check');
+            } else {
+              // Testing mode completed
+              setCurrentStep('completed');
+              setIsReciting(false);
+              setCurrentVerseIndex(0);
+            }
+            
             setFeedback(null);
             setShowFeedback(false);
             setErrorDetails('');
@@ -301,14 +336,20 @@ export const useRecitingJourney = () => {
           setShowFeedback(false);
           resetTranscript();
           setHighlightedWords([]);
-          setCurrentStep('listening');
+          
+          if (recitingMode === 'learning') {
+            setCurrentStep('listening');
+          } else {
+            setCurrentStep('testing');
+          }
+          
           setTimeout(() => {
             startListening();
           }, 800);
         }, 5000); // Show error for 5 seconds before retry
       }
     }
-  }, [transcript, currentVerseIndex, stopListening, resetTranscript, startListening]);
+  }, [transcript, currentVerseIndex, stopListening, resetTranscript, startListening, recitingMode]);
 
   const stopRecitingJourney = useCallback(() => {
     console.log('Stopping reciting journey');
@@ -319,9 +360,44 @@ export const useRecitingJourney = () => {
     setShowFeedback(false);
     setErrorDetails('');
     setHighlightedWords([]);
+    setRecitingMode('learning');
+    setCompletedLearningVerses([]);
+    setRevealedTestingVerses([]);
     stopListening();
     resetTranscript();
   }, [stopListening, resetTranscript]);
+
+  const handleReadyForTesting = useCallback(() => {
+    console.log('User ready for testing mode');
+    setRecitingMode('testing');
+    setCurrentStep('testing');
+    setCurrentVerseIndex(0);
+    setRevealedTestingVerses([]);
+    setFeedback(null);
+    setShowFeedback(false);
+    setErrorDetails('');
+    setHighlightedWords([]);
+    resetTranscript();
+    
+    // Start listening immediately
+    setTimeout(() => {
+      startListening();
+    }, 800);
+  }, [resetTranscript, startListening]);
+
+  const handleRestartLearning = useCallback(() => {
+    console.log('Restarting learning mode');
+    setRecitingMode('learning');
+    setCurrentStep('playing');
+    setCurrentVerseIndex(0);
+    setCompletedLearningVerses([]);
+    setRevealedTestingVerses([]);
+    setFeedback(null);
+    setShowFeedback(false);
+    setErrorDetails('');
+    setHighlightedWords([]);
+    resetTranscript();
+  }, [resetTranscript]);
 
   // Update highlighting when transcript changes
   React.useEffect(() => {
@@ -341,10 +417,15 @@ export const useRecitingJourney = () => {
     showFeedback,
     errorDetails,
     highlightedWords,
+    recitingMode,
+    completedLearningVerses,
+    revealedTestingVerses,
     startRecitingJourney,
     stopRecitingJourney,
     handleVerseEnded,
     handleListeningComplete,
-    updateWordHighlighting
+    updateWordHighlighting,
+    handleReadyForTesting,
+    handleRestartLearning
   };
 };

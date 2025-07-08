@@ -30,10 +30,14 @@ const Index = () => {
     showFeedback,
     errorDetails,
     highlightedWords,
+    recitingMode,
+    revealedTestingVerses,
     handleStartReciting,
     handleStopReciting,
     handleListeningComplete,
-    updateWordHighlighting
+    updateWordHighlighting,
+    handleReadyForTesting,
+    handleRestartLearning
   } = useAudioPlayer();
 
   const phase = getPhaseData(currentPhaseIdx);
@@ -51,14 +55,14 @@ const Index = () => {
     console.log('Effect triggered - transcript:', transcript, 'isListening:', isListening, 'currentStep:', currentStep);
     
     // Update word highlighting during listening
-    if (isListening && transcript && currentStep === 'listening') {
+    if (isListening && transcript && (currentStep === 'listening' || currentStep === 'testing')) {
       const currentVerse = phaseVerseObjs[currentAyahIdx];
       if (currentVerse) {
         updateWordHighlighting(transcript, currentVerse.arabic);
       }
     }
     
-    if (transcript && transcript.trim().length > 0 && !isListening && currentStep === 'listening') {
+    if (transcript && transcript.trim().length > 0 && !isListening && (currentStep === 'listening' || currentStep === 'testing')) {
       console.log('Auto-advancing due to transcript completion');
       const currentVerse = phaseVerseObjs[currentAyahIdx];
       const currentVerseText = currentVerse ? currentVerse.arabic : '';
@@ -134,6 +138,9 @@ const Index = () => {
             highlightedWords={highlightedWords}
             expectedText={phaseVerseObjs[currentAyahIdx]?.arabic || ''}
             isListening={isListening}
+            recitingMode={recitingMode}
+            revealedTestingVerses={revealedTestingVerses}
+            currentStep={currentStep}
           />
           
           <AudioControls
@@ -156,6 +163,9 @@ const Index = () => {
             errorDetails={errorDetails}
             onStartReciting={() => handleStartReciting(phase.verses)}
             onStopReciting={handleStopReciting}
+            recitingMode={recitingMode}
+            onReadyForTesting={handleReadyForTesting}
+            onRestartLearning={handleRestartLearning}
           />
         </Card>
         
@@ -207,7 +217,7 @@ const Index = () => {
   );
 };
 
-// Add custom slower "bounce" animation (gentler) to tailwind via inline global style
+// Add custom animations to tailwind via inline global style
 const style = document.createElement('style');
 style.textContent = `
   @keyframes bounce-gentler {
@@ -216,6 +226,13 @@ style.textContent = `
   }
   .animate-bounce-gentler {
     animation: bounce-gentler 3.5s infinite;
+  }
+  @keyframes fade-in {
+    0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
   }
 `;
 if (!document.getElementById('gentleBounceStyle')) {

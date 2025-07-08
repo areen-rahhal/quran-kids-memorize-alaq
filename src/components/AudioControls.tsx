@@ -15,13 +15,17 @@ interface AudioControlsProps {
   // Reciting journey props
   isReciting: boolean;
   isListening: boolean;
-  currentStep: 'playing' | 'listening' | 'completed';
+  currentStep: 'playing' | 'listening' | 'completed' | 'ready-check' | 'testing';
   transcript: string;
   feedback: 'correct' | 'incorrect' | null;
   showFeedback: boolean;
   errorDetails: string;
   onStartReciting: () => void;
   onStopReciting: () => void;
+  // New props for two-phase system
+  recitingMode?: 'learning' | 'testing';
+  onReadyForTesting?: () => void;
+  onRestartLearning?: () => void;
 }
 
 export const AudioControls = ({
@@ -43,7 +47,10 @@ export const AudioControls = ({
   showFeedback,
   errorDetails,
   onStartReciting,
-  onStopReciting
+  onStopReciting,
+  recitingMode = 'learning',
+  onReadyForTesting,
+  onRestartLearning
 }: AudioControlsProps) => {
   return (
     <>
@@ -118,6 +125,46 @@ export const AudioControls = ({
               )}
             </div>
           )}
+        </div>
+      )}
+      
+      {/* Ready check for testing mode */}
+      {currentStep === 'ready-check' && (
+        <div className="text-center mb-4 space-y-4">
+          <div className="text-lg font-arabic p-6 rounded-xl border-2 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300 text-blue-800 shadow-lg">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <span className="text-4xl">🎯</span>
+              <span className="text-xl font-bold">ممتاز! أكملت مرحلة التعلم</span>
+              <span className="text-base">هل أنت مستعد لتلاوة هذه الآيات من الذاكرة؟</span>
+              <div className="flex gap-4 mt-2">
+                <Button
+                  onClick={onReadyForTesting}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 font-arabic rounded-full"
+                >
+                  نعم، أنا مستعد
+                </Button>
+                <Button
+                  onClick={onRestartLearning}
+                  variant="outline"
+                  className="border-blue-300 text-blue-600 hover:bg-blue-50 px-6 py-2 font-arabic rounded-full"
+                >
+                  لا، أريد التكرار
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Testing mode indicator */}
+      {currentStep === 'testing' && recitingMode === 'testing' && (
+        <div className="text-center mb-4">
+          <div className="text-sm font-arabic p-4 rounded-xl border-2 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-300 text-purple-800 shadow-lg">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">🎤</span>
+              <span className="font-bold">وضع الاختبار - ابدأ التلاوة من الذاكرة</span>
+            </div>
+          </div>
         </div>
       )}
       

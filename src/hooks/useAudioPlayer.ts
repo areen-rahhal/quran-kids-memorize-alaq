@@ -20,11 +20,16 @@ export const useAudioPlayer = () => {
     showFeedback,
     errorDetails,
     highlightedWords,
+    recitingMode,
+    completedLearningVerses,
+    revealedTestingVerses,
     startRecitingJourney,
     stopRecitingJourney,
     handleVerseEnded,
     handleListeningComplete: handleListeningCompleteFromHook,
-    updateWordHighlighting
+    updateWordHighlighting,
+    handleReadyForTesting,
+    handleRestartLearning
   } = useRecitingJourney();
 
   const loadAndPlayAyah = useCallback(async (ayahIndex: number, verses: number[]) => {
@@ -163,9 +168,13 @@ export const useAudioPlayer = () => {
     showFeedback,
     errorDetails,
     highlightedWords,
+    recitingMode,
+    revealedTestingVerses,
     handleStartReciting,
     handleStopReciting,
     handleListeningComplete,
-    updateWordHighlighting
+    updateWordHighlighting,
+    handleReadyForTesting,
+    handleRestartLearning
   };
 };
