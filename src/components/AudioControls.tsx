@@ -80,18 +80,6 @@ export const AudioControls = ({
             </div>
           )}
           
-          {/* Enhanced error details with better visibility */}
-          {errorDetails && currentStep === 'listening' && (
-            <div className="text-sm font-arabic p-5 rounded-xl border-2 bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-200 text-orange-900 shadow-lg">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <span className="text-xl">📚</span>
-                <span className="font-bold text-lg">تحسين التلاوة</span>
-              </div>
-              <div className="text-sm bg-white/80 p-4 rounded-lg border border-orange-300 whitespace-pre-line leading-relaxed shadow-inner">
-                {errorDetails}
-              </div>
-            </div>
-          )}
           
           {showFeedback && feedback && (
             <div className={`text-sm font-arabic p-5 rounded-xl border-2 shadow-lg ${
