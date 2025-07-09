@@ -11,6 +11,7 @@ import { AudioControls } from '@/components/AudioControls';
 const Index = () => {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
+  const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
   const {
     isPlaying,
     audioError,
@@ -76,9 +77,7 @@ const Index = () => {
   }, [transcript, isListening, currentStep, handleListeningComplete, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
-  const completedPhaseCount = studyPhases.filter(phase =>
-    phase.verses.every(id => completedVerses.includes(id))
-  ).length;
+  const completedPhaseCount = completedTestingPhases.length;
   const totalPhases = studyPhases.length;
   const progress = (completedPhaseCount / totalPhases) * 100;
 
@@ -88,6 +87,18 @@ const Index = () => {
       return [...prev, ...newIds];
     });
   };
+
+  // Handle testing phase completion
+  useEffect(() => {
+    if (currentStep === 'completed' && recitingMode === 'testing') {
+      setCompletedTestingPhases(prev => {
+        if (!prev.includes(currentPhaseIdx)) {
+          return [...prev, currentPhaseIdx];
+        }
+        return prev;
+      });
+    }
+  }, [currentStep, recitingMode, currentPhaseIdx]);
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 flex flex-col justify-start transition-colors">
@@ -111,7 +122,12 @@ const Index = () => {
           <div className="text-center">
             <h2 className="text-lg md:text-xl font-bold text-emerald-700 mb-0.5 font-arabic">سورة العلق</h2>
             <div className="flex items-center justify-center space-x-1 gap-1 flex-wrap mt-2">
-              <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-white shadow text-emerald-700 border border-amber-100">
+              <span className={`text-xs px-3 py-0.5 rounded-full font-arabic shadow border ${
+                completedTestingPhases.includes(currentPhaseIdx) 
+                  ? 'bg-green-100 text-green-700 border-green-300' 
+                  : 'bg-white text-emerald-700 border-amber-100'
+              }`}>
+                {completedTestingPhases.includes(currentPhaseIdx) && '✓ '}
                 {phase.label}
               </span>
               <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-amber-50 text-amber-700 border border-amber-100">
@@ -166,6 +182,7 @@ const Index = () => {
             recitingMode={recitingMode}
             onReadyForTesting={handleReadyForTesting}
             onRestartLearning={handleRestartLearning}
+            currentPhaseLabel={phase.label}
           />
         </Card>
         
@@ -182,7 +199,12 @@ const Index = () => {
             >
               <CircleArrowRight className="h-6 w-6" />
             </Button>
-            <span className="text-base font-arabic font-bold px-2 rounded-full bg-amber-100 text-amber-700 border border-amber-300">
+            <span className={`text-base font-arabic font-bold px-2 rounded-full border ${
+              completedTestingPhases.includes(currentPhaseIdx)
+                ? 'bg-green-100 text-green-700 border-green-300'
+                : 'bg-amber-100 text-amber-700 border-amber-300'
+            }`}>
+              {completedTestingPhases.includes(currentPhaseIdx) && '✓ '}
               {phase.label}
             </span>
             <Button

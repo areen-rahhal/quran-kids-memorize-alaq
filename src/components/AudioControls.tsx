@@ -26,6 +26,7 @@ interface AudioControlsProps {
   recitingMode?: 'learning' | 'testing';
   onReadyForTesting?: () => void;
   onRestartLearning?: () => void;
+  currentPhaseLabel?: string;
 }
 
 export const AudioControls = ({
@@ -50,7 +51,8 @@ export const AudioControls = ({
   onStopReciting,
   recitingMode = 'learning',
   onReadyForTesting,
-  onRestartLearning
+  onRestartLearning,
+  currentPhaseLabel = ''
 }: AudioControlsProps) => {
   return (
     <>
@@ -134,7 +136,7 @@ export const AudioControls = ({
           <div className="text-lg font-arabic p-6 rounded-xl border-2 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300 text-blue-800 shadow-lg">
             <div className="flex flex-col items-center justify-center gap-4">
               <span className="text-4xl">🎯</span>
-              <span className="text-xl font-bold">ممتاز! أكملت مرحلة التعلم</span>
+              <span className="text-xl font-bold">ممتاز! أكملت تعلم {currentPhaseLabel}</span>
               <span className="text-base">هل أنت مستعد لتلاوة هذه الآيات من الذاكرة؟</span>
               <div className="flex gap-4 mt-2">
                 <Button
@@ -168,6 +170,19 @@ export const AudioControls = ({
         </div>
       )}
       
+      {/* Testing completion message */}
+      {currentStep === 'completed' && recitingMode === 'testing' && (
+        <div className="text-center mb-4">
+          <div className="text-lg font-arabic p-6 rounded-xl border-2 bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800 shadow-lg">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <span className="text-4xl animate-bounce">🎉</span>
+              <span className="text-xl font-bold">ممتاز! أكملت اختبار هذه المرحلة بنجاح</span>
+              <span className="text-sm">تم حفظ تقدمك... يمكنك الانتقال للمرحلة التالية</span>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="flex justify-center gap-4 mt-4 items-center">
         <Button
           onClick={onPlayPause}
@@ -193,14 +208,11 @@ export const AudioControls = ({
         </Button>
         
         <Button
-          onClick={onMarkComplete}
-          disabled={isPhaseComplete}
-          className={`bg-amber-400 hover:bg-amber-500 text-white px-6 py-2 font-arabic text-base rounded-full shadow-md transition-all
-            ${isPhaseComplete ? 'opacity-70 scale-95' : 'animate-bounce-gentle'}
-          `}
+          onClick={onReadyForTesting}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 font-arabic text-base rounded-full shadow-md transition-all"
         >
-          <Star className="h-4 w-4 ml-2 fill-current" />
-          {isPhaseComplete ? "تمت المرحلة!" : "تم الحفظ"}
+          <Mic className="h-4 w-4 ml-2 fill-current" />
+          بدء الاختبار
         </Button>
       </div>
     </>
