@@ -1,5 +1,5 @@
 
-import { BookOpen, Star } from 'lucide-react';
+import { BookOpen, Star, User, Check } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { studyPhases } from '@/data/studyPhases';
 
@@ -30,9 +30,15 @@ export const QuranHeader = ({
           </h1>
           <p className="text-emerald-100 text-xs font-arabic mt-0.5">تعلم سورة العلق</p>
         </div>
-        <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
-          <Star className="h-5 w-5 fill-current" />
-          <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
+            <Star className="h-5 w-5 fill-current" />
+            <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
+            <User className="h-4 w-4 text-white" />
+            <span className="text-sm font-arabic text-white">أحمد</span>
+          </div>
         </div>
       </div>
       
@@ -53,9 +59,9 @@ export const QuranHeader = ({
               key={ph.label}
               onClick={() => setCurrentPhaseIdx(idx)}
               className={`
-                transition-all duration-300 w-7 h-7 md:w-9 md:h-9 rounded-full border-2 font-arabic font-bold text-xs md:text-sm focus:outline-none
+                transition-all duration-300 w-7 h-7 md:w-9 md:h-9 rounded-full border-2 font-arabic font-bold text-xs md:text-sm focus:outline-none relative
                 ${isCurrent ? 'bg-amber-100 text-amber-700 border-amber-400 scale-110 shadow-md animate-bounce-gentler' : ''}
-                ${isComplete && !isCurrent ? 'bg-amber-400 text-white border-amber-100' : ''}
+                ${isComplete && !isCurrent ? 'bg-green-500 text-white border-green-300 shadow-lg' : ''}
                 ${!isComplete && !isCurrent ? 'bg-gray-100 text-gray-400 hover:bg-emerald-50' : ''}
               `}
               style={{
@@ -65,7 +71,13 @@ export const QuranHeader = ({
               }}
               aria-label={ph.label}
               tabIndex={0}
-            >{idx + 1}</button>
+            >
+              {isComplete && !isCurrent ? (
+                <Check className="h-3 w-3 md:h-4 md:w-4" />
+              ) : (
+                idx + 1
+              )}
+            </button>
           );
         })}
       </div>

@@ -12,6 +12,32 @@ const Index = () => {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
   const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
+
+  // Load progress from localStorage on mount
+  useEffect(() => {
+    const savedProgress = localStorage.getItem('ahmad-quran-progress');
+    if (savedProgress) {
+      try {
+        const progress = JSON.parse(savedProgress);
+        setCompletedVerses(progress.completedVerses || []);
+        setCompletedTestingPhases(progress.completedTestingPhases || []);
+        setCurrentPhaseIdx(progress.currentPhaseIdx || 0);
+      } catch (error) {
+        console.error('Error loading progress:', error);
+      }
+    }
+  }, []);
+
+  // Save progress to localStorage whenever it changes
+  useEffect(() => {
+    const progress = {
+      completedVerses,
+      completedTestingPhases,
+      currentPhaseIdx,
+      lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem('ahmad-quran-progress', JSON.stringify(progress));
+  }, [completedVerses, completedTestingPhases, currentPhaseIdx]);
   const {
     isPlaying,
     audioError,
