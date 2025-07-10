@@ -369,6 +369,7 @@ export const useRecitingJourney = () => {
 
   const handleReadyForTesting = useCallback(() => {
     console.log('User ready for testing mode');
+    setIsReciting(true); // Ensure reciting state is active
     setRecitingMode('testing');
     setCurrentStep('testing');
     setCurrentVerseIndex(0);

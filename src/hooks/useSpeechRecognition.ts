@@ -12,6 +12,12 @@ export const useSpeechRecognition = () => {
       return;
     }
 
+    // Stop any existing recognition before starting a new one
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
     
