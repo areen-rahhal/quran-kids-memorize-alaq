@@ -139,6 +139,7 @@ const Index = () => {
         currentPhaseIdx={currentPhaseIdx}
         setCurrentPhaseIdx={setCurrentPhaseIdx}
         completedVerses={completedVerses}
+        completedTestingPhases={completedTestingPhases}
       />
 
       {/* Main Content */}
@@ -209,6 +210,9 @@ const Index = () => {
             onReadyForTesting={handleReadyForTesting}
             onRestartLearning={handleRestartLearning}
             currentPhaseLabel={phase.label}
+            currentPhaseIdx={currentPhaseIdx}
+            totalPhases={totalPhases}
+            onNextPhase={() => setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1))}
           />
         </Card>
         

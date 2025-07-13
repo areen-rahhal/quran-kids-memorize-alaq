@@ -27,6 +27,10 @@ interface AudioControlsProps {
   onReadyForTesting?: () => void;
   onRestartLearning?: () => void;
   currentPhaseLabel?: string;
+  // Navigation props
+  currentPhaseIdx?: number;
+  totalPhases?: number;
+  onNextPhase?: () => void;
 }
 
 export const AudioControls = ({
@@ -52,7 +56,10 @@ export const AudioControls = ({
   recitingMode = 'learning',
   onReadyForTesting,
   onRestartLearning,
-  currentPhaseLabel = ''
+  currentPhaseLabel = '',
+  currentPhaseIdx = 0,
+  totalPhases = 0,
+  onNextPhase
 }: AudioControlsProps) => {
   return (
     <>
@@ -178,6 +185,14 @@ export const AudioControls = ({
               <span className="text-4xl animate-bounce">🎉</span>
               <span className="text-xl font-bold">ممتاز! أكملت اختبار هذه المرحلة بنجاح</span>
               <span className="text-sm">تم حفظ تقدمك... يمكنك الانتقال للمرحلة التالية</span>
+              {onNextPhase && currentPhaseIdx < totalPhases - 1 && (
+                <Button
+                  onClick={onNextPhase}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 font-arabic rounded-full shadow-lg mt-2"
+                >
+                  الانتقال للمرحلة التالية
+                </Button>
+              )}
             </div>
           </div>
         </div>

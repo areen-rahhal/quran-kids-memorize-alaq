@@ -10,6 +10,7 @@ interface QuranHeaderProps {
   currentPhaseIdx: number;
   setCurrentPhaseIdx: (idx: number) => void;
   completedVerses: number[];
+  completedTestingPhases: number[];
 }
 
 export const QuranHeader = ({
@@ -18,7 +19,8 @@ export const QuranHeader = ({
   progress,
   currentPhaseIdx,
   setCurrentPhaseIdx,
-  completedVerses
+  completedVerses,
+  completedTestingPhases
 }: QuranHeaderProps) => {
   return (
     <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-3 py-2 rounded-b-3xl shadow-xl">
@@ -53,7 +55,7 @@ export const QuranHeader = ({
       <div className="flex justify-center mt-1 gap-1">
         {studyPhases.map((ph, idx) => {
           const isCurrent = idx === currentPhaseIdx;
-          const isComplete = studyPhases[idx].verses.every(id => completedVerses.includes(id));
+          const isComplete = completedTestingPhases.includes(idx);
           return (
             <button
               key={ph.label}
