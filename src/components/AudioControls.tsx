@@ -177,26 +177,38 @@ export const AudioControls = ({
         </div>
       )}
       
-      {/* Testing completion message */}
-      {currentStep === 'completed' && recitingMode === 'testing' && (
-        <div className="text-center mb-4">
-          <div className="text-lg font-arabic p-6 rounded-xl border-2 bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800 shadow-lg">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <span className="text-4xl animate-bounce">🎉</span>
-              <span className="text-xl font-bold">ممتاز! أكملت اختبار هذه المرحلة بنجاح</span>
-              <span className="text-sm">تم حفظ تقدمك... يمكنك الانتقال للمرحلة التالية</span>
-              {onNextPhase && currentPhaseIdx < totalPhases - 1 && (
-                <Button
-                  onClick={onNextPhase}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 font-arabic rounded-full shadow-lg mt-2"
-                >
-                  الانتقال للمرحلة التالية
-                </Button>
-              )}
+          {/* Testing completion message */}
+          {currentStep === 'completed' && recitingMode === 'testing' && (
+            <div className="text-center mb-4">
+              <div className="text-lg font-arabic p-6 rounded-xl border-2 bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800 shadow-lg">
+                <div className="flex flex-col items-center justify-center gap-4">
+                  {currentPhaseIdx === totalPhases - 1 ? (
+                    // Final phase completion - celebrate memorizing the entire surah
+                    <>
+                      <span className="text-5xl animate-bounce">🎉🎊</span>
+                      <span className="text-2xl font-bold">مبارك! لقد حفظت سورة العلق كاملة</span>
+                      <span className="text-base">تم حفظ تقدمك... بارك الله فيك وأعانك على المزيد</span>
+                    </>
+                  ) : (
+                    // Regular phase completion
+                    <>
+                      <span className="text-4xl animate-bounce">🎉</span>
+                      <span className="text-xl font-bold">ممتاز! أكملت اختبار هذه المرحلة بنجاح</span>
+                      <span className="text-sm">تم حفظ تقدمك... يمكنك الانتقال للمرحلة التالية</span>
+                      {onNextPhase && (
+                        <Button
+                          onClick={onNextPhase}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 font-arabic rounded-full shadow-lg mt-2"
+                        >
+                          الانتقال للمرحلة التالية
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
       
       <div className="flex justify-center gap-4 mt-4 items-center">
         <Button
