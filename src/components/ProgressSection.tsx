@@ -37,17 +37,17 @@ export const ProgressSection = ({
   const createCurvedPath = () => {
     const items = [];
     
-    // Start with Al-Alaq (العلق) at bottom - 5 phases + surah
+    // Start with Al-Alaq (العلق) at bottom, then its 5 phases
     items.push({ type: 'surah', surahId: 96 });
     for (let i = 0; i < 5; i++) {
       items.push({ type: 'phase', surahId: 96, phaseIndex: i, number: i + 1 });
     }
     
-    // Then Al-Qadr (القدر) - 1 phase + surah
+    // Then Al-Qadr (القدر), then its 1 phase
+    items.push({ type: 'surah', surahId: 97 });
     for (let i = 0; i < 1; i++) {
       items.push({ type: 'phase', surahId: 97, phaseIndex: i, number: i + 1 });
     }
-    items.push({ type: 'surah', surahId: 97 });
     
     return items.reverse(); // Reverse to show Al-Alaq at bottom
   };
