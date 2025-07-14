@@ -9,8 +9,8 @@ interface ProgressSectionProps {
 
 // Simple data for the two surahs we want to show
 const progressSurahs = [
-  { id: 97, name: "Al-Qadr", arabicName: "القدر", phases: 1 },
-  { id: 96, name: "Al-Alaq", arabicName: "العلق", phases: 4 }
+  { id: 96, name: "Al-Alaq", arabicName: "العلق", phases: 5 },
+  { id: 97, name: "Al-Qadr", arabicName: "القدر", phases: 1 }
 ];
 
 export const ProgressSection = ({ 
@@ -33,21 +33,23 @@ export const ProgressSection = ({
     return 'locked';
   };
 
-  // Create curved path data for both surahs and their phases
+  // Create curved path data for both surahs and their phases (ascending order)
   const createCurvedPath = () => {
     const items = [];
     
-    // Add Al-Alaq (4 phases + surah)
-    for (let i = 0; i < 4; i++) {
+    // Start with Al-Alaq (العلق) at bottom - 5 phases + surah
+    items.push({ type: 'surah', surahId: 96 });
+    for (let i = 0; i < 5; i++) {
       items.push({ type: 'phase', surahId: 96, phaseIndex: i, number: i + 1 });
     }
-    items.push({ type: 'surah', surahId: 96 });
     
-    // Add Al-Qadr (1 phase + surah)
-    items.push({ type: 'phase', surahId: 97, phaseIndex: 0, number: 1 });
+    // Then Al-Qadr (القدر) - 1 phase + surah
+    for (let i = 0; i < 1; i++) {
+      items.push({ type: 'phase', surahId: 97, phaseIndex: i, number: i + 1 });
+    }
     items.push({ type: 'surah', surahId: 97 });
     
-    return items;
+    return items.reverse(); // Reverse to show Al-Alaq at bottom
   };
 
   const pathItems = createCurvedPath();
@@ -122,24 +124,14 @@ export const ProgressSection = ({
                   >
                     <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all shadow-xl ${
                       surahStatus === 'completed' 
-                        ? 'bg-green-500 border-green-600' 
+                        ? 'bg-green-500 border-green-600 text-white' 
                         : surahStatus === 'current'
-                        ? 'bg-blue-500 border-blue-600'
-                        : 'bg-gray-300 border-gray-400'
+                        ? 'bg-blue-500 border-blue-600 text-white'
+                        : 'bg-gray-300 border-gray-400 text-gray-700'
                     }`}>
-                      {surahStatus === 'completed' ? (
-                        <Check className="w-8 h-8 text-white" />
-                      ) : surahStatus === 'current' ? (
-                        <Star className="w-8 h-8 text-white" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-white opacity-60" />
-                      )}
-                    </div>
-                    
-                    {/* Surah label */}
-                    <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-center whitespace-nowrap">
-                      <p className="text-lg font-bold text-gray-800 font-arabic">{surah?.arabicName}</p>
-                      <p className="text-sm text-gray-600">{surah?.name}</p>
+                      <span className="text-xs font-bold text-center leading-tight font-arabic">
+                        {surah?.arabicName}
+                      </span>
                     </div>
                   </div>
                 </div>
