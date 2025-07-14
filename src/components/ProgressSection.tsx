@@ -73,9 +73,10 @@ export const ProgressSection = ({
           </svg>
           
           {pathItems.map((item, index) => {
-            // Calculate curved positions - all items follow the same curved path
+            // Calculate curved positions
             const baseY = 500 - (index * 70);
-            const zigzagOffset = index % 2 === 0 ? 0 : 50;
+            // Surah circles stay centered on path, phase circles follow zigzag
+            const zigzagOffset = item.type === 'surah' ? 25 : (index % 2 === 0 ? 0 : 50);
             const xPosition = 125 + zigzagOffset;
             
             if (item.type === 'phase') {
