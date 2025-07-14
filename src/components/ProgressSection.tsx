@@ -33,72 +33,118 @@ export const ProgressSection = ({
     return 'locked';
   };
 
+  // Create curved path data for both surahs and their phases
+  const createCurvedPath = () => {
+    const items = [];
+    
+    // Add Al-Alaq (4 phases + surah)
+    for (let i = 0; i < 4; i++) {
+      items.push({ type: 'phase', surahId: 96, phaseIndex: i, number: i + 1 });
+    }
+    items.push({ type: 'surah', surahId: 96 });
+    
+    // Add Al-Qadr (1 phase + surah)
+    items.push({ type: 'phase', surahId: 97, phaseIndex: 0, number: 1 });
+    items.push({ type: 'surah', surahId: 97 });
+    
+    return items;
+  };
+
+  const pathItems = createCurvedPath();
+
   return (
     <div className="h-full bg-gradient-to-b from-blue-50 to-purple-50 p-8 overflow-y-auto">
       <div className="max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-8 text-gray-800">رحلة الحفظ</h2>
+        <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">رحلة الحفظ</h2>
         
-        {/* Progress Path */}
-        <div className="relative flex flex-col items-center space-y-6">
-          {/* Vertical connecting line */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gray-300 rounded-full" />
+        {/* Curved Progress Path */}
+        <div className="relative w-full min-h-[600px]">
+          {/* Curved connecting path */}
+          <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
+            <path
+              d="M 150 500 Q 100 450 150 400 Q 200 350 150 300 Q 100 250 150 200 Q 200 150 150 100 Q 100 50 150 20"
+              stroke="#d1d5db"
+              strokeWidth="3"
+              fill="none"
+              className="opacity-60"
+            />
+          </svg>
           
-          {progressSurahs.map((surah, surahIndex) => {
-            const surahStatus = getSurahStatus(surah.id);
-            const isClickable = surahStatus !== 'locked';
+          {pathItems.map((item, index) => {
+            // Calculate curved positions
+            const baseY = 500 - (index * 70);
+            const zigzagOffset = index % 2 === 0 ? 0 : 50;
+            const xPosition = 125 + zigzagOffset;
             
-            return (
-              <div key={surah.id} className="relative z-10 flex flex-col items-center space-y-3">
-                {/* Phases - Small circles above the surah */}
-                <div className="flex flex-col items-center space-y-2">
-                  {Array.from({ length: surah.phases }, (_, phaseIndex) => {
-                    const phaseStatus = getPhaseStatus(surah.id, phaseIndex);
-                    return (
-                      <div
-                        key={phaseIndex}
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                          phaseStatus === 'completed' 
-                            ? 'bg-green-400 border-green-500' 
-                            : 'bg-gray-200 border-gray-300'
-                        }`}
-                      >
-                        {phaseStatus === 'completed' && (
-                          <Check className="w-3 h-3 text-white" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Surah - Big circle */}
-                <div 
-                  className={`relative z-20 ${isClickable ? 'cursor-pointer' : ''}`}
-                  onClick={() => isClickable && onSurahSelect(surah.id)}
+            if (item.type === 'phase') {
+              const phaseStatus = getPhaseStatus(item.surahId, item.phaseIndex);
+              
+              return (
+                <div
+                  key={`phase-${item.surahId}-${item.phaseIndex}`}
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                  style={{ 
+                    left: `${xPosition}px`, 
+                    top: `${baseY}px`,
+                    zIndex: 10
+                  }}
                 >
-                  <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center transition-all shadow-lg ${
-                    surahStatus === 'completed' 
-                      ? 'bg-green-500 border-green-600' 
-                      : surahStatus === 'current'
-                      ? 'bg-blue-500 border-blue-600'
-                      : 'bg-gray-300 border-gray-400'
+                  <div className={`w-12 h-12 rounded-full border-3 flex items-center justify-center transition-all shadow-lg ${
+                    phaseStatus === 'completed' 
+                      ? 'bg-green-400 border-green-500 text-white' 
+                      : phaseStatus === 'current'
+                      ? 'bg-orange-400 border-orange-500 text-white'
+                      : 'bg-gray-200 border-gray-300 text-gray-600'
                   }`}>
-                    {surahStatus === 'completed' ? (
-                      <Check className="w-6 h-6 text-white" />
-                    ) : surahStatus === 'current' ? (
-                      <Star className="w-6 h-6 text-white" />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-white opacity-60" />
-                    )}
-                  </div>
-                  
-                  {/* Surah label */}
-                  <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-center">
-                    <p className="text-sm font-bold text-gray-800 font-arabic">{surah.arabicName}</p>
-                    <p className="text-xs text-gray-600">{surah.name}</p>
+                    <span className="text-sm font-bold">{item.number}</span>
                   </div>
                 </div>
-              </div>
-            );
+              );
+            } else {
+              // Surah circle
+              const surah = progressSurahs.find(s => s.id === item.surahId);
+              const surahStatus = getSurahStatus(item.surahId);
+              const isClickable = surahStatus !== 'locked';
+              
+              return (
+                <div
+                  key={`surah-${item.surahId}`}
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                  style={{ 
+                    left: `${xPosition}px`, 
+                    top: `${baseY}px`,
+                    zIndex: 20
+                  }}
+                >
+                  <div 
+                    className={`relative ${isClickable ? 'cursor-pointer' : ''}`}
+                    onClick={() => isClickable && onSurahSelect(item.surahId)}
+                  >
+                    <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all shadow-xl ${
+                      surahStatus === 'completed' 
+                        ? 'bg-green-500 border-green-600' 
+                        : surahStatus === 'current'
+                        ? 'bg-blue-500 border-blue-600'
+                        : 'bg-gray-300 border-gray-400'
+                    }`}>
+                      {surahStatus === 'completed' ? (
+                        <Check className="w-8 h-8 text-white" />
+                      ) : surahStatus === 'current' ? (
+                        <Star className="w-8 h-8 text-white" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white opacity-60" />
+                      )}
+                    </div>
+                    
+                    {/* Surah label */}
+                    <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-center whitespace-nowrap">
+                      <p className="text-lg font-bold text-gray-800 font-arabic">{surah?.arabicName}</p>
+                      <p className="text-sm text-gray-600">{surah?.name}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
           })}
         </div>
       </div>
