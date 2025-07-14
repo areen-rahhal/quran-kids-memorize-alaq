@@ -1,123 +1,106 @@
-import { Check, Lock, Star } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { juz30Surahs, getCurrentSurah } from '@/data/juz30';
+import { Check, Star } from 'lucide-react';
 
 interface ProgressSectionProps {
   currentSurahId: number;
   completedSurahs: number[];
+  completedTestingPhases: number[];
   onSurahSelect: (surahId: number) => void;
 }
+
+// Simple data for the two surahs we want to show
+const progressSurahs = [
+  { id: 97, name: "Al-Qadr", arabicName: "القدر", phases: 1 },
+  { id: 96, name: "Al-Alaq", arabicName: "العلق", phases: 4 }
+];
 
 export const ProgressSection = ({ 
   currentSurahId, 
   completedSurahs, 
+  completedTestingPhases,
   onSurahSelect 
 }: ProgressSectionProps) => {
-  const currentSurah = getCurrentSurah(currentSurahId);
   
-  const getSurahStatus = (surahId: number) => {
-    if (completedSurahs.includes(surahId)) return 'completed';
+  const getPhaseStatus = (surahId: number, phaseIndex: number) => {
+    const phaseId = surahId * 10 + phaseIndex + 1;
+    if (completedTestingPhases.includes(phaseId)) return 'completed';
     if (surahId === currentSurahId) return 'current';
-    if (surahId <= Math.max(...completedSurahs, currentSurahId)) return 'unlocked';
     return 'locked';
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-500 hover:bg-green-600 border-green-400';
-      case 'current': return 'bg-blue-500 hover:bg-blue-600 border-blue-400';
-      case 'unlocked': return 'bg-gray-200 hover:bg-gray-300 border-gray-300';
-      default: return 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-50';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <Check className="w-4 h-4 text-white" />;
-      case 'current': return <Star className="w-4 h-4 text-white" />;
-      case 'unlocked': return <div className="w-4 h-4 rounded-full bg-white opacity-70" />;
-      default: return <Lock className="w-4 h-4 text-gray-400" />;
-    }
+  const getSurahStatus = (surahId: number) => {
+    if (completedSurahs.includes(surahId)) return 'completed';
+    if (surahId === currentSurahId) return 'current';
+    return 'locked';
   };
 
   return (
-    <div className="h-full bg-gradient-to-b from-slate-50 to-slate-100 p-6 overflow-y-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-center mb-2 font-arabic">الجزء الثلاثون</h2>
-        <p className="text-sm text-gray-600 text-center font-arabic">عم يتساءلون</p>
+    <div className="h-full bg-gradient-to-b from-blue-50 to-purple-50 p-8 overflow-y-auto">
+      <div className="max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-center mb-8 text-gray-800">رحلة الحفظ</h2>
         
-        {/* Progress Stats */}
-        <Card className="mt-4 p-4 bg-white">
-          <div className="flex justify-between items-center">
-            <div className="text-center">
-              <div className="text-lg font-bold text-green-600">{completedSurahs.length}</div>
-              <div className="text-xs text-gray-500 font-arabic">مكتملة</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">1</div>
-              <div className="text-xs text-gray-500 font-arabic">حالية</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-600">{37 - completedSurahs.length - 1}</div>
-              <div className="text-xs text-gray-500 font-arabic">متبقية</div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Surahs Path */}
-      <div className="space-y-4">
-        {juz30Surahs.map((surah, index) => {
-          const status = getSurahStatus(surah.id);
-          const isClickable = status !== 'locked';
+        {/* Progress Path */}
+        <div className="relative flex flex-col items-center space-y-6">
+          {/* Vertical connecting line */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gray-300 rounded-full" />
           
-          return (
-            <div key={surah.id} className="relative">
-              {/* Connection Line */}
-              {index < juz30Surahs.length - 1 && (
-                <div className="absolute left-6 top-12 w-0.5 h-8 bg-gray-300 z-0" />
-              )}
-              
-              {/* Surah Node */}
-              <div 
-                className={`relative z-10 flex items-center gap-4 ${isClickable ? 'cursor-pointer' : ''}`}
-                onClick={() => isClickable && onSurahSelect(surah.id)}
-              >
-                {/* Circle Icon */}
-                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${getStatusColor(status)}`}>
-                  {getStatusIcon(status)}
+          {progressSurahs.map((surah, surahIndex) => {
+            const surahStatus = getSurahStatus(surah.id);
+            const isClickable = surahStatus !== 'locked';
+            
+            return (
+              <div key={surah.id} className="relative z-10 flex flex-col items-center space-y-3">
+                {/* Phases - Small circles above the surah */}
+                <div className="flex flex-col items-center space-y-2">
+                  {Array.from({ length: surah.phases }, (_, phaseIndex) => {
+                    const phaseStatus = getPhaseStatus(surah.id, phaseIndex);
+                    return (
+                      <div
+                        key={phaseIndex}
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                          phaseStatus === 'completed' 
+                            ? 'bg-green-400 border-green-500' 
+                            : 'bg-gray-200 border-gray-300'
+                        }`}
+                      >
+                        {phaseStatus === 'completed' && (
+                          <Check className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 
-                {/* Surah Info */}
-                <Card className={`flex-1 p-3 transition-all ${
-                  status === 'current' 
-                    ? 'bg-blue-50 border-blue-200 shadow-md' 
-                    : 'bg-white hover:shadow-sm'
-                }`}>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-bold text-sm font-arabic">{surah.arabicName}</h3>
-                      <p className="text-xs text-gray-500">{surah.name}</p>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className="text-xs font-arabic">
-                        {surah.verses} آية
-                      </Badge>
-                      {status === 'current' && (
-                        <div className="mt-1">
-                          <Badge className="text-xs bg-blue-100 text-blue-700">
-                            {surah.phases} مراحل
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
+                {/* Surah - Big circle */}
+                <div 
+                  className={`relative z-20 ${isClickable ? 'cursor-pointer' : ''}`}
+                  onClick={() => isClickable && onSurahSelect(surah.id)}
+                >
+                  <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center transition-all shadow-lg ${
+                    surahStatus === 'completed' 
+                      ? 'bg-green-500 border-green-600' 
+                      : surahStatus === 'current'
+                      ? 'bg-blue-500 border-blue-600'
+                      : 'bg-gray-300 border-gray-400'
+                  }`}>
+                    {surahStatus === 'completed' ? (
+                      <Check className="w-6 h-6 text-white" />
+                    ) : surahStatus === 'current' ? (
+                      <Star className="w-6 h-6 text-white" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-white opacity-60" />
+                    )}
                   </div>
-                </Card>
+                  
+                  {/* Surah label */}
+                  <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-center">
+                    <p className="text-sm font-bold text-gray-800 font-arabic">{surah.arabicName}</p>
+                    <p className="text-xs text-gray-600">{surah.name}</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -276,6 +276,7 @@ const Index = () => {
           <ProgressSection 
             currentSurahId={currentSurahId}
             completedSurahs={completedSurahs}
+            completedTestingPhases={completedTestingPhases}
             onSurahSelect={setCurrentSurahId}
           />
         </div>
