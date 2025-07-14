@@ -73,7 +73,7 @@ export const ProgressSection = ({
           </svg>
           
           {pathItems.map((item, index) => {
-            // Calculate curved positions
+            // Calculate curved positions - all items follow the same curved path
             const baseY = 500 - (index * 70);
             const zigzagOffset = index % 2 === 0 ? 0 : 50;
             const xPosition = 125 + zigzagOffset;
