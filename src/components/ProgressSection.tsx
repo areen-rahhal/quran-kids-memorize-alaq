@@ -21,17 +21,13 @@ export const ProgressSection = ({
   onSurahSelect 
 }: ProgressSectionProps) => {
   // Track which surahs are expanded (current surah is expanded by default)
-  const [expandedSurahs, setExpandedSurahs] = useState<Set<number>>(new Set([currentSurahId]));
+  const [expandedSurahs, setExpandedSurahs] = useState<Set<number>>(() => new Set([currentSurahId]));
   
-  console.log('ProgressSection render - currentSurahId:', currentSurahId, 'expandedSurahs:', Array.from(expandedSurahs));
-  
-  // Ensure current surah is always expanded
+  // Ensure current surah is always expanded when currentSurahId changes
   useEffect(() => {
-    console.log('useEffect triggered - currentSurahId:', currentSurahId);
     setExpandedSurahs(prev => {
       const newExpanded = new Set(prev);
       newExpanded.add(currentSurahId);
-      console.log('Updated expanded surahs to include current:', Array.from(newExpanded));
       return newExpanded;
     });
   }, [currentSurahId]);
@@ -50,17 +46,15 @@ export const ProgressSection = ({
   };
 
   const toggleSurahExpansion = (surahId: number) => {
-    console.log('toggleSurahExpansion called with surahId:', surahId);
-    const newExpanded = new Set(expandedSurahs);
-    if (newExpanded.has(surahId)) {
-      console.log('Collapsing surah:', surahId);
-      newExpanded.delete(surahId);
-    } else {
-      console.log('Expanding surah:', surahId);
-      newExpanded.add(surahId);
-    }
-    console.log('New expanded surahs:', Array.from(newExpanded));
-    setExpandedSurahs(newExpanded);
+    setExpandedSurahs(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(surahId)) {
+        newExpanded.delete(surahId);
+      } else {
+        newExpanded.add(surahId);
+      }
+      return newExpanded;
+    });
   };
 
   // Create curved path data for visible items only
@@ -89,7 +83,6 @@ export const ProgressSection = ({
   };
 
   const pathItems = createCurvedPath();
-  console.log('pathItems:', pathItems);
 
   return (
     <div className="h-full bg-gradient-to-b from-blue-50 to-purple-50 p-8 overflow-y-auto">
@@ -141,28 +134,31 @@ export const ProgressSection = ({
             } else {
               // Surah circle
               const surah = progressSurahs.find(s => s.id === item.surahId);
-              const surahStatus = getSurahStatus(item.surahId);
-              const isClickable = surahStatus !== 'locked';
-              
-              return (
-                <div
-                  key={`surah-${item.surahId}`}
-                  className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                  style={{ 
-                    left: `${xPosition}px`, 
-                    top: `${baseY}px`,
-                    zIndex: 20
-                  }}
-                >
-                  <div 
-                    className={`relative ${isClickable ? 'cursor-pointer' : ''}`}
-                    onClick={() => {
-                      if (isClickable) {
-                        onSurahSelect(item.surahId);
-                        toggleSurahExpansion(item.surahId);
-                      }
-                    }}
-                  >
+               const surahStatus = getSurahStatus(item.surahId);
+               // All surahs are clickable for expansion - only selection depends on status
+               const canSelect = surahStatus !== 'locked';
+               
+               return (
+                 <div
+                   key={`surah-${item.surahId}`}
+                   className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                   style={{ 
+                     left: `${xPosition}px`, 
+                     top: `${baseY}px`,
+                     zIndex: 20
+                   }}
+                 >
+                   <div 
+                     className="relative cursor-pointer"
+                     onClick={() => {
+                       // Always allow expansion/collapse
+                       toggleSurahExpansion(item.surahId);
+                       // Only call onSurahSelect if the surah can be selected
+                       if (canSelect) {
+                         onSurahSelect(item.surahId);
+                       }
+                     }}
+                   >
                     <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all shadow-xl ${
                       surahStatus === 'completed' 
                         ? 'bg-green-500 border-green-600 text-white' 
