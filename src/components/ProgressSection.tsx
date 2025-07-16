@@ -1,4 +1,5 @@
 import { Check, Star } from 'lucide-react';
+import { useState } from 'react';
 
 interface ProgressSectionProps {
   currentSurahId: number;
@@ -19,6 +20,8 @@ export const ProgressSection = ({
   completedTestingPhases,
   onSurahSelect 
 }: ProgressSectionProps) => {
+  // Track which surahs are expanded (current surah is expanded by default)
+  const [expandedSurahs, setExpandedSurahs] = useState<Set<number>>(new Set([currentSurahId]));
   
   const getPhaseStatus = (surahId: number, phaseIndex: number) => {
     const phaseId = surahId * 10 + phaseIndex + 1;
@@ -33,20 +36,36 @@ export const ProgressSection = ({
     return 'locked';
   };
 
-  // Create curved path data for both surahs and their phases (ascending order)
+  const toggleSurahExpansion = (surahId: number) => {
+    const newExpanded = new Set(expandedSurahs);
+    if (newExpanded.has(surahId)) {
+      newExpanded.delete(surahId);
+    } else {
+      newExpanded.add(surahId);
+    }
+    setExpandedSurahs(newExpanded);
+  };
+
+  // Create curved path data for visible items only
   const createCurvedPath = () => {
     const items = [];
     
-    // Start with Al-Alaq (العلق) at bottom, then its 5 phases
+    // Start with Al-Alaq (العلق) at bottom
     items.push({ type: 'surah', surahId: 96 });
-    for (let i = 0; i < 5; i++) {
-      items.push({ type: 'phase', surahId: 96, phaseIndex: i, number: i + 1 });
+    // Add its phases only if expanded
+    if (expandedSurahs.has(96)) {
+      for (let i = 0; i < 5; i++) {
+        items.push({ type: 'phase', surahId: 96, phaseIndex: i, number: i + 1 });
+      }
     }
     
-    // Then Al-Qadr (القدر), then its 1 phase
+    // Then Al-Qadr (القدر)
     items.push({ type: 'surah', surahId: 97 });
-    for (let i = 0; i < 1; i++) {
-      items.push({ type: 'phase', surahId: 97, phaseIndex: i, number: i + 1 });
+    // Add its phases only if expanded
+    if (expandedSurahs.has(97)) {
+      for (let i = 0; i < 1; i++) {
+        items.push({ type: 'phase', surahId: 97, phaseIndex: i, number: i + 1 });
+      }
     }
     
     return items.reverse(); // Reverse to show Al-Alaq at bottom
@@ -73,11 +92,9 @@ export const ProgressSection = ({
           </svg>
           
           {pathItems.map((item, index) => {
-            // Calculate curved positions
+            // Calculate curved positions - all circles centered on path line
             const baseY = 500 - (index * 70);
-            // Surah circles stay centered on path, phase circles follow zigzag
-            const zigzagOffset = item.type === 'surah' ? 25 : (index % 2 === 0 ? 0 : 50);
-            const xPosition = 125 + zigzagOffset;
+            const xPosition = 150; // Center all circles on the path line
             
             if (item.type === 'phase') {
               const phaseStatus = getPhaseStatus(item.surahId, item.phaseIndex);
@@ -121,7 +138,12 @@ export const ProgressSection = ({
                 >
                   <div 
                     className={`relative ${isClickable ? 'cursor-pointer' : ''}`}
-                    onClick={() => isClickable && onSurahSelect(item.surahId)}
+                    onClick={() => {
+                      if (isClickable) {
+                        onSurahSelect(item.surahId);
+                        toggleSurahExpansion(item.surahId);
+                      }
+                    }}
                   >
                     <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all shadow-xl ${
                       surahStatus === 'completed' 
