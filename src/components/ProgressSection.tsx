@@ -103,9 +103,11 @@ export const ProgressSection = ({
           </svg>
           
           {pathItems.map((item, index) => {
-            // Calculate curved positions - all circles centered on path line
+            // Calculate curved positions with zigzag pattern
             const baseY = 500 - (index * 70);
-            const xPosition = 150; // Center all circles on the path line
+            // Create the curved zigzag effect: alternate between left and right positions
+            const zigzagOffset = index % 2 === 0 ? 25 : 75; // Wider zigzag for better curve
+            const xPosition = 100 + zigzagOffset;
             
             if (item.type === 'phase') {
               const phaseStatus = getPhaseStatus(item.surahId, item.phaseIndex);
