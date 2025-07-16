@@ -1,5 +1,5 @@
 import { Check, Star } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ProgressSectionProps {
   currentSurahId: number;
@@ -23,6 +23,19 @@ export const ProgressSection = ({
   // Track which surahs are expanded (current surah is expanded by default)
   const [expandedSurahs, setExpandedSurahs] = useState<Set<number>>(new Set([currentSurahId]));
   
+  console.log('ProgressSection render - currentSurahId:', currentSurahId, 'expandedSurahs:', Array.from(expandedSurahs));
+  
+  // Ensure current surah is always expanded
+  useEffect(() => {
+    console.log('useEffect triggered - currentSurahId:', currentSurahId);
+    setExpandedSurahs(prev => {
+      const newExpanded = new Set(prev);
+      newExpanded.add(currentSurahId);
+      console.log('Updated expanded surahs to include current:', Array.from(newExpanded));
+      return newExpanded;
+    });
+  }, [currentSurahId]);
+  
   const getPhaseStatus = (surahId: number, phaseIndex: number) => {
     const phaseId = surahId * 10 + phaseIndex + 1;
     if (completedTestingPhases.includes(phaseId)) return 'completed';
@@ -37,12 +50,16 @@ export const ProgressSection = ({
   };
 
   const toggleSurahExpansion = (surahId: number) => {
+    console.log('toggleSurahExpansion called with surahId:', surahId);
     const newExpanded = new Set(expandedSurahs);
     if (newExpanded.has(surahId)) {
+      console.log('Collapsing surah:', surahId);
       newExpanded.delete(surahId);
     } else {
+      console.log('Expanding surah:', surahId);
       newExpanded.add(surahId);
     }
+    console.log('New expanded surahs:', Array.from(newExpanded));
     setExpandedSurahs(newExpanded);
   };
 
@@ -72,6 +89,7 @@ export const ProgressSection = ({
   };
 
   const pathItems = createCurvedPath();
+  console.log('pathItems:', pathItems);
 
   return (
     <div className="h-full bg-gradient-to-b from-blue-50 to-purple-50 p-8 overflow-y-auto">
