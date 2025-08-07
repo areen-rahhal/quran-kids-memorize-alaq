@@ -6,23 +6,19 @@ interface ProgressSectionProps {
   completedSurahs: number[];
   completedTestingPhases: number[];
   onSurahSelect: (surahId: number) => void;
-  onPhaseSelect?: (phaseIndex: number) => void;
-  currentPhaseIdx?: number;
 }
 
 // Simple data for the two surahs we want to show
 const progressSurahs = [
-  { id: 96, name: "Al-Alaq", arabicName: "العلق", phases: 5, phaseRanges: ["١-٣", "٤-٥", "٦-٨", "٩-١٤", "١٥-١٩"] },
-  { id: 97, name: "Al-Qadr", arabicName: "القدر", phases: 1, phaseRanges: ["١-٥"] }
+  { id: 96, name: "Al-Alaq", arabicName: "العلق", phases: 5 },
+  { id: 97, name: "Al-Qadr", arabicName: "القدر", phases: 1 }
 ];
 
 export const ProgressSection = ({ 
   currentSurahId, 
   completedSurahs, 
   completedTestingPhases,
-  onSurahSelect,
-  onPhaseSelect,
-  currentPhaseIdx = 0
+  onSurahSelect 
 }: ProgressSectionProps) => {
   // Track which surahs are expanded (current surah is expanded by default)
   const [expandedSurahs, setExpandedSurahs] = useState<Set<number>>(() => new Set([currentSurahId]));
@@ -39,8 +35,7 @@ export const ProgressSection = ({
   const getPhaseStatus = (surahId: number, phaseIndex: number) => {
     const phaseId = surahId * 10 + phaseIndex + 1;
     if (completedTestingPhases.includes(phaseId)) return 'completed';
-    if (surahId === currentSurahId && phaseIndex === currentPhaseIdx) return 'current';
-    if (surahId === currentSurahId && phaseIndex < currentPhaseIdx) return 'started';
+    if (surahId === currentSurahId) return 'current';
     return 'locked';
   };
 
@@ -108,47 +103,35 @@ export const ProgressSection = ({
           </svg>
           
           {pathItems.map((item, index) => {
-            // Calculate positions - all circles centered on path line
+            // Calculate curved positions with zigzag pattern
             const baseY = 500 - (index * 70);
-            const xPosition = 150; // Center all circles on the path line
+            // Create the curved zigzag effect: alternate between left and right positions
+            const zigzagOffset = index % 2 === 0 ? 25 : 75; // Wider zigzag for better curve
+            const xPosition = 100 + zigzagOffset;
             
             if (item.type === 'phase') {
               const phaseStatus = getPhaseStatus(item.surahId, item.phaseIndex);
               
               return (
-                 <div
-                   key={`phase-${item.surahId}-${item.phaseIndex}`}
-                   className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                   style={{ 
-                     left: `${xPosition}px`, 
-                     top: `${baseY}px`,
-                     zIndex: 10
-                   }}
-                 >
-                   <div className="flex items-center gap-2">
-                     <div 
-                       className={`w-12 h-12 rounded-full border-3 flex items-center justify-center transition-all shadow-lg cursor-pointer ${
-                         phaseStatus === 'completed' 
-                           ? 'bg-green-400 border-green-500 text-white' 
-                           : phaseStatus === 'current'
-                           ? 'bg-blue-500 border-blue-600 text-white'
-                           : phaseStatus === 'started'
-                           ? 'bg-orange-400 border-orange-500 text-white'
-                           : 'bg-gray-200 border-gray-300 text-gray-600'
-                       }`}
-                       onClick={() => {
-                         if (item.surahId === currentSurahId && onPhaseSelect) {
-                           onPhaseSelect(item.phaseIndex);
-                         }
-                       }}
-                     >
-                       <span className="text-sm font-bold">{item.number}</span>
-                     </div>
-                     <span className="text-xs font-arabic bg-white/80 px-2 py-1 rounded shadow-sm">
-                       {progressSurahs.find(s => s.id === item.surahId)?.phaseRanges[item.phaseIndex] || ''}
-                     </span>
-                   </div>
-                 </div>
+                <div
+                  key={`phase-${item.surahId}-${item.phaseIndex}`}
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                  style={{ 
+                    left: `${xPosition}px`, 
+                    top: `${baseY}px`,
+                    zIndex: 10
+                  }}
+                >
+                  <div className={`w-12 h-12 rounded-full border-3 flex items-center justify-center transition-all shadow-lg ${
+                    phaseStatus === 'completed' 
+                      ? 'bg-green-400 border-green-500 text-white' 
+                      : phaseStatus === 'current'
+                      ? 'bg-orange-400 border-orange-500 text-white'
+                      : 'bg-gray-200 border-gray-300 text-gray-600'
+                  }`}>
+                    <span className="text-sm font-bold">{item.number}</span>
+                  </div>
+                </div>
               );
             } else {
               // Surah circle
