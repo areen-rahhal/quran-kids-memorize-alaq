@@ -278,6 +278,8 @@ const Index = () => {
             completedSurahs={completedSurahs}
             completedTestingPhases={completedTestingPhases}
             onSurahSelect={setCurrentSurahId}
+            onPhaseSelect={setCurrentPhaseIdx}
+            currentPhaseIdx={currentPhaseIdx}
           />
         </div>
       </div>
