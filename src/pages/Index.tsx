@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CircleArrowLeft, CircleArrowRight } from 'lucide-react';
 import { AlAlaqVerses, studyPhases, getPhaseData } from '@/data/studyPhases';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useAuth } from '@/hooks/useAuth';
 import { AppHeader } from '@/components/AppHeader';
 import { ProgressSection } from '@/components/ProgressSection';
 import { VerseDisplay } from '@/components/VerseDisplay';
 import { AudioControls } from '@/components/AudioControls';
 
 const Index = () => {
+  const { user, loading } = useAuth();
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
   const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
@@ -133,6 +136,23 @@ const Index = () => {
       });
     }
   }, [currentStep, recitingMode, currentPhaseIdx]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground font-arabic">جارٍ التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to auth if not logged in
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
