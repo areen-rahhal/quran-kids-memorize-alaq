@@ -20,9 +20,9 @@ const Auth = () => {
   const navigate = useNavigate();
 
   const fillTestCredentials = () => {
-    setEmail('mohammad@gmail.com');
+    setEmail('areenrahhal@gmail.com');
     setPassword('A123456');
-    setDisplayName('Mohammad');
+    setDisplayName('Areen');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,7 +165,7 @@ const Auth = () => {
             <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
             <div className="text-xs text-amber-700 font-arabic">
               <p className="font-semibold mb-1">حساب تجريبي:</p>
-              <p>البريد: mohammad@gmail.com</p>
+              <p>البريد: areenrahhal@gmail.com</p>
               <p>كلمة المرور: A123456</p>
               <Button 
                 variant="ghost" 
