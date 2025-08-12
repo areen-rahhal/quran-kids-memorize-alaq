@@ -150,7 +150,7 @@ const Auth = () => {
             <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
             <div className="text-xs text-amber-700 font-arabic">
               <p className="font-semibold mb-1">حساب تجريبي:</p>
-              <p>البريد: mohammad@test.com</p>
+              <p>البريد: mohammad@example.com</p>
               <p>كلمة المرور: A123456</p>
             </div>
           </div>
