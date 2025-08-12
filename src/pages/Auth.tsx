@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
@@ -17,6 +18,12 @@ const Auth = () => {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const fillTestCredentials = () => {
+    setEmail('mohammad@example.com');
+    setPassword('A123456');
+    setDisplayName('Mohammad');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +69,14 @@ const Auth = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    // Clear form when switching modes
+    setEmail('');
+    setPassword('');
+    setDisplayName('');
   };
 
   return (
@@ -137,7 +152,7 @@ const Auth = () => {
         <div className="mt-6 text-center">
           <Button
             variant="ghost"
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={toggleMode}
             className="font-arabic text-emerald-600 hover:text-emerald-700"
           >
             {isLogin ? 'إنشاء حساب جديد' : 'لديك حساب؟ سجل دخولك'}
@@ -152,6 +167,14 @@ const Auth = () => {
               <p className="font-semibold mb-1">حساب تجريبي:</p>
               <p>البريد: mohammad@example.com</p>
               <p>كلمة المرور: A123456</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={fillTestCredentials}
+                className="mt-2 h-6 px-2 text-xs text-amber-700 hover:text-amber-800"
+              >
+                ملء البيانات التجريبية
+              </Button>
             </div>
           </div>
         </div>
