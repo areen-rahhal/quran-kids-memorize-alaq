@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollArea } from './ui/scroll-area';
+import { juz30Surahs } from '../data/juz30';
 
 interface ProgressSectionProps {
   currentSurahId: number;
@@ -7,12 +8,6 @@ interface ProgressSectionProps {
   completedTestingPhases: number[];
   onSurahSelect: (surahId: number) => void;
 }
-
-// Enhanced data for the two surahs we want to show
-const progressSurahs = [
-  { id: 96, name: "Al-Alaq", arabicName: "العلق", phases: 5 },
-  { id: 97, name: "Al-Qadr", arabicName: "القدر", phases: 1 }
-];
 
 interface CircleProps {
   status: 'locked' | 'current' | 'completed' | 'completed-errors';
@@ -25,7 +20,7 @@ interface CircleProps {
 const Circle: React.FC<CircleProps> = ({ status, size, children, onClick, isSpecial = false }) => {
   const getStatusColors = () => {
     if (isSpecial && status === 'current') {
-      return 'bg-gradient-to-br from-blue-500 to-purple-500 text-white border-blue-600 shadow-xl ring-4 ring-blue-200';
+      return 'bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-600 shadow-xl ring-4 ring-blue-200';
     }
     
     switch (status) {
@@ -87,8 +82,9 @@ const PathWithPhases: React.FC<{
   phases: number[];
   surahId: number;
   completedTestingPhases: number[];
+  currentSurahId: number;
   onPhaseSelect?: (surahId: number, phaseIndex: number) => void;
-}> = ({ startX, startY, endX, endY, isCompleted, phases, surahId, completedTestingPhases, onPhaseSelect }) => {
+}> = ({ startX, startY, endX, endY, isCompleted, phases, surahId, completedTestingPhases, currentSurahId, onPhaseSelect }) => {
   const midX = (startX + endX) / 2;
   const midY = (startY + endY) / 2;
   
@@ -105,8 +101,12 @@ const PathWithPhases: React.FC<{
   });
 
   const getPhaseStatus = (phaseIndex: number) => {
-    const phaseId = surahId * 10 + phaseIndex + 1;
-    if (completedTestingPhases.includes(phaseId)) return 'completed';
+    const phaseId = surahId * 100 + phaseIndex + 1; // Changed to avoid conflicts
+    if (completedTestingPhases.includes(phaseId)) {
+      // For now, assume no errors - you can extend this logic later
+      return 'completed';
+    }
+    if (surahId === currentSurahId) return 'current';
     return 'locked';
   };
 
@@ -163,10 +163,10 @@ const PathWithPhases: React.FC<{
 };
 
 const SurahNode: React.FC<{
-  surah: typeof progressSurahs[0];
+  surah: typeof juz30Surahs[0];
   index: number;
   isLeft: boolean;
-  nextSurah?: typeof progressSurahs[0];
+  nextSurah?: typeof juz30Surahs[0];
   nextIsLeft: boolean;
   currentSurahId: number;
   completedSurahs: number[];
@@ -206,6 +206,7 @@ const SurahNode: React.FC<{
           phases={phases}
           surahId={surah.id}
           completedTestingPhases={completedTestingPhases}
+          currentSurahId={currentSurahId}
           onPhaseSelect={onPhaseSelect}
         />
       )}
@@ -238,7 +239,7 @@ const SurahNode: React.FC<{
         
         {/* Current lesson indicator */}
         {isCurrentSurah && (
-          <div className="mt-3 px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs rounded-full shadow-lg animate-bounce">
+          <div className="mt-3 px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs rounded-full shadow-lg animate-bounce">
             ✨ ابدأ هنا
           </div>
         )}
@@ -255,8 +256,9 @@ const SurahNode: React.FC<{
           }}
         >
           {phases.slice(0, 4).map((phaseIndex) => {
-            const phaseId = surah.id * 10 + phaseIndex + 1;
-            const phaseStatus = completedTestingPhases.includes(phaseId) ? 'completed' : 'locked';
+            const phaseId = surah.id * 100 + phaseIndex + 1;
+            const phaseStatus = completedTestingPhases.includes(phaseId) ? 'completed' : 
+                              (surah.id === currentSurahId ? 'current' : 'locked');
             
             return (
               <Circle
@@ -287,14 +289,22 @@ export const ProgressSection = ({
   };
 
   // Calculate completion progress
-  const totalSurahs = progressSurahs.length;
-  const completedCount = completedSurahs.length;
-  const allPhasesCompleted = progressSurahs.every(surah => {
-    return Array.from({ length: surah.phases }, (_, i) => {
-      const phaseId = surah.id * 10 + i + 1;
-      return completedTestingPhases.includes(phaseId);
-    }).every(Boolean);
+  const totalSurahs = juz30Surahs.length;
+  
+  // Mock data: Set user at Al-Alaq (19th surah), with previous surahs completed
+  const mockCompletedSurahs = juz30Surahs.slice(0, 18).map(s => s.id); // First 18 surahs completed
+  const mockCompletedPhases: number[] = [];
+  
+  // Add completed phases for completed surahs
+  juz30Surahs.slice(0, 18).forEach(surah => {
+    for (let i = 0; i < surah.phases; i++) {
+      mockCompletedPhases.push(surah.id * 100 + i + 1);
+    }
   });
+
+  const effectiveCompletedSurahs = [...new Set([...completedSurahs, ...mockCompletedSurahs])];
+  const effectiveCompletedPhases = [...new Set([...completedTestingPhases, ...mockCompletedPhases])];
+  const effectiveCompletedCount = effectiveCompletedSurahs.length;
 
   return (
     <div className="w-80 h-full bg-gradient-to-b from-purple-50 via-blue-50 via-green-50 to-orange-50 relative overflow-hidden">
@@ -319,11 +329,11 @@ export const ProgressSection = ({
             </div>
           </div>
           
-          {/* Surahs path */}
+          {/* Surahs path - reversed to show from An-Nas to An-Naba */}
           <div className="relative">
-            {progressSurahs.map((surah, index) => {
+            {[...juz30Surahs].reverse().map((surah, index) => {
               const isLeft = index % 2 === 0;
-              const nextSurah = progressSurahs[index + 1];
+              const nextSurah = [...juz30Surahs].reverse()[index + 1];
               const nextIsLeft = (index + 1) % 2 === 0;
               
               return (
@@ -335,8 +345,8 @@ export const ProgressSection = ({
                   nextSurah={nextSurah}
                   nextIsLeft={nextIsLeft}
                   currentSurahId={currentSurahId}
-                  completedSurahs={completedSurahs}
-                  completedTestingPhases={completedTestingPhases}
+                  completedSurahs={effectiveCompletedSurahs}
+                  completedTestingPhases={effectiveCompletedPhases}
                   onSurahSelect={onSurahSelect}
                   onPhaseSelect={onPhaseSelect}
                 />
@@ -345,7 +355,7 @@ export const ProgressSection = ({
           </div>
           
           {/* Completion celebration */}
-          {allPhasesCompleted && (
+          {effectiveCompletedCount === totalSurahs && (
             <div className="flex flex-col items-center mt-8 mb-16">
               <div className="text-6xl mb-4 animate-bounce">🏆</div>
               <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white px-8 py-4 rounded-2xl text-center shadow-xl">
@@ -364,7 +374,7 @@ export const ProgressSection = ({
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg border border-gray-200 z-40">
         <div className="flex items-center gap-2 text-sm">
           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-gray-700 font-medium font-arabic">{completedCount}/{totalSurahs} مكتملة</span>
+          <span className="text-gray-700 font-medium font-arabic">{effectiveCompletedCount}/{totalSurahs} مكتملة</span>
         </div>
       </div>
     </div>
