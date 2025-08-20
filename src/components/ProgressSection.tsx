@@ -195,7 +195,7 @@ const SurahNode: React.FC<{
   const phases = Array.from({ length: surah.phases }, (_, i) => i);
 
   return (
-    <div className="relative mb-20" style={{ height: '150px' }}>
+    <div className="relative mb-2" style={{ height: '90px' }}>
       {/* Path connector with phases to next surah */}
       {nextSurah && (
         <PathWithPhases
