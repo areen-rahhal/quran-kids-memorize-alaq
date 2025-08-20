@@ -186,9 +186,9 @@ const SurahNode: React.FC<{
   const isCompleted = surahStatus === 'completed';
 
   // Calculate positions for surah circles
-  const currentX = isLeft ? 80 : 220;
+  const currentX = isLeft ? 100 : 200;
   const currentY = 60;
-  const nextX = nextIsLeft ? 80 : 220;
+  const nextX = nextIsLeft ? 100 : 200;
   const nextY = 180;
 
   // Generate phases array for the surah
