@@ -49,7 +49,7 @@ const Circle: React.FC<CircleProps> = ({ status, size, children, onClick, isSpec
         transition-all duration-300 hover:scale-105 z-20 relative font-medium
         ${status !== 'locked' ? 'cursor-pointer' : 'cursor-not-allowed'}
         ${status === 'current' ? 'animate-pulse' : ''}
-        transform translate-x-2.5
+        transform translate-x-[30px] -translate-y-5
       `}
       disabled={status === 'locked'}
     >
