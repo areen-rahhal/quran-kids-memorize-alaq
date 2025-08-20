@@ -112,9 +112,9 @@ const PathWithPhases: React.FC<{
   };
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+    <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
       {/* SVG Path */}
-      <svg width="300" height="200" className="absolute top-0 left-0 w-full h-full">
+      <svg width="300" height="200" className="absolute top-0 left-0 w-full h-full z-10">
         <defs>
           <linearGradient id={`completedPath-${surahId}`} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#10b981" />
