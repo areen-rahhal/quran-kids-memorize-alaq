@@ -189,13 +189,13 @@ const SurahNode: React.FC<{
   const currentX = isLeft ? 100 : 200;
   const currentY = 60;
   const nextX = nextIsLeft ? 100 : 200;
-  const nextY = 180;
+  const nextY = 220; // Increased from 180 to 220 for more spacing
 
   // Generate phases array for the surah
   const phases = Array.from({ length: surah.phases }, (_, i) => i);
 
   return (
-    <div className="relative mb-5" style={{ height: '120px' }}>
+    <div className="relative mb-10" style={{ height: '160px' }}>
       {/* Path connector with phases to next surah */}
       {nextSurah && (
         <PathWithPhases
