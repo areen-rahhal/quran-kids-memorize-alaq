@@ -102,74 +102,113 @@ const LearningPath: React.FC<{
     return 'locked';
   };
 
-  // Create learning path items
-  const pathItems: Array<{
-    type: 'surah' | 'phase';
-    surah?: typeof juz30Surahs[0];
-    phaseIndex?: number;
-    id: string;
-  }> = [];
-
-  // Reverse surahs to show from An-Nas to An-Naba
-  [...juz30Surahs].reverse().forEach((surah) => {
-    // Add surah
-    pathItems.push({
-      type: 'surah',
-      surah,
-      id: `surah-${surah.id}`
-    });
-
-    // Add phases for this surah
-    for (let i = 0; i < surah.phases; i++) {
-      pathItems.push({
-        type: 'phase',
-        surah,
-        phaseIndex: i,
-        id: `phase-${surah.id}-${i}`
-      });
-    }
-  });
+  // Curve calculation function
+  const getPointOnCurve = (startX: number, startY: number, endX: number, endY: number, t: number) => {
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+    const controlX = midX + (endX - startX) * 0.3;
+    const controlY = midY;
+    
+    const x = Math.pow(1 - t, 2) * startX + 2 * (1 - t) * t * controlX + Math.pow(t, 2) * endX;
+    const y = Math.pow(1 - t, 2) * startY + 2 * (1 - t) * t * controlY + Math.pow(t, 2) * endY;
+    
+    return { x, y };
+  };
 
   return (
-    <div className="flex flex-col items-center gap-8 py-8 relative">
-      {/* Vertical connecting line */}
-      <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-gray-200 via-blue-200 to-green-200 transform -translate-x-1/2 z-0" />
-      
-      {pathItems.map((item, index) => {
-        if (item.type === 'surah' && item.surah) {
-          const surah = item.surah;
-          const status = getSurahStatus(surah.id);
-          
-          return (
-            <PathItem
-              key={item.id}
-              type="surah"
-              status={status}
-              onClick={() => onSurahSelect(surah.id)}
-              surah={surah}
-              isSpecial={status === 'current'}
-            >
-              <div className="text-center leading-tight">
-                <div className="font-semibold font-arabic text-sm">{surah.arabicName}</div>
-              </div>
-            </PathItem>
-          );
-        } else if (item.type === 'phase' && item.surah && item.phaseIndex !== undefined) {
-          const status = getPhaseStatus(item.surah.id, item.phaseIndex);
-          
-          return (
-            <PathItem
-              key={item.id}
-              type="phase"
-              status={status}
-              onClick={() => onPhaseSelect(item.surah!.id, item.phaseIndex!)}
-            >
-              {item.phaseIndex + 1}
-            </PathItem>
-          );
-        }
+    <div className="relative py-4">
+      {[...juz30Surahs].reverse().map((surah, index) => {
+        const isLeft = index % 2 === 0;
+        const nextSurah = [...juz30Surahs].reverse()[index + 1];
+        const nextIsLeft = (index + 1) % 2 === 0;
         
-        return null;
+        const surahStatus = getSurahStatus(surah.id);
+        const isCurrentSurah = surahStatus === 'current';
+        const isCompleted = surahStatus === 'completed';
+
+        // Calculate positions - reduced spacing
+        const currentX = isLeft ? 80 : 220;
+        const currentY = index * 80 + 60; // Reduced from 160px to 80px spacing
+        const nextX = nextIsLeft ? 80 : 220;
+        const nextY = (index + 1) * 80 + 60;
+
+        // Generate phases for the current surah
+        const phases = Array.from({ length: surah.phases }, (_, i) => i);
+
+        return (
+          <div key={surah.id} className="relative" style={{ height: '80px' }}>
+            {/* Curved path to next surah */}
+            {nextSurah && (
+              <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                <svg width="300" height="120" className="absolute top-0 left-0 w-full h-full">
+                  <defs>
+                    <linearGradient id={`path-${surah.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={isCompleted ? "#10b981" : "#d1d5db"} />
+                      <stop offset="100%" stopColor={isCompleted ? "#34d399" : "#e5e7eb"} />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d={`M ${currentX} ${40} Q ${(currentX + nextX) / 2 + (nextX - currentX) * 0.3} ${(40 + 80) / 2} ${nextX} ${80}`}
+                    stroke={`url(#path-${surah.id})`}
+                    strokeWidth="4"
+                    fill="none"
+                    strokeLinecap="round"
+                    className={isCompleted ? "drop-shadow-sm" : ""}
+                  />
+                </svg>
+                
+                {/* Phase circles along the curve */}
+                {phases.slice(0, 3).map((_, phaseIndex) => {
+                  const t = (phaseIndex + 1) / (phases.length + 1);
+                  const position = getPointOnCurve(currentX, 40, nextX, 80, t);
+                  const phaseStatus = getPhaseStatus(surah.id, phaseIndex);
+                  
+                  return (
+                    <div
+                      key={phaseIndex}
+                      className="absolute pointer-events-auto"
+                      style={{
+                        left: position.x - 24,
+                        top: position.y - 24,
+                        zIndex: 20
+                      }}
+                    >
+                      <PathItem
+                        type="phase"
+                        status={phaseStatus}
+                        onClick={() => onPhaseSelect(surah.id, phaseIndex)}
+                      >
+                        {phaseIndex + 1}
+                      </PathItem>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Surah node */}
+            <div 
+              className="absolute"
+              style={{ 
+                left: currentX - 40,
+                top: 0,
+                zIndex: 30 
+              }}
+            >
+              <PathItem
+                type="surah"
+                status={surahStatus}
+                onClick={() => onSurahSelect(surah.id)}
+                surah={surah}
+                isSpecial={isCurrentSurah}
+              >
+                <div className="text-center leading-tight">
+                  <div className="font-semibold font-arabic text-sm">{surah.arabicName}</div>
+                </div>
+              </PathItem>
+            </div>
+          </div>
+        );
       })}
     </div>
   );
