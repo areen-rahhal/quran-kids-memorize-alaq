@@ -7,14 +7,172 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
-      [_ in never]: never
+      child_memorization_history: {
+        Row: {
+          child_id: string
+          created_at: string | null
+          id: string
+          proficiency: Database["public"]["Enums"]["proficiency_level"]
+          surah_number: number
+          updated_at: string | null
+        }
+        Insert: {
+          child_id: string
+          created_at?: string | null
+          id?: string
+          proficiency: Database["public"]["Enums"]["proficiency_level"]
+          surah_number: number
+          updated_at?: string | null
+        }
+        Update: {
+          child_id?: string
+          created_at?: string | null
+          id?: string
+          proficiency?: Database["public"]["Enums"]["proficiency_level"]
+          surah_number?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_memorization_history_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_profiles: {
+        Row: {
+          age: number
+          avatar_url: string | null
+          child_level: Database["public"]["Enums"]["child_level"]
+          created_at: string | null
+          first_name: string
+          has_speech_disorder: boolean | null
+          id: string
+          learning_goal: Database["public"]["Enums"]["learning_goal"]
+          learning_preference: Database["public"]["Enums"]["learning_preference"]
+          native_language: string
+          parent_id: string
+          phase_length: number
+          session_time_minutes: number
+          speech_disorder_type: string | null
+          target_juz: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          age: number
+          avatar_url?: string | null
+          child_level?: Database["public"]["Enums"]["child_level"]
+          created_at?: string | null
+          first_name: string
+          has_speech_disorder?: boolean | null
+          id?: string
+          learning_goal?: Database["public"]["Enums"]["learning_goal"]
+          learning_preference?: Database["public"]["Enums"]["learning_preference"]
+          native_language?: string
+          parent_id: string
+          phase_length?: number
+          session_time_minutes?: number
+          speech_disorder_type?: string | null
+          target_juz?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          age?: number
+          avatar_url?: string | null
+          child_level?: Database["public"]["Enums"]["child_level"]
+          created_at?: string | null
+          first_name?: string
+          has_speech_disorder?: boolean | null
+          id?: string
+          learning_goal?: Database["public"]["Enums"]["learning_goal"]
+          learning_preference?: Database["public"]["Enums"]["learning_preference"]
+          native_language?: string
+          parent_id?: string
+          phase_length?: number
+          session_time_minutes?: number
+          speech_disorder_type?: string | null
+          target_juz?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_profiles_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "parent_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_target_surahs: {
+        Row: {
+          child_id: string
+          created_at: string | null
+          id: string
+          surah_number: number
+        }
+        Insert: {
+          child_id: string
+          created_at?: string | null
+          id?: string
+          surah_number: number
+        }
+        Update: {
+          child_id?: string
+          created_at?: string | null
+          id?: string
+          surah_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_target_surahs_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string
+          id: string
+          phone_number: string | null
+          profile_picture_url: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          profile_picture_url?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          profile_picture_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +181,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      child_level: "beginner" | "intermediate" | "advanced"
+      learning_goal: "memorize_new" | "review_memorized" | "balance_both"
+      learning_preference: "visual" | "audio" | "sensory"
+      proficiency_level: "basic" | "very_good" | "excellent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +311,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      child_level: ["beginner", "intermediate", "advanced"],
+      learning_goal: ["memorize_new", "review_memorized", "balance_both"],
+      learning_preference: ["visual", "audio", "sensory"],
+      proficiency_level: ["basic", "very_good", "excellent"],
+    },
   },
 } as const
