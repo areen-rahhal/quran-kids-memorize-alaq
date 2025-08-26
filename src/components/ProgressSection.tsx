@@ -308,7 +308,7 @@ export const ProgressSection = ({
   const effectiveCompletedCount = effectiveCompletedSurahs.length;
 
   return (
-    <div className="w-80 h-full bg-gradient-to-b from-purple-50 via-blue-50 via-green-50 to-orange-50 relative overflow-hidden">
+    <div className="w-80 h-full bg-gradient-to-t from-purple-50 via-blue-50 via-green-50 to-orange-50 relative overflow-hidden">
       {/* Header */}
       <div className="p-6 bg-white/95 backdrop-blur border-b border-gray-100 relative z-40">
         <div className="text-center">
@@ -321,43 +321,11 @@ export const ProgressSection = ({
       </div>
       
       {/* Scrollable path */}
-      <ScrollArea className="h-[calc(100vh-140px)] relative">
-        <div className="relative py-8">
-          {/* Starting point decoration */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white px-6 py-3 rounded-full shadow-lg">
-              <div className="text-sm font-semibold font-arabic">🚀 ابدأ الرحلة</div>
-            </div>
-          </div>
-          
-          {/* Surahs path - reversed to show from An-Nas to An-Naba */}
-          <div className="relative">
-            {[...juz30Surahs].reverse().map((surah, index) => {
-              const isLeft = index % 2 === 0;
-              const nextSurah = [...juz30Surahs].reverse()[index + 1];
-              const nextIsLeft = (index + 1) % 2 === 0;
-              
-              return (
-                <SurahNode
-                  key={surah.id}
-                  surah={surah}
-                  index={index}
-                  isLeft={isLeft}
-                  nextSurah={nextSurah}
-                  nextIsLeft={nextIsLeft}
-                  currentSurahId={currentSurahId}
-                  completedSurahs={effectiveCompletedSurahs}
-                  completedTestingPhases={effectiveCompletedPhases}
-                  onSurahSelect={onSurahSelect}
-                  onPhaseSelect={onPhaseSelect}
-                />
-              );
-            })}
-          </div>
-          
-          {/* Completion celebration */}
+      <ScrollArea className="h-[calc(100vh-200px)] relative">
+        <div className="relative pt-8 pb-32">
+          {/* Completion celebration at the top */}
           {effectiveCompletedCount === totalSurahs && (
-            <div className="flex flex-col items-center mt-8 mb-16">
+            <div className="flex flex-col items-center mb-8">
               <div className="text-6xl mb-4 animate-bounce">🏆</div>
               <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white px-8 py-4 rounded-2xl text-center shadow-xl">
                 <div className="font-bold text-lg font-arabic">🎉 مبروك!</div>
@@ -368,11 +336,51 @@ export const ProgressSection = ({
               </div>
             </div>
           )}
+          
+          {/* Surahs path - NOT reversed to show from An-Naba to An-Nas (bottom to top) */}
+          <div className="relative" style={{ transform: 'scaleY(-1)' }}>
+            {juz30Surahs.map((surah, index) => {
+              const isLeft = index % 2 === 0;
+              const nextSurah = juz30Surahs[index + 1];
+              const nextIsLeft = (index + 1) % 2 === 0;
+              
+              return (
+                <div key={surah.id} style={{ transform: 'scaleY(-1)' }}>
+                  <SurahNode
+                    surah={surah}
+                    index={index}
+                    isLeft={isLeft}
+                    nextSurah={nextSurah}
+                    nextIsLeft={nextIsLeft}
+                    currentSurahId={currentSurahId}
+                    completedSurahs={effectiveCompletedSurahs}
+                    completedTestingPhases={effectiveCompletedPhases}
+                    onSurahSelect={onSurahSelect}
+                    onPhaseSelect={onPhaseSelect}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       </ScrollArea>
       
-      {/* Floating progress indicator */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg border border-gray-200 z-40">
+      {/* Floating Start Journey CTA - Always visible at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white/95 to-transparent z-50">
+        <div className="flex justify-center">
+          <button 
+            onClick={() => onSurahSelect(114)} // Start with Surat Al-Nas
+            className="bg-gradient-to-r from-green-400 to-blue-500 text-white px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 transform"
+          >
+            <div className="text-lg font-semibold font-arabic flex items-center gap-2">
+              🚀 ابدأ الرحلة
+            </div>
+          </button>
+        </div>
+      </div>
+      
+      {/* Floating progress indicator - moved up to avoid CTA overlap */}
+      <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg border border-gray-200 z-40">
         <div className="flex items-center gap-2 text-sm">
           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
           <span className="text-gray-700 font-medium font-arabic">{effectiveCompletedCount}/{totalSurahs} مكتملة</span>
