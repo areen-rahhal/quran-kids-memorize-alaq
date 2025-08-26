@@ -337,28 +337,27 @@ export const ProgressSection = ({
             </div>
           )}
           
-          {/* Surahs path - NOT reversed to show from An-Naba to An-Nas (bottom to top) */}
-          <div className="relative" style={{ transform: 'scaleY(-1)' }}>
-            {juz30Surahs.map((surah, index) => {
+          {/* Surahs path - reversed to show ascending from An-Nas to An-Naba (bottom to top) */}
+          <div className="relative">
+            {[...juz30Surahs].reverse().map((surah, index) => {
               const isLeft = index % 2 === 0;
-              const nextSurah = juz30Surahs[index + 1];
+              const nextSurah = [...juz30Surahs].reverse()[index + 1];
               const nextIsLeft = (index + 1) % 2 === 0;
               
               return (
-                <div key={surah.id} style={{ transform: 'scaleY(-1)' }}>
-                  <SurahNode
-                    surah={surah}
-                    index={index}
-                    isLeft={isLeft}
-                    nextSurah={nextSurah}
-                    nextIsLeft={nextIsLeft}
-                    currentSurahId={currentSurahId}
-                    completedSurahs={effectiveCompletedSurahs}
-                    completedTestingPhases={effectiveCompletedPhases}
-                    onSurahSelect={onSurahSelect}
-                    onPhaseSelect={onPhaseSelect}
-                  />
-                </div>
+                <SurahNode
+                  key={surah.id}
+                  surah={surah}
+                  index={index}
+                  isLeft={isLeft}
+                  nextSurah={nextSurah}
+                  nextIsLeft={nextIsLeft}
+                  currentSurahId={currentSurahId}
+                  completedSurahs={effectiveCompletedSurahs}
+                  completedTestingPhases={effectiveCompletedPhases}
+                  onSurahSelect={onSurahSelect}
+                  onPhaseSelect={onPhaseSelect}
+                />
               );
             })}
           </div>
