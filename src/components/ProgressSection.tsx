@@ -337,11 +337,11 @@ export const ProgressSection = ({
             </div>
           )}
           
-          {/* Surahs path - reversed to show ascending from An-Nas to An-Naba (bottom to top) */}
+          {/* Surahs path - natural order to show ascending from An-Nas (bottom) to An-Naba (top) */}
           <div className="relative">
-            {[...juz30Surahs].reverse().map((surah, index) => {
+            {juz30Surahs.map((surah, index) => {
               const isLeft = index % 2 === 0;
-              const nextSurah = [...juz30Surahs].reverse()[index + 1];
+              const nextSurah = juz30Surahs[index + 1];
               const nextIsLeft = (index + 1) % 2 === 0;
               
               return (
