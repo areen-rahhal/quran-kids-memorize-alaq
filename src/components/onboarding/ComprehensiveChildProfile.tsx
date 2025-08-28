@@ -434,76 +434,189 @@ export const ComprehensiveChildProfile = ({ child, onNext, onBack, isLoading }: 
 
           {/* Learning Record Section */}
           <Card className="p-6 bg-white shadow-lg border-emerald-200">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-purple-600" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 font-arabic">السجل التعليمي</h2>
+                  <p className="text-sm text-gray-600 font-arabic">السور التي أتقنها طفلك من قبل</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 font-arabic">كمية الحفظ في كل مرحلة</h2>
-                <p className="text-sm text-gray-600 font-arabic">اختياري - السور المحفوظة مسبقاً من الجزء الثلاثين</p>
+              <div className="text-right">
+                <div className="text-sm text-green-600 font-arabic font-semibold">
+                  {Object.keys(memorizedSurahs).length} سورة محفوظة
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="grid gap-3 max-h-64 overflow-y-auto">
-                {juz30Surahs.slice(0, 8).map((surah) => {
-                  const isMemorized = memorizedSurahs[surah.id] !== undefined;
+            {/* Proficiency Level Selection */}
+            <div className="mb-6">
+              <Label className="font-arabic mb-4 block text-lg">الخطوة الأولى: اختر مستوى الإتقان</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.entries(proficiencyLabels).map(([key, label]) => {
+                  const count = Object.values(memorizedSurahs).filter(p => p === key).length;
+                  const isBasic = key === 'basic';
+                  const isVeryGood = key === 'very_good';
+                  const isExcellent = key === 'excellent';
                   
                   return (
-                    <div 
-                      key={surah.id}
-                      className={`p-4 border-2 rounded-lg transition-colors ${
-                        isMemorized 
-                          ? 'border-emerald-300 bg-emerald-50' 
-                          : 'border-gray-200 hover:border-gray-300'
+                    <div
+                      key={key}
+                      className={`p-6 border-2 rounded-xl transition-all cursor-pointer ${
+                        count > 0 
+                          ? isBasic 
+                            ? 'border-gray-300 bg-gray-50' 
+                            : isVeryGood 
+                              ? 'border-blue-400 bg-blue-50' 
+                              : 'border-green-300 bg-green-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 space-x-reverse">
-                          <button
-                            type="button"
-                            onClick={() => handleSurahToggle(surah.id)}
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                              isMemorized 
-                                ? 'border-emerald-500 bg-emerald-500' 
-                                : 'border-gray-300'
-                            }`}
-                          >
-                            {isMemorized && <CheckCircle className="w-4 h-4 text-white" />}
-                          </button>
-                          
-                          <div>
-                            <h3 className="font-semibold text-gray-900 font-arabic">
-                              {surah.arabicName}
-                            </h3>
-                            <p className="text-sm text-gray-600 font-arabic">
-                              {surah.verses} آية
-                            </p>
-                          </div>
+                      <div className="text-center">
+                        <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${
+                          isBasic 
+                            ? 'bg-gray-100' 
+                            : isVeryGood 
+                              ? 'bg-blue-100' 
+                              : 'bg-green-100'
+                        }`}>
+                          {isBasic && <CheckCircle className="w-6 h-6 text-gray-600" />}
+                          {isVeryGood && <Volume2 className="w-6 h-6 text-blue-600" />}
+                          {isExcellent && <Target className="w-6 h-6 text-green-600" />}
                         </div>
-
-                        {isMemorized && (
-                          <Select
-                            value={memorizedSurahs[surah.id]}
-                            onValueChange={(value) => handleProficiencyChange(surah.id, value)}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(proficiencyLabels).map(([key, label]) => (
-                                <SelectItem key={key} value={key}>
-                                  <span className="font-arabic">{label}</span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <h3 className="font-bold text-gray-900 font-arabic text-lg mb-2">{label}</h3>
+                        <p className="text-sm text-gray-600 font-arabic mb-3">
+                          {isBasic && 'حفظ أساسي يحتاج تقوية'}
+                          {isVeryGood && 'حفظ جيد مع أخطاء قليلة'}
+                          {isExcellent && 'حفظ متقن مع تلاوة صحيحة'}
+                        </p>
+                        {count > 0 && (
+                          <div className={`text-sm font-semibold ${
+                            isBasic 
+                              ? 'text-red-600' 
+                              : isVeryGood 
+                                ? 'text-blue-600' 
+                                : 'text-green-600'
+                          }`}>
+                            {count} سورة
+                          </div>
                         )}
                       </div>
                     </div>
                   );
                 })}
               </div>
+            </div>
+
+            {/* Surahs Selection */}
+            <div className="space-y-4">
+              <Label className="font-arabic text-lg block">الخطوة الثانية: اختر السور بمستوى "جيد جداً"</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {juz30Surahs.map((surah) => {
+                  const isMemorized = memorizedSurahs[surah.id] !== undefined;
+                  const proficiency = memorizedSurahs[surah.id];
+                  
+                  return (
+                    <div 
+                      key={surah.id}
+                      onClick={() => handleSurahToggle(surah.id)}
+                      className={`p-4 border-2 rounded-xl transition-all cursor-pointer text-center ${
+                        isMemorized 
+                          ? proficiency === 'basic'
+                            ? 'border-orange-300 bg-orange-50'
+                            : proficiency === 'very_good'
+                              ? 'border-blue-400 bg-blue-50'
+                              : 'border-green-300 bg-green-50'
+                          : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        <h3 className="font-bold text-gray-900 font-arabic text-sm">
+                          {surah.arabicName}
+                        </h3>
+                        <p className="text-xs text-gray-600 font-arabic">
+                          {surah.name}
+                        </p>
+                        
+                        {isMemorized ? (
+                          <div className="space-y-2">
+                            <div className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                              proficiency === 'basic'
+                                ? 'bg-orange-100 text-orange-700'
+                                : proficiency === 'very_good'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-green-100 text-green-700'
+                            }`}>
+                              {proficiency === 'basic' && 'أساسي'}
+                              {proficiency === 'very_good' && 'محدد'}
+                              {proficiency === 'excellent' && 'ممتاز'}
+                            </div>
+                            
+                            {/* Proficiency selector buttons */}
+                            <div className="flex gap-1 justify-center">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleProficiencyChange(surah.id, 'basic');
+                                }}
+                                className={`w-6 h-6 rounded-full text-xs font-bold ${
+                                  proficiency === 'basic'
+                                    ? 'bg-orange-500 text-white'
+                                    : 'bg-gray-200 text-gray-600 hover:bg-orange-200'
+                                }`}
+                              >
+                                أ
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleProficiencyChange(surah.id, 'very_good');
+                                }}
+                                className={`w-6 h-6 rounded-full text-xs font-bold ${
+                                  proficiency === 'very_good'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-200 text-gray-600 hover:bg-blue-200'
+                                }`}
+                              >
+                                ج
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleProficiencyChange(surah.id, 'excellent');
+                                }}
+                                className={`w-6 h-6 rounded-full text-xs font-bold ${
+                                  proficiency === 'excellent'
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-gray-200 text-gray-600 hover:bg-green-200'
+                                }`}
+                              >
+                                م
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500 font-arabic">
+                            اضغط للإضافة
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Optional note */}
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700 font-arabic">
+                💡 هذه المعلومات اختيارية وستساعد في تخصيص خطة التعلم المناسبة لطفلك
+              </p>
             </div>
           </Card>
 
