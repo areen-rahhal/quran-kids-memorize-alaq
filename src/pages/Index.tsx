@@ -292,16 +292,7 @@ const Index = () => {
                 feedback={feedback}
                 showFeedback={showFeedback}
                 errorDetails={errorDetails}
-                onStartReciting={() => {
-                  console.log('🎓 User clicked Start Learning - forcing full reset');
-                  // Force stop first to clear all state
-                  handleStopReciting();
-                  // Wait briefly then start
-                  setTimeout(() => {
-                    console.log('🚀 Now starting fresh reciting journey');
-                    handleStartReciting(phase.verses);
-                  }, 300);
-                }}
+                onStartReciting={() => handleStartReciting(phase.verses)}
                 onStopReciting={handleStopReciting}
                 recitingMode={recitingMode}
                 onReadyForTesting={handleReadyForTesting}
