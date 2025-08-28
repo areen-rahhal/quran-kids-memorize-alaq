@@ -51,7 +51,7 @@ export interface ChildProfile {
 const OnboardingFlow = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>('parent-info');
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('children-overview');
   const [parentProfile, setParentProfile] = useState<ParentProfile>({
     full_name: '',
     phone_number: '',
@@ -249,14 +249,6 @@ const OnboardingFlow = () => {
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'parent-info':
-        return (
-          <ParentProfileForm
-            profile={parentProfile}
-            onSave={handleParentProfileSave}
-            isLoading={isLoading}
-          />
-        );
       
       case 'children-overview':
         return (
