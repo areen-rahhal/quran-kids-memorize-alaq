@@ -59,24 +59,36 @@ const OnboardingFlow = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Create parent profile automatically and load existing children
+  // Get or create parent profile automatically and load existing children
   useEffect(() => {
     const initializeProfile = async () => {
       if (!user) return;
       
       try {
-        // Create or get parent profile
-        const { data: profile, error: profileError } = await supabase
+        // First try to get existing parent profile
+        let { data: profile, error: getError } = await supabase
           .from('parent_profiles')
-          .upsert({
-            user_id: user.id,
-            full_name: user.user_metadata?.full_name || '',
-            phone_number: user.user_metadata?.phone_number || '',
-          })
-          .select()
-          .single();
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        if (profileError) throw profileError;
+        // If no profile exists, create one
+        if (!profile && !getError) {
+          const { data: newProfile, error: createError } = await supabase
+            .from('parent_profiles')
+            .insert({
+              user_id: user.id,
+              full_name: user.user_metadata?.full_name || 'Parent',
+              phone_number: user.user_metadata?.phone_number || '',
+            })
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          profile = newProfile;
+        } else if (getError) {
+          throw getError;
+        }
 
         setParentProfile(profile);
         
@@ -100,13 +112,18 @@ const OnboardingFlow = () => {
         }
       } catch (error) {
         console.error('Error initializing profile:', error);
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ في تحميل البيانات",
+          variant: "destructive",
+        });
       }
     };
 
     if (user && !loading) {
       initializeProfile();
     }
-  }, [user, loading]);
+  }, [user, loading, toast]);
 
 
   const handleNext = (step: OnboardingStep) => {
