@@ -2,8 +2,6 @@
 import { BookOpen, Star, Check } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { studyPhases } from '@/data/studyPhases';
-import { ChildProfileSwitcher } from './ChildProfileSwitcher';
-import { useChildProfiles } from '@/hooks/useChildProfiles';
 
 interface QuranHeaderProps {
   completedPhaseCount: number;
@@ -24,7 +22,6 @@ export const QuranHeader = ({
   completedVerses,
   completedTestingPhases
 }: QuranHeaderProps) => {
-  const { childProfiles, selectedChild, selectChild, loading } = useChildProfiles();
 
   return (
     <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-3 py-2 rounded-b-3xl shadow-xl">
@@ -38,16 +35,6 @@ export const QuranHeader = ({
             <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
           </div>
         </div>
-      </div>
-      
-      {/* Child Profile Switcher - Positioned in top right corner */}
-      <div className="absolute top-2 right-3">
-        <ChildProfileSwitcher
-          children={childProfiles}
-          selectedChild={selectedChild}
-          onSelectChild={selectChild}
-          loading={loading}
-        />
       </div>
       
       <div className="mt-0">

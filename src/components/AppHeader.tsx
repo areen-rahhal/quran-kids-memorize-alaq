@@ -11,10 +11,13 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+import { ChildProfileSwitcher } from './ChildProfileSwitcher';
+import { useChildProfiles } from '@/hooks/useChildProfiles';
 
 export const AppHeader = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { childProfiles, selectedChild, selectChild, loading } = useChildProfiles();
 
   const handleLogout = async () => {
     const { error } = await signOut();
@@ -33,7 +36,7 @@ export const AppHeader = () => {
   };
 
   return (
-    <header className="w-full bg-white border-b shadow-sm">
+    <header className="w-full bg-white border-b shadow-sm relative">
       <div className="flex items-center justify-between px-6 py-4">        
         {/* Empty left space for balance */}
         <div className="w-16"></div>
@@ -44,6 +47,16 @@ export const AppHeader = () => {
             تطبيق حفظ القرآن
           </h1>
           <p className="text-xs text-muted-foreground font-arabic">طريقك لحفظ كلام الله</p>
+        </div>
+        
+        {/* Child Profile Switcher - Top Right Corner */}
+        <div className="absolute top-4 right-6">
+          <ChildProfileSwitcher
+            children={childProfiles}
+            selectedChild={selectedChild}
+            onSelectChild={selectChild}
+            loading={loading}
+          />
         </div>
         
         {/* User Profile Dropdown */}
