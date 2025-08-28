@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CircleArrowLeft, CircleArrowRight } from 'lucide-react';
 import { AlAlaqVerses, studyPhases, getPhaseData } from '@/data/studyPhases';
+import { AnNasVerses, anNasStudyPhases, getAnNasPhaseData } from '@/data/anNasData';
+import { getCurrentSurah } from '@/data/juz30';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useChildProfiles } from '@/hooks/useChildProfiles';
@@ -98,15 +100,29 @@ const Index = () => {
     handleRestartLearning
   } = useAudioPlayer();
 
-  const phase = getPhaseData(currentPhaseIdx);
+  // Get current surah data
+  const currentSurah = getCurrentSurah(currentSurahId);
+  const isAnNas = currentSurahId === 114;
+  
+  // Use the appropriate data based on current surah
+  const currentVerses = isAnNas ? AnNasVerses : AlAlaqVerses;
+  const currentStudyPhases = isAnNas ? anNasStudyPhases : studyPhases;
+  const getCurrentPhaseData = isAnNas ? getAnNasPhaseData : getPhaseData;
+  
+  const phase = getCurrentPhaseData(currentPhaseIdx);
   const phaseVerseObjs = phase.verses.map(
-    vnum => AlAlaqVerses.find(v => v.id === vnum)
+    vnum => currentVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
-  // When phase changes, reset audio
+  // When phase changes or surah changes, reset audio
   useEffect(() => {
     resetAudio();
-  }, [currentPhaseIdx, resetAudio]);
+  }, [currentPhaseIdx, currentSurahId, resetAudio]);
+
+  // Reset to phase 0 when surah changes
+  useEffect(() => {
+    setCurrentPhaseIdx(0);
+  }, [currentSurahId]);
 
   // Handle automatic progression in reciting mode
   useEffect(() => {
@@ -135,7 +151,7 @@ const Index = () => {
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = completedTestingPhases.length;
-  const totalPhases = studyPhases.length;
+  const totalPhases = currentStudyPhases.length;
   const progress = (completedPhaseCount / totalPhases) * 100;
 
   const handleMarkPhaseComplete = () => {
@@ -184,7 +200,7 @@ const Index = () => {
         
         {/* Surah Header */}
         <QuranHeader
-          currentSurahName="سورة العلق"
+          currentSurahName={`سورة ${currentSurah.arabicName}`}
           completedPhaseCount={completedPhaseCount}
           totalPhases={totalPhases}
           currentPhaseIdx={currentPhaseIdx}
@@ -197,7 +213,7 @@ const Index = () => {
             {/* Surah Title & Phase Info */}
             <Card className="p-4 md:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-sm mb-1">
               <div className="text-center">
-                <h2 className="text-lg md:text-xl font-bold text-emerald-700 mb-0.5 font-arabic">سورة العلق</h2>
+                <h2 className="text-lg md:text-xl font-bold text-emerald-700 mb-0.5 font-arabic">سورة {currentSurah.arabicName}</h2>
                 <div className="flex items-center justify-center space-x-1 gap-1 flex-wrap mt-2">
                   <span className={`text-xs px-3 py-0.5 rounded-full font-arabic shadow border ${
                     completedTestingPhases.includes(currentPhaseIdx) 
@@ -211,7 +227,7 @@ const Index = () => {
                     {phase.description}
                   </span>
                 </div>
-                <p className="text-xs text-gray-600 mt-1 font-arabic">١٩ آية • مكية</p>
+                <p className="text-xs text-gray-600 mt-1 font-arabic">{currentSurah.verses} آية • مكية</p>
               </div>
             </Card>
 
@@ -301,7 +317,7 @@ const Index = () => {
             </div>
             
             {/* Completion Message */}
-            {completedVerses.length === AlAlaqVerses.length && (
+            {completedVerses.length === currentVerses.length && (
               <Card className="p-7 relative mt-7 bg-gradient-to-r from-amber-100 to-yellow-100 border-amber-300 animate-enter rounded-2xl shadow-2xl ring-4 ring-amber-200">
                 <div className="absolute -top-8 left-1/2 -translate-x-1/2">
                   <span className="text-6xl animate-bounce">🎉</span>
@@ -309,7 +325,7 @@ const Index = () => {
                 <div className="text-center space-y-2 mt-4">
                   <h3 className="text-xl md:text-2xl font-bold text-amber-700 font-arabic mb-1">مبروك!</h3>
                   <p className="text-amber-600 font-arabic text-base" dir="rtl">
-                    لقد أكملت حفظ سورة العلق! بارك الله في جهودك في حفظ كلام الله
+                    لقد أكملت حفظ سورة {currentSurah.arabicName}! بارك الله في جهودك في حفظ كلام الله
                   </p>
                 </div>
               </Card>
