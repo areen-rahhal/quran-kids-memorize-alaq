@@ -237,8 +237,9 @@ export const useRecitingJourney = () => {
   }, [resetTranscript]);
 
   const handleVerseEnded = useCallback(() => {
+    console.log('🎵 handleVerseEnded called - isReciting:', isReciting, 'currentStep:', currentStep);
     if (isReciting && currentStep === 'playing') {
-      console.log('Verse ended, starting listening phase for verse index:', currentVerseIndex);
+      console.log('✅ Verse ended, starting listening phase for verse index:', currentVerseIndex);
       setCurrentStep('listening');
       setFeedback(null);
       setShowFeedback(false);
@@ -246,8 +247,11 @@ export const useRecitingJourney = () => {
       setHighlightedWords([]);
       
       setTimeout(() => {
+        console.log('🎤 About to start listening...');
         startListening();
       }, 800);
+    } else {
+      console.log('❌ Not starting listening - isReciting:', isReciting, 'currentStep:', currentStep);
     }
   }, [isReciting, currentStep, currentVerseIndex, startListening]);
 

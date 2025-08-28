@@ -7,8 +7,11 @@ export const useSpeechRecognition = () => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const startListening = useCallback(() => {
+    console.log('🎤 Attempting to start speech recognition...');
+    
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      console.error('Speech recognition not supported');
+      console.error('❌ Speech recognition not supported in this browser');
+      alert('Speech recognition is not supported in your browser. Please use Chrome or Safari.');
       return;
     }
 
@@ -27,27 +30,35 @@ export const useSpeechRecognition = () => {
       recognitionRef.current.lang = 'ar-SA'; // Arabic language
       
       recognitionRef.current.onstart = () => {
-        console.log('Speech recognition started');
+        console.log('✅ Speech recognition started successfully');
         setIsListening(true);
       };
       
       recognitionRef.current.onresult = (event) => {
         const result = event.results[0][0].transcript;
-        console.log('Speech recognition result:', result);
+        console.log('🎙️ Speech recognition result:', result);
+        console.log('📊 Confidence:', event.results[0][0].confidence);
         setTranscript(result);
       };
       
       recognitionRef.current.onend = () => {
-        console.log('Speech recognition ended');
+        console.log('🛑 Speech recognition ended');
         setIsListening(false);
       };
       
       recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
+        console.error('❌ Speech recognition error:', event.error);
+        console.error('Error details:', event);
         setIsListening(false);
       };
       
-      recognitionRef.current.start();
+      try {
+        recognitionRef.current.start();
+        console.log('🚀 Speech recognition start() called');
+      } catch (error) {
+        console.error('❌ Failed to start speech recognition:', error);
+        setIsListening(false);
+      }
     }
   }, []);
 
