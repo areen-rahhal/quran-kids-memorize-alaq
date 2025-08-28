@@ -98,7 +98,7 @@ const Index = () => {
     updateWordHighlighting,
     handleReadyForTesting,
     handleRestartLearning
-  } = useAudioPlayer();
+  } = useAudioPlayer(currentSurahId);
 
   // Get current surah data
   const currentSurah = getCurrentSurah(currentSurahId);

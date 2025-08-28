@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { getAudioUrl, SURAH_NUMBER } from '@/utils/audioUtils';
+import { getAudioUrl } from '@/utils/audioUtils';
 import { useRecitingJourney } from './useRecitingJourney';
 
-export const useAudioPlayer = () => {
+export const useAudioPlayer = (currentSurahId: number = 114) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentAyahIdx, setCurrentAyahIdx] = useState(0);
   const [audioError, setAudioError] = useState<string | null>(null);
@@ -36,9 +36,9 @@ export const useAudioPlayer = () => {
     if (!audioRef.current || ayahIndex >= verses.length) return;
     
     const ayahId = verses[ayahIndex];
-    const url = getAudioUrl(SURAH_NUMBER, ayahId);
+    const url = getAudioUrl(currentSurahId, ayahId);
     
-    console.log(`Loading ayah ${ayahId} at index ${ayahIndex}, URL: ${url}`);
+    console.log(`Loading ayah ${ayahId} from Surah ${currentSurahId} at index ${ayahIndex}, URL: ${url}`);
     
     try {
       setAudioError(null);
@@ -63,7 +63,7 @@ export const useAudioPlayer = () => {
       setShowAudioError(true);
       setIsPlaying(false);
     }
-  }, []);
+  }, [currentSurahId]);
 
   const onAudioEnded = useCallback((verses: number[]) => {
     console.log('Audio ended for verse index:', currentAyahIdx);

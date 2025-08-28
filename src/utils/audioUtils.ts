@@ -1,7 +1,5 @@
 
 // Audio utilities for Quran recitation
-const SURAH_NUMBER = 96;
-
 export function getAudioUrl(surah: number, ayah: number): string {
   const surahStr = surah.toString().padStart(3, '0');
   const ayahStr = ayah.toString().padStart(3, '0');
@@ -22,5 +20,3 @@ export function getThirdAudioUrl(surah: number, ayah: number): string {
   // Third backup
   return `https://audio.qurancdn.com/${surahStr}${ayahStr}.mp3`;
 }
-
-export { SURAH_NUMBER };
