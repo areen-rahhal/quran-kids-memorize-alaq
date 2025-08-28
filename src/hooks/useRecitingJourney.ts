@@ -241,6 +241,8 @@ export const useRecitingJourney = () => {
 
   const handleVerseEnded = useCallback(() => {
     console.log('🎵 handleVerseEnded called - isReciting:', isReciting, 'currentStep:', currentStep);
+    console.log('🎵 Current verse index:', currentVerseIndex, 'recitingMode:', recitingMode);
+    
     if (isReciting && currentStep === 'playing') {
       console.log('✅ Verse ended, starting listening phase for verse index:', currentVerseIndex);
       setCurrentStep('listening');
@@ -255,8 +257,9 @@ export const useRecitingJourney = () => {
       }, 800);
     } else {
       console.log('❌ Not starting listening - isReciting:', isReciting, 'currentStep:', currentStep);
+      console.log('❌ Possible reasons: isReciting is false or currentStep is not "playing"');
     }
-  }, [isReciting, currentStep, currentVerseIndex, startListening]);
+  }, [isReciting, currentStep, currentVerseIndex, startListening, recitingMode]);
 
   const handleListeningComplete = useCallback((verses: number[], expectedText: string, loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
     console.log('Listening complete called with transcript:', transcript);

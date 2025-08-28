@@ -285,7 +285,10 @@ const Index = () => {
                 onPlayPause={() => handlePlayPause(phase.verses)}
                 onMarkComplete={handleMarkPhaseComplete}
                 audioRef={audioRef}
-                onAudioEnded={() => onAudioEnded(phase.verses)}
+                onAudioEnded={() => {
+                  console.log('🔊 Audio ended event triggered from Index component');
+                  onAudioEnded(phase.verses);
+                }}
                 onAudioError={onAudioError}
                 isReciting={isReciting}
                 isListening={isListening}
