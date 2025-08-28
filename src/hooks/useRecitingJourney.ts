@@ -442,13 +442,23 @@ export const useRecitingJourney = () => {
     resetTranscript();
   }, [resetTranscript]);
 
-  // Update highlighting when transcript changes
+  // CRITICAL: Enhanced effect for monitoring transcript changes
   React.useEffect(() => {
-    if (isListening && transcript) {
-      // This would need the expected text, but we'll handle it in the component
-      console.log('Transcript updated for highlighting:', transcript);
+    console.log('🔄 EFFECT TRIGGERED - isReciting:', isReciting, 'isListening:', isListening, 'transcript:', transcript);
+    console.log('🔄 Current step:', currentStep, 'recitingMode:', recitingMode);
+    
+    if (!isReciting) {
+      console.log('⚠️ Ignoring effect because not in reciting mode');
+      return;
     }
-  }, [transcript, isListening]);
+    
+    if (isListening && transcript && transcript.trim().length > 0) {
+      console.log('🎙️ TRANSCRIPT RECEIVED IN EFFECT:', transcript);
+      console.log('🎙️ Transcript length:', transcript.length);
+      console.log('🎙️ Current listening state:', isListening);
+      // This would need the expected text, but we'll handle it in the component
+    }
+  }, [transcript, isListening, isReciting, currentStep, recitingMode]);
 
   return {
     isReciting,

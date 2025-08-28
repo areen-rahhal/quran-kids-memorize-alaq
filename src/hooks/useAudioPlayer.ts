@@ -66,25 +66,32 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
   }, [currentSurahId]);
 
   const onAudioEnded = useCallback((verses: number[]) => {
-    console.log('Audio ended for verse index:', currentAyahIdx);
+    console.log('🎵 AUDIO ENDED EVENT TRIGGERED');
+    console.log('🎵 Current verse index:', currentAyahIdx);
+    console.log('🎵 Is reciting mode:', isReciting);
+    console.log('🎵 Current step:', currentStep);
+    console.log('🎵 Verses array:', verses);
     setIsPlaying(false);
     
     if (isReciting) {
       // Handle reciting journey flow
-      console.log('Handling verse end in reciting mode');
+      console.log('🎵 IN RECITING MODE - calling handleVerseEnded');
+      console.log('🎵 About to trigger listening phase...');
       handleVerseEnded();
     } else {
+      console.log('🎵 NOT in reciting mode - normal playback');
       // Normal playback flow
       const nextIndex = currentAyahIdx + 1;
       
       if (nextIndex >= verses.length) {
-        console.log('Phase completed');
+        console.log('🏁 Phase completed');
         setCurrentAyahIdx(0);
       } else {
+        console.log('▶️ Loading next ayah:', nextIndex);
         loadAndPlayAyah(nextIndex, verses);
       }
     }
-  }, [currentAyahIdx, loadAndPlayAyah, isReciting, handleVerseEnded]);
+  }, [currentAyahIdx, loadAndPlayAyah, isReciting, handleVerseEnded, currentStep]);
 
   const onAudioError = useCallback(() => {
     console.error('Audio error occurred');

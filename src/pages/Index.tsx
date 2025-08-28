@@ -14,6 +14,8 @@ import { QuranHeader } from '@/components/QuranHeader';
 import { ProgressSection } from '@/components/ProgressSection';
 import { VerseDisplay } from '@/components/VerseDisplay';
 import { AudioControls } from '@/components/AudioControls';
+import { DebugPanel } from '@/components/DebugPanel';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -111,6 +113,22 @@ const Index = () => {
     handleReadyForTesting,
     handleRestartLearning
   } = useAudioPlayer(currentSurahId);
+
+  // Enhanced debugging functions
+  const handleForceStartListening = () => {
+    console.log('🔧 MANUAL: Force starting speech recognition');
+    toast.info('🎤 محاولة بدء الاستماع يدوياً...');
+  };
+
+  const handleForceClearTranscript = () => {
+    console.log('🔧 MANUAL: Force clearing transcript');
+    toast.info('🧹 محاولة مسح النص...');
+  };
+
+  const handleForceNextStep = () => {
+    console.log('🔧 MANUAL: Force proceeding to next step');
+    toast.info('⏭️ محاولة الانتقال للخطوة التالية...');
+  };
 
   // Get current surah data
   const currentSurah = getCurrentSurah(currentSurahId);
@@ -374,6 +392,21 @@ const Index = () => {
             )}
           </div>
         </div>
+        
+        {/* Debug Panel for comprehensive troubleshooting */}
+        <DebugPanel
+          isReciting={isReciting}
+          currentStep={currentStep}
+          isListening={isListening}
+          transcript={transcript}
+          currentVerseIndex={currentAyahIdx}
+          recitingMode={recitingMode}
+          feedback={feedback}
+          showFeedback={showFeedback}
+          onForceNextStep={handleForceNextStep}
+          onForceStartListening={handleForceStartListening}
+          onForceClearTranscript={handleForceClearTranscript}
+        />
         
         {/* Right Side - Progress Section */}
         <div className="w-80 border-l">
