@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -184,15 +184,33 @@ const Index = () => {
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   
+  // Refs for tracking phase transitions to prevent flickering
+  const completingPhaseRef = useRef<number | null>(null);
+  const transitionLockRef = useRef<boolean>(false);
+  
   // Generate consistent phase ID for current phase
   const currentPhaseId = currentSurahId * 100 + currentPhaseIdx + 1;
   
-  // Simple completion status check
-  const isCurrentPhaseCompleted = completedTestingPhases.includes(currentPhaseId);
+  // Create stable display phase ID that doesn't change during transitions
+  const displayPhaseId = useMemo(() => {
+    if (transitionLockRef.current && completingPhaseRef.current) {
+      return completingPhaseRef.current;
+    }
+    return currentPhaseId;
+  }, [currentPhaseId, phaseCompletionInProgress]);
   
-  // Progress calculation that shows completion immediately during the completion process
+  // Stable completion status using display phase ID to prevent flickering
+  const isCurrentPhaseCompleted = useMemo(() => {
+    // During transitions, use the completing phase for status
+    if (transitionLockRef.current && completingPhaseRef.current) {
+      return completedTestingPhases.includes(completingPhaseRef.current);
+    }
+    return completedTestingPhases.includes(currentPhaseId);
+  }, [completedTestingPhases, currentPhaseId, phaseCompletionInProgress]);
+  
+  // Stable progress calculation that doesn't flicker during transitions
   const stableCompletedPhases = phaseCompletionInProgress && !isCurrentPhaseCompleted 
-    ? [...completedTestingPhases, currentPhaseId] 
+    ? [...completedTestingPhases, displayPhaseId] 
     : completedTestingPhases;
   const completedPhaseCount = stableCompletedPhases.length;
   const totalPhases = currentStudyPhases.length;
@@ -207,7 +225,7 @@ const Index = () => {
     });
   };
   
-  // Handle testing phase completion with automatic navigation
+  // Handle testing phase completion with automatic navigation using refs to prevent flickering
   useEffect(() => {
     if (currentStep === 'completed' && 
         recitingMode === 'testing' && 
@@ -219,6 +237,10 @@ const Index = () => {
       }
       
       console.log('Marking phase as completed:', currentPhaseId);
+      
+      // Set transition lock and completing phase ref to prevent flickering
+      transitionLockRef.current = true;
+      completingPhaseRef.current = currentPhaseId;
       setPhaseCompletionInProgress(true);
       
       // Mark phase as completed immediately using consistent ID
@@ -237,19 +259,28 @@ const Index = () => {
           setIsTransitioning(true);
           setCurrentPhaseIdx(nextPhaseIdx);
           
-          // Reset transition state after navigation
+          // Reset transition state and refs after navigation
           setTimeout(() => {
             setIsTransitioning(false);
             setPhaseCompletionInProgress(false);
+            transitionLockRef.current = false;
+            completingPhaseRef.current = null;
           }, 500);
         } else {
           console.log('All phases completed!');
           toast.success('🎉 تم إنجاز جميع المراحل بنجاح!');
           setPhaseCompletionInProgress(false);
+          transitionLockRef.current = false;
+          completingPhaseRef.current = null;
         }
       }, 2000);
       
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        // Cleanup refs if effect is cancelled
+        transitionLockRef.current = false;
+        completingPhaseRef.current = null;
+      };
     }
   }, [currentStep, recitingMode, phaseCompletionInProgress, currentPhaseId, completedTestingPhases, currentPhaseIdx, totalPhases]);
 
