@@ -127,6 +127,11 @@ const Index = () => {
 
   // Handle automatic progression in reciting mode
   useEffect(() => {
+    // Don't process if step is completed to prevent infinite loops
+    if (currentStep === 'completed') {
+      return;
+    }
+    
     console.log('Effect triggered - transcript:', transcript, 'isListening:', isListening, 'currentStep:', currentStep, 'isProcessingTranscript:', isProcessingTranscript);
     
     // Update word highlighting during listening
@@ -145,7 +150,7 @@ const Index = () => {
       const currentVerse = phaseVerseObjs[currentAyahIdx];
       const currentVerseText = currentVerse ? currentVerse.arabic : '';
       
-      // Call handleListeningComplete directly without setTimeout to avoid issues
+      // Call handleListeningComplete directly
       handleListeningComplete(phase.verses, currentVerseText);
       
       // Reset processing flag after a delay
@@ -153,7 +158,7 @@ const Index = () => {
         setIsProcessingTranscript(false);
       }, 2000);
     }
-  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript]);
+  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript, handleListeningComplete]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = completedTestingPhases.length;
@@ -169,15 +174,11 @@ const Index = () => {
 
   // Handle testing phase completion
   useEffect(() => {
-    if (currentStep === 'completed' && recitingMode === 'testing') {
-      setCompletedTestingPhases(prev => {
-        if (!prev.includes(currentPhaseIdx)) {
-          return [...prev, currentPhaseIdx];
-        }
-        return prev;
-      });
+    if (currentStep === 'completed' && recitingMode === 'testing' && !completedTestingPhases.includes(currentPhaseIdx)) {
+      console.log('Marking phase as completed:', currentPhaseIdx);
+      setCompletedTestingPhases(prev => [...prev, currentPhaseIdx]);
     }
-  }, [currentStep, recitingMode, currentPhaseIdx]);
+  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases]);
 
   // Show loading while checking auth
   if (loading) {
