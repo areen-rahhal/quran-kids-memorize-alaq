@@ -23,6 +23,8 @@ const Index = () => {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
   const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [phaseCompletionInProgress, setPhaseCompletionInProgress] = useState(false);
   const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
   const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
@@ -181,7 +183,11 @@ const Index = () => {
   }, [transcript, isReciting, isListening, currentStep, phaseVerseObjs, currentAyahIdx, phase.verses, handleListeningComplete]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
-  const completedPhaseCount = completedTestingPhases.length;
+  // Stable progress calculation that doesn't flicker during transitions
+  const stableCompletedPhases = phaseCompletionInProgress && !completedTestingPhases.includes(currentPhaseIdx) 
+    ? [...completedTestingPhases, currentPhaseIdx] 
+    : completedTestingPhases;
+  const completedPhaseCount = stableCompletedPhases.length;
   const totalPhases = currentStudyPhases.length;
   const progress = (completedPhaseCount / totalPhases) * 100;
 
@@ -196,30 +202,43 @@ const Index = () => {
 
   // Handle testing phase completion with automatic navigation
   useEffect(() => {
-    if (currentStep === 'completed' && recitingMode === 'testing' && !completedTestingPhases.includes(currentPhaseIdx)) {
-      console.log('Marking phase as completed:', currentPhaseIdx);
+    if (currentStep === 'completed' && 
+        recitingMode === 'testing' && 
+        !completedTestingPhases.includes(currentPhaseIdx) && 
+        !phaseCompletionInProgress) {
       
-      // Mark phase as completed
+      console.log('Marking phase as completed:', currentPhaseIdx);
+      setPhaseCompletionInProgress(true);
+      
+      // Mark phase as completed immediately
       setCompletedTestingPhases(prev => {
-        if (prev.includes(currentPhaseIdx)) return prev; // Prevent duplicate
+        if (prev.includes(currentPhaseIdx)) return prev;
         return [...prev, currentPhaseIdx];
       });
       
-      // Auto-navigate to next phase after a short delay
+      // Auto-navigate to next phase after delay
       const timer = setTimeout(() => {
         const nextPhaseIdx = currentPhaseIdx + 1;
         if (nextPhaseIdx < totalPhases) {
           console.log('Auto-navigating to next phase:', nextPhaseIdx);
+          setIsTransitioning(true);
           setCurrentPhaseIdx(nextPhaseIdx);
+          
+          // Reset transition state after navigation
+          setTimeout(() => {
+            setIsTransitioning(false);
+            setPhaseCompletionInProgress(false);
+          }, 500);
         } else {
           console.log('All phases completed!');
           toast.success('🎉 تم إنجاز جميع المراحل بنجاح!');
+          setPhaseCompletionInProgress(false);
         }
-      }, 2000); // 2 second delay to show completion message
+      }, 2000);
       
       return () => clearTimeout(timer);
     }
-  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases, totalPhases]);
+  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases, totalPhases, phaseCompletionInProgress]);
 
   // Show loading while checking auth
   if (loading) {
@@ -332,16 +351,28 @@ const Index = () => {
                 currentPhaseLabel={phase.label}
                 currentPhaseIdx={currentPhaseIdx}
                 totalPhases={totalPhases}
-                onNextPhase={() => setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1))}
+                 onNextPhase={() => {
+                   if (!isTransitioning && !phaseCompletionInProgress) {
+                     setIsTransitioning(true);
+                     setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
+                     setTimeout(() => setIsTransitioning(false), 300);
+                   }
+                 }}
               />
             </Card>
             
             {/* Phase navigation */}
             <div className="flex flex-col items-center gap-2">
               <div className="flex items-center justify-center gap-2">
-                <Button
-                  onClick={() => setCurrentPhaseIdx(i => Math.max(0, i - 1))}
-                  disabled={currentPhaseIdx === 0}
+                 <Button
+                   onClick={() => {
+                     if (!isTransitioning && !phaseCompletionInProgress) {
+                       setIsTransitioning(true);
+                       setCurrentPhaseIdx(i => Math.max(0, i - 1));
+                       setTimeout(() => setIsTransitioning(false), 300);
+                     }
+                   }}
+                   disabled={currentPhaseIdx === 0 || isTransitioning || phaseCompletionInProgress}
                   variant="outline"
                   className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
                   size="icon"
@@ -357,9 +388,15 @@ const Index = () => {
                   {completedTestingPhases.includes(currentPhaseIdx) && '✓ '}
                   {phase.label}
                 </span>
-                <Button
-                  onClick={() => setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1))}
-                  disabled={currentPhaseIdx === totalPhases - 1}
+                 <Button
+                   onClick={() => {
+                     if (!isTransitioning && !phaseCompletionInProgress) {
+                       setIsTransitioning(true);
+                       setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
+                       setTimeout(() => setIsTransitioning(false), 300);
+                     }
+                   }}
+                   disabled={currentPhaseIdx === totalPhases - 1 || isTransitioning || phaseCompletionInProgress}
                   variant="outline"
                   className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
                   size="icon"
