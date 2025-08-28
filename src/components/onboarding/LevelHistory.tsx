@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 import { juz30Surahs } from '@/data/juz30';
 import type { ChildProfile } from '@/pages/OnboardingFlow';
 
@@ -104,7 +104,7 @@ export const LevelHistory = ({ child, onNext, onBack }: LevelHistoryProps) => {
                               : 'border-gray-300'
                           }`}
                         >
-                          {isMemorized && <CheckCircle className="w-4 h-4 text-white" />}
+                          {isMemorized && <Check className="w-4 h-4 text-white" />}
                         </button>
                         
                         <div>

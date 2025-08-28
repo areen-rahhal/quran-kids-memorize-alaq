@@ -18,7 +18,7 @@ import {
   Volume2, 
   Hand, 
   Target,
-  CheckCircle,
+  Check,
   AlertTriangle,
   FileUser
 } from 'lucide-react';
@@ -482,7 +482,7 @@ export const ComprehensiveChildProfile = ({ child, onNext, onBack, isLoading }: 
                               ? 'bg-blue-100' 
                               : 'bg-green-100'
                         }`}>
-                          {isBasic && <CheckCircle className="w-6 h-6 text-gray-600" />}
+                          {isBasic && <Check className="w-6 h-6 text-gray-600" />}
                           {isVeryGood && <Volume2 className="w-6 h-6 text-blue-600" />}
                           {isExcellent && <Target className="w-6 h-6 text-green-600" />}
                         </div>
