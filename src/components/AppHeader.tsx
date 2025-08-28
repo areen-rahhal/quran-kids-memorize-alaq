@@ -35,8 +35,11 @@ export const AppHeader = () => {
   return (
     <header className="w-full bg-white border-b shadow-sm">
       <div className="flex items-center justify-between px-6 py-4">        
-        {/* App Title */}
-        <div className="text-center">
+        {/* Empty left space for balance */}
+        <div className="w-16"></div>
+        
+        {/* App Title - Centered */}
+        <div className="text-center flex-1">
           <h1 className="text-xl font-bold font-arabic text-emerald-700">
             تطبيق حفظ القرآن
           </h1>

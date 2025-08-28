@@ -365,7 +365,7 @@ const OnboardingFlow = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50">
+    <div>
       {renderCurrentStep()}
     </div>
   );
