@@ -85,12 +85,13 @@ export const AudioControls = ({
               🔊 استمع للآية...
             </div>
           )}
-          {currentStep === 'listening' && isListening && (
+          {(currentStep === 'listening' || currentStep === 'testing') && isListening && (
             <div className="text-green-600 text-sm font-arabic animate-pulse">
               🎤 جاري الاستماع... كرر الآية
             </div>
           )}
-          {transcript && !showFeedback && (
+          {/* Show transcript during testing mode even if step isn't 'testing' */}
+          {transcript && !showFeedback && (recitingMode === 'testing' || currentStep === 'listening' || currentStep === 'testing') && (
             <div className="text-gray-600 text-xs font-arabic bg-gray-50 p-2 rounded">
               سمعت: {transcript}
             </div>
@@ -165,8 +166,8 @@ export const AudioControls = ({
         </div>
       )}
       
-      {/* Testing mode indicator */}
-      {currentStep === 'testing' && recitingMode === 'testing' && (
+      {/* Testing mode indicator - show when in testing mode regardless of step */}
+      {recitingMode === 'testing' && currentStep !== 'completed' && currentStep !== 'ready-check' && (
         <div className="text-center mb-4">
           <div className="text-sm font-arabic p-4 rounded-xl border-2 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-300 text-purple-800 shadow-lg">
             <div className="flex items-center justify-center gap-2">
