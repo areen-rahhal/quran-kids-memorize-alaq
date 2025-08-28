@@ -225,9 +225,8 @@ export const useRecitingJourney = () => {
   const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
     console.log('🚀 Starting reciting journey with verses:', verses);
     
-    // CRITICAL: Completely reset everything first
-    console.log('🧹 Resetting all state before starting');
-    setIsReciting(false);
+    // Simple reset and start
+    setIsReciting(true);
     setCurrentStep('playing');
     setCurrentVerseIndex(0);
     setFeedback(null);
@@ -236,24 +235,15 @@ export const useRecitingJourney = () => {
     setHighlightedWords([]);
     resetTranscript();
     
-    // Force a brief pause to ensure state is cleared
-    setTimeout(() => {
-      console.log('🎵 Now actually starting reciting journey');
-      setIsReciting(true);
-      setCurrentStep('playing');
-      setCurrentVerseIndex(0);
-      
-      console.log('🎵 Loading and playing first ayah');
-      loadAndPlayAyah(0, verses);
-    }, 200);
+    console.log('🎵 Loading and playing first ayah');
+    loadAndPlayAyah(0, verses);
   }, [resetTranscript]);
 
   const handleVerseEnded = useCallback(() => {
     console.log('🎵 handleVerseEnded called - isReciting:', isReciting, 'currentStep:', currentStep);
-    console.log('🎵 Current verse index:', currentVerseIndex, 'recitingMode:', recitingMode);
     
     if (isReciting && currentStep === 'playing') {
-      console.log('✅ Verse ended, starting listening phase for verse index:', currentVerseIndex);
+      console.log('✅ Verse ended, starting listening phase');
       setCurrentStep('listening');
       setFeedback(null);
       setShowFeedback(false);
@@ -261,14 +251,11 @@ export const useRecitingJourney = () => {
       setHighlightedWords([]);
       
       setTimeout(() => {
-        console.log('🎤 About to start listening...');
+        console.log('🎤 Starting listening...');
         startListening();
-      }, 800);
-    } else {
-      console.log('❌ Not starting listening - isReciting:', isReciting, 'currentStep:', currentStep);
-      console.log('❌ Possible reasons: isReciting is false or currentStep is not "playing"');
+      }, 500);
     }
-  }, [isReciting, currentStep, currentVerseIndex, startListening, recitingMode]);
+  }, [isReciting, currentStep, startListening]);
 
   const handleListeningComplete = useCallback((verses: number[], expectedText: string, loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
     console.log('Listening complete called with transcript:', transcript);
@@ -385,7 +372,7 @@ export const useRecitingJourney = () => {
   }, [transcript, currentVerseIndex, stopListening, resetTranscript, startListening, recitingMode]);
 
   const stopRecitingJourney = useCallback(() => {
-    console.log('🛑 Stopping reciting journey and clearing ALL state');
+    console.log('🛑 Stopping reciting journey');
     setIsReciting(false);
     setCurrentStep('playing');
     setCurrentVerseIndex(0);
@@ -397,16 +384,7 @@ export const useRecitingJourney = () => {
     setCompletedLearningVerses([]);
     setRevealedTestingVerses([]);
     stopListening();
-    
-    // CRITICAL: Force reset transcript
-    console.log('🧹 Force resetting transcript');
     resetTranscript();
-    
-    // Double-check transcript is cleared
-    setTimeout(() => {
-      resetTranscript();
-      console.log('🧹 Double-reset transcript completed');
-    }, 100);
   }, [stopListening, resetTranscript]);
 
   const handleReadyForTesting = useCallback(() => {

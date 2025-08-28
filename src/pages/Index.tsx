@@ -14,7 +14,7 @@ import { QuranHeader } from '@/components/QuranHeader';
 import { ProgressSection } from '@/components/ProgressSection';
 import { VerseDisplay } from '@/components/VerseDisplay';
 import { AudioControls } from '@/components/AudioControls';
-import { DebugPanel } from '@/components/DebugPanel';
+
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -158,48 +158,19 @@ const Index = () => {
     setCurrentPhaseIdx(0);
   }, [currentSurahId]);
 
-  // Handle automatic progression in reciting mode
+  // Simple transcript processing effect
   useEffect(() => {
-    // Don't process if step is completed to prevent infinite loops
-    if (currentStep === 'completed' || processingRef.current) {
-      return;
-    }
-    
-    // CRITICAL FIX: Only log and process if we're actually in a reciting state
-    if (!isReciting) {
-      console.log('⚠️ Ignoring effect because not in reciting mode');
-      return;
-    }
-    
-    console.log('Effect triggered - transcript:', transcript, 'isListening:', isListening, 'currentStep:', currentStep, 'isProcessingTranscript:', isProcessingTranscript);
-    
-    // Update word highlighting during listening
-    if (isListening && transcript && (currentStep === 'listening' || currentStep === 'testing')) {
-      const currentVerse = phaseVerseObjs[currentAyahIdx];
-      if (currentVerse) {
-        updateWordHighlighting(transcript, currentVerse.arabic);
+    if (isReciting && !isListening && transcript && transcript.trim().length > 0) {
+      console.log('Processing transcript:', transcript);
+      
+      if (currentStep === 'listening' || currentStep === 'testing') {
+        const currentVerse = phaseVerseObjs[currentAyahIdx];
+        const currentVerseText = currentVerse ? currentVerse.arabic : '';
+        
+        handleListeningComplete(phase.verses, currentVerseText);
       }
     }
-    
-    // Only process transcript once when listening is complete
-    if (transcript && transcript.trim().length > 0 && !isListening && (currentStep === 'listening' || currentStep === 'testing') && !isProcessingTranscript) {
-      console.log('Auto-advancing due to transcript completion');
-      processingRef.current = true;
-      setIsProcessingTranscript(true);
-      
-      const currentVerse = phaseVerseObjs[currentAyahIdx];
-      const currentVerseText = currentVerse ? currentVerse.arabic : '';
-      
-      // Call handleListeningComplete directly
-      handleListeningComplete(phase.verses, currentVerseText);
-      
-      // Reset processing flag after a delay
-      setTimeout(() => {
-        setIsProcessingTranscript(false);
-        processingRef.current = false;
-      }, 2000);
-    }
-  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript, handleListeningComplete, isReciting]);
+  }, [transcript, isReciting, isListening, currentStep, phaseVerseObjs, currentAyahIdx, phase.verses, handleListeningComplete]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = completedTestingPhases.length;
@@ -393,20 +364,6 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Debug Panel for comprehensive troubleshooting */}
-        <DebugPanel
-          isReciting={isReciting}
-          currentStep={currentStep}
-          isListening={isListening}
-          transcript={transcript}
-          currentVerseIndex={currentAyahIdx}
-          recitingMode={recitingMode}
-          feedback={feedback}
-          showFeedback={showFeedback}
-          onForceNextStep={handleForceNextStep}
-          onForceStartListening={handleForceStartListening}
-          onForceClearTranscript={handleForceClearTranscript}
-        />
         
         {/* Right Side - Progress Section */}
         <div className="w-80 border-l">
