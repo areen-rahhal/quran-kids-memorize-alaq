@@ -23,6 +23,7 @@ const Index = () => {
   const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
   const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
+  const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
 
 
   // Load progress from localStorage on mount and update with child data
@@ -126,7 +127,7 @@ const Index = () => {
 
   // Handle automatic progression in reciting mode
   useEffect(() => {
-    console.log('Effect triggered - transcript:', transcript, 'isListening:', isListening, 'currentStep:', currentStep);
+    console.log('Effect triggered - transcript:', transcript, 'isListening:', isListening, 'currentStep:', currentStep, 'isProcessingTranscript:', isProcessingTranscript);
     
     // Update word highlighting during listening
     if (isListening && transcript && (currentStep === 'listening' || currentStep === 'testing')) {
@@ -136,18 +137,25 @@ const Index = () => {
       }
     }
     
-    if (transcript && transcript.trim().length > 0 && !isListening && (currentStep === 'listening' || currentStep === 'testing')) {
+    // Only process transcript once when listening is complete
+    if (transcript && transcript.trim().length > 0 && !isListening && (currentStep === 'listening' || currentStep === 'testing') && !isProcessingTranscript) {
       console.log('Auto-advancing due to transcript completion');
+      setIsProcessingTranscript(true);
+      
       const currentVerse = phaseVerseObjs[currentAyahIdx];
       const currentVerseText = currentVerse ? currentVerse.arabic : '';
       
       const timer = setTimeout(() => {
         handleListeningComplete(phase.verses, currentVerseText);
+        setIsProcessingTranscript(false);
       }, 1000);
       
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        setIsProcessingTranscript(false);
+      };
     }
-  }, [transcript, isListening, currentStep, handleListeningComplete, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting]);
+  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = completedTestingPhases.length;
