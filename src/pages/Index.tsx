@@ -254,29 +254,13 @@ const Index = () => {
         return newCompleted;
       });
       
-      // Auto-navigate to next phase after delay
+      // No auto-navigation - let user control when to advance
+      // Just reset completion states after a brief moment to finalize UI
       autoNavigationTimerRef.current = setTimeout(() => {
-        const nextPhaseIdx = currentPhaseIdx + 1;
-        if (nextPhaseIdx < totalPhases) {
-          console.log('Auto-navigating to next phase:', nextPhaseIdx);
-          setIsTransitioning(true);
-          setCurrentPhaseIdx(nextPhaseIdx);
-          
-          // Reset transition state and refs after navigation
-          setTimeout(() => {
-            setIsTransitioning(false);
-            setPhaseCompletionInProgress(false);
-            transitionLockRef.current = false;
-            completingPhaseRef.current = null;
-          }, 500);
-        } else {
-          console.log('All phases completed!');
-          toast.success('🎉 تم إنجاز جميع المراحل بنجاح!');
-          setPhaseCompletionInProgress(false);
-          transitionLockRef.current = false;
-          completingPhaseRef.current = null;
-        }
-      }, 2000);
+        setPhaseCompletionInProgress(false);
+        transitionLockRef.current = false;
+        completingPhaseRef.current = null;
+      }, 500);
       
       return () => {
         if (autoNavigationTimerRef.current) {
