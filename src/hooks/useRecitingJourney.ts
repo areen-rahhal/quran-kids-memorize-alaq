@@ -225,24 +225,27 @@ export const useRecitingJourney = () => {
   const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
     console.log('🚀 Starting reciting journey with verses:', verses);
     
-    // CRITICAL: Force clear transcript with multiple methods
-    console.log('🧹 Forcefully clearing transcript before starting');
-    setIsReciting(false); // Temporarily disable to prevent loops
+    // CRITICAL: Completely reset everything first
+    console.log('🧹 Resetting all state before starting');
+    setIsReciting(false);
+    setCurrentStep('playing');
+    setCurrentVerseIndex(0);
+    setFeedback(null);
+    setShowFeedback(false);
+    setErrorDetails('');
+    setHighlightedWords([]);
     resetTranscript();
     
-    // Wait a moment then start properly
+    // Force a brief pause to ensure state is cleared
     setTimeout(() => {
+      console.log('🎵 Now actually starting reciting journey');
       setIsReciting(true);
       setCurrentStep('playing');
       setCurrentVerseIndex(0);
-      setFeedback(null);
-      setShowFeedback(false);
-      setErrorDetails('');
-      setHighlightedWords([]);
       
-      console.log('🎵 About to load and play first ayah');
+      console.log('🎵 Loading and playing first ayah');
       loadAndPlayAyah(0, verses);
-    }, 100);
+    }, 200);
   }, [resetTranscript]);
 
   const handleVerseEnded = useCallback(() => {
@@ -382,7 +385,7 @@ export const useRecitingJourney = () => {
   }, [transcript, currentVerseIndex, stopListening, resetTranscript, startListening, recitingMode]);
 
   const stopRecitingJourney = useCallback(() => {
-    console.log('Stopping reciting journey');
+    console.log('🛑 Stopping reciting journey and clearing ALL state');
     setIsReciting(false);
     setCurrentStep('playing');
     setCurrentVerseIndex(0);
@@ -394,7 +397,16 @@ export const useRecitingJourney = () => {
     setCompletedLearningVerses([]);
     setRevealedTestingVerses([]);
     stopListening();
+    
+    // CRITICAL: Force reset transcript
+    console.log('🧹 Force resetting transcript');
     resetTranscript();
+    
+    // Double-check transcript is cleared
+    setTimeout(() => {
+      resetTranscript();
+      console.log('🧹 Double-reset transcript completed');
+    }, 100);
   }, [stopListening, resetTranscript]);
 
   const handleReadyForTesting = useCallback(() => {
