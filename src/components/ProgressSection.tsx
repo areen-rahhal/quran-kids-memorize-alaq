@@ -118,17 +118,7 @@ const PathWithPhases: React.FC<{
       // For now, assume no errors - you can extend this logic later
       return 'completed';
     }
-    
-    // Only show phases as current if the surah has actually been started
-    if (surahId === currentSurahId) {
-      const surahPhases = completedTestingPhases.filter(id => 
-        Math.floor(id / 100) === surahId
-      );
-      if (surahPhases.length > 0) {
-        return 'current';
-      }
-    }
-    
+    if (surahId === currentSurahId) return 'current';
     return 'locked';
   };
   return <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
@@ -206,24 +196,9 @@ const SurahNode: React.FC<{
       }
     }
 
-    // Check if surah is completed
+    // Fallback to old logic
     if (completedSurahs.includes(surahId)) return 'completed';
-    
-    // Only mark as current if user has actually started (has completed phases or is actively learning)
-    if (surahId === currentSurahId) {
-      // Check if user has made any progress on this surah
-      const surahPhases = completedTestingPhases.filter(phaseId => 
-        Math.floor(phaseId / 100) === surahId
-      );
-      
-      // If user has completed any phases in this surah, it's current
-      // Otherwise, it's just the starting point but not yet "current"
-      if (surahPhases.length > 0) {
-        return 'current';
-      }
-    }
-    
-    // Default to locked for surahs that haven't been started
+    if (surahId === currentSurahId) return 'current';
     return 'locked';
   };
   const surahStatus = getSurahStatus(surah.id);
@@ -285,20 +260,7 @@ const SurahNode: React.FC<{
     }}>
           {phases.slice(0, 4).map(phaseIndex => {
         const phaseId = surah.id * 100 + phaseIndex + 1;
-        let phaseStatus: 'locked' | 'current' | 'completed' | 'completed-errors' | 'excellent' | 'very-good' | 'basic' | 'needs-improvement' = 'locked';
-        
-        if (completedTestingPhases.includes(phaseId)) {
-          phaseStatus = 'completed';
-        } else if (surah.id === currentSurahId) {
-          // Only show as current if user has started this surah
-          const surahPhases = completedTestingPhases.filter(id => 
-            Math.floor(id / 100) === surah.id
-          );
-          if (surahPhases.length > 0) {
-            phaseStatus = 'current';
-          }
-        }
-        
+        const phaseStatus = completedTestingPhases.includes(phaseId) ? 'completed' : surah.id === currentSurahId ? 'current' : 'locked';
         return <Circle key={phaseIndex} status={phaseStatus} size="small" onClick={() => onPhaseSelect?.(surah.id, phaseIndex)}>
                 {phaseIndex + 1}
               </Circle>;
