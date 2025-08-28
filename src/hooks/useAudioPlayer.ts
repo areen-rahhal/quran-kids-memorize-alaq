@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { getAudioUrl } from '@/utils/audioUtils';
+import { getAudioUrl, getAlternativeAudioUrl, getThirdAudioUrl } from '@/utils/audioUtils';
 import { useRecitingJourney } from './useRecitingJourney';
 
 export const useAudioPlayer = (currentSurahId: number = 114) => {
@@ -36,32 +36,45 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     if (!audioRef.current || ayahIndex >= verses.length) return;
     
     const ayahId = verses[ayahIndex];
-    const url = getAudioUrl(currentSurahId, ayahId);
+    const urls = [
+      getAudioUrl(currentSurahId, ayahId),
+      getAlternativeAudioUrl(currentSurahId, ayahId),
+      getThirdAudioUrl(currentSurahId, ayahId)
+    ];
     
-    console.log(`Loading ayah ${ayahId} from Surah ${currentSurahId} at index ${ayahIndex}, URL: ${url}`);
+    console.log(`Loading ayah ${ayahId} from Surah ${currentSurahId} at index ${ayahIndex}`);
     
-    try {
-      setAudioError(null);
-      setShowAudioError(false);
-      setHasAttemptedPlay(true);
-      setCurrentAyahIdx(ayahIndex);
+    setAudioError(null);
+    setShowAudioError(false);
+    setHasAttemptedPlay(true);
+    setCurrentAyahIdx(ayahIndex);
+    
+    // Stop any current audio
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    
+    // Try each URL until one works
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      console.log(`Trying audio URL ${i + 1}/${urls.length}: ${url}`);
       
-      // Stop any current audio
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.src = url;
-      
-      // Load and play
-      audioRef.current.load();
-      await audioRef.current.play();
-      console.log('Audio playing successfully');
-      setIsPlaying(true);
-      
-    } catch (error) {
-      console.error('Audio play failed:', error);
-      setAudioError('Failed to load audio. Please check your internet connection.');
-      setShowAudioError(true);
-      setIsPlaying(false);
+      try {
+        audioRef.current.src = url;
+        audioRef.current.load();
+        await audioRef.current.play();
+        console.log(`Audio playing successfully from source ${i + 1}`);
+        setIsPlaying(true);
+        return; // Success! Exit the function
+        
+      } catch (error) {
+        console.error(`Audio source ${i + 1} failed:`, error);
+        if (i === urls.length - 1) {
+          // All sources failed
+          setAudioError('Failed to load audio. Please check your internet connection.');
+          setShowAudioError(true);
+          setIsPlaying(false);
+        }
+      }
     }
   }, [currentSurahId]);
 
