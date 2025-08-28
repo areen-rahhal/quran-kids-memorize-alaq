@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ const Index = () => {
   const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
   const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
+  const processingRef = useRef(false);
 
 
   // Clear localStorage data for testing
@@ -133,7 +134,7 @@ const Index = () => {
   // Handle automatic progression in reciting mode
   useEffect(() => {
     // Don't process if step is completed to prevent infinite loops
-    if (currentStep === 'completed') {
+    if (currentStep === 'completed' || processingRef.current) {
       return;
     }
     
@@ -150,6 +151,7 @@ const Index = () => {
     // Only process transcript once when listening is complete
     if (transcript && transcript.trim().length > 0 && !isListening && (currentStep === 'listening' || currentStep === 'testing') && !isProcessingTranscript) {
       console.log('Auto-advancing due to transcript completion');
+      processingRef.current = true;
       setIsProcessingTranscript(true);
       
       const currentVerse = phaseVerseObjs[currentAyahIdx];
@@ -161,9 +163,10 @@ const Index = () => {
       // Reset processing flag after a delay
       setTimeout(() => {
         setIsProcessingTranscript(false);
+        processingRef.current = false;
       }, 2000);
     }
-  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript, handleListeningComplete]);
+  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = completedTestingPhases.length;
