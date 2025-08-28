@@ -199,12 +199,14 @@ const Index = () => {
     return currentPhaseId;
   }, [currentPhaseId, phaseCompletionInProgress]);
   
-  // Stable completion status using display phase ID to prevent flickering
+  // Phase completion status - shows actual status for completed phases, "in progress" for new phases
   const isCurrentPhaseCompleted = useMemo(() => {
     // During transitions, use the completing phase for status
     if (transitionLockRef.current && completingPhaseRef.current) {
       return completedTestingPhases.includes(completingPhaseRef.current);
     }
+    // For the current phase, only show as completed if it was actually completed before
+    // This ensures new phases show as "in progress" even if user navigated manually
     return completedTestingPhases.includes(currentPhaseId);
   }, [completedTestingPhases, currentPhaseId, phaseCompletionInProgress]);
   
