@@ -44,6 +44,7 @@ const OnboardingFlow = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('parent_profile');
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
+  const [editingChildIndex, setEditingChildIndex] = useState<number | null>(null);
   const [currentChild, setCurrentChild] = useState<ChildProfile>({
     first_name: '',
     age: 6,
@@ -151,66 +152,142 @@ const OnboardingFlow = () => {
     try {
       setIsLoading(true);
       
-      // Save child profile to database
-      const { data: savedChild, error: childError } = await supabase
-        .from('child_profiles')
-        .insert({
-          parent_id: parentProfile.id,
-          first_name: childData.first_name!,
-          age: childData.age!,
-          child_level: childData.child_level!,
-          native_language: childData.native_language!,
-          avatar_url: childData.avatar_url,
-          session_time_minutes: childData.session_time_minutes!,
-          phase_length: childData.phase_length!,
-          learning_goal: childData.learning_goal!,
-          learning_preference: childData.learning_preference!,
-          has_speech_disorder: childData.has_speech_disorder || false,
-          speech_disorder_type: childData.speech_disorder_type,
-          target_juz: childData.target_juz,
-        })
-        .select()
-        .single();
+      // Check if we're editing an existing child
+      if (editingChildIndex !== null) {
+        // Update existing child
+        const childToUpdate = children[editingChildIndex];
+        if (childToUpdate.id) {
+          const { data: updatedChild, error: updateError } = await supabase
+            .from('child_profiles')
+            .update({
+              first_name: childData.first_name!,
+              age: childData.age!,
+              child_level: childData.child_level!,
+              native_language: childData.native_language!,
+              avatar_url: childData.avatar_url,
+              session_time_minutes: childData.session_time_minutes!,
+              phase_length: childData.phase_length!,
+              learning_goal: childData.learning_goal!,
+              learning_preference: childData.learning_preference!,
+              has_speech_disorder: childData.has_speech_disorder || false,
+              speech_disorder_type: childData.speech_disorder_type,
+              target_juz: childData.target_juz,
+            })
+            .eq('id', childToUpdate.id)
+            .select()
+            .single();
 
-      if (childError) throw childError;
+          if (updateError) throw updateError;
 
-      // Save memorization history if any
-      if (childData.memorization_history && childData.memorization_history.length > 0) {
-        const historyInserts = childData.memorization_history.map(item => ({
-          child_id: savedChild.id,
-          surah_number: item.surah_number,
-          proficiency: item.proficiency as 'basic' | 'very_good' | 'excellent',
-        }));
+          // Update memorization history
+          await supabase
+            .from('child_memorization_history')
+            .delete()
+            .eq('child_id', childToUpdate.id);
 
-        const { error: historyError } = await supabase
-          .from('child_memorization_history')
-          .insert(historyInserts);
+          if (childData.memorization_history && childData.memorization_history.length > 0) {
+            const historyInserts = childData.memorization_history.map(item => ({
+              child_id: childToUpdate.id,
+              surah_number: item.surah_number,
+              proficiency: item.proficiency as 'basic' | 'very_good' | 'excellent',
+            }));
 
-        if (historyError) throw historyError;
+            await supabase
+              .from('child_memorization_history')
+              .insert(historyInserts);
+          }
+
+          // Update target surahs
+          await supabase
+            .from('child_target_surahs')
+            .delete()
+            .eq('child_id', childToUpdate.id);
+
+          if (childData.target_surahs && childData.target_surahs.length > 0) {
+            const targetInserts = childData.target_surahs.map(surahNumber => ({
+              child_id: childToUpdate.id,
+              surah_number: surahNumber,
+            }));
+
+            await supabase
+              .from('child_target_surahs')
+              .insert(targetInserts);
+          }
+
+          // Update children list
+          const updatedChildren = [...children];
+          updatedChildren[editingChildIndex] = { ...updatedChild, memorization_history: childData.memorization_history || [], target_surahs: childData.target_surahs || [] };
+          setChildren(updatedChildren);
+          setEditingChildIndex(null);
+
+          toast({
+            title: "تم تحديث البيانات",
+            description: `تم تحديث ملف ${childData.first_name} بنجاح`,
+          });
+        }
+      } else {
+        // Create new child
+        const { data: savedChild, error: childError } = await supabase
+          .from('child_profiles')
+          .insert({
+            parent_id: parentProfile.id,
+            first_name: childData.first_name!,
+            age: childData.age!,
+            child_level: childData.child_level!,
+            native_language: childData.native_language!,
+            avatar_url: childData.avatar_url,
+            session_time_minutes: childData.session_time_minutes!,
+            phase_length: childData.phase_length!,
+            learning_goal: childData.learning_goal!,
+            learning_preference: childData.learning_preference!,
+            has_speech_disorder: childData.has_speech_disorder || false,
+            speech_disorder_type: childData.speech_disorder_type,
+            target_juz: childData.target_juz,
+          })
+          .select()
+          .single();
+
+        if (childError) throw childError;
+
+        // Save memorization history if any
+        if (childData.memorization_history && childData.memorization_history.length > 0) {
+          const historyInserts = childData.memorization_history.map(item => ({
+            child_id: savedChild.id,
+            surah_number: item.surah_number,
+            proficiency: item.proficiency as 'basic' | 'very_good' | 'excellent',
+          }));
+
+          const { error: historyError } = await supabase
+            .from('child_memorization_history')
+            .insert(historyInserts);
+
+          if (historyError) throw historyError;
+        }
+
+        // Save target surahs if any
+        if (childData.target_surahs && childData.target_surahs.length > 0) {
+          const targetInserts = childData.target_surahs.map(surahNumber => ({
+            child_id: savedChild.id,
+            surah_number: surahNumber,
+          }));
+
+          const { error: targetError } = await supabase
+            .from('child_target_surahs')
+            .insert(targetInserts);
+
+          if (targetError) throw targetError;
+        }
+
+        // Add child to current children list
+        setChildren(prev => [...prev, { ...savedChild, memorization_history: childData.memorization_history || [], target_surahs: childData.target_surahs || [] }]);
+        
+        toast({
+          title: "تم إنشاء الملف",
+          description: `تم إنشاء ملف ${childData.first_name} بنجاح`,
+        });
       }
-
-      // Save target surahs if any
-      if (childData.target_surahs && childData.target_surahs.length > 0) {
-        const targetInserts = childData.target_surahs.map(surahNumber => ({
-          child_id: savedChild.id,
-          surah_number: surahNumber,
-        }));
-
-        const { error: targetError } = await supabase
-          .from('child_target_surahs')
-          .insert(targetInserts);
-
-        if (targetError) throw targetError;
-      }
-
-      // Add child to current children list
-      setChildren(prev => [...prev, { ...savedChild, memorization_history: childData.memorization_history || [], target_surahs: childData.target_surahs || [] }]);
-      setCurrentStep('children_overview');
       
-      toast({
-        title: "تم إنشاء الملف",
-        description: `تم إنشاء ملف ${childData.first_name} بنجاح`,
-      });
+      setCurrentStep('children_overview');
     } catch (error) {
       console.error('Error saving child:', error);
       toast({
@@ -253,10 +330,27 @@ const OnboardingFlow = () => {
         return (
           <ChildrenOverview
             children={children}
-            onAddChild={() => setCurrentStep('create_child_comprehensive')}
-            onEditChild={(childId) => {
-              // Handle edit child logic here
-              console.log('Edit child:', childId);
+            onAddChild={() => {
+              setEditingChildIndex(null);
+              setCurrentChild({
+                first_name: '',
+                age: 6,
+                child_level: 'beginner',
+                native_language: 'arabic',
+                session_time_minutes: 15,
+                phase_length: 3,
+                learning_goal: 'memorize_new',
+                learning_preference: 'audio',
+                has_speech_disorder: false,
+                memorization_history: [],
+                target_surahs: [],
+              });
+              setCurrentStep('create_child_comprehensive');
+            }}
+            onEditChild={(childIndex) => {
+              setEditingChildIndex(childIndex);
+              setCurrentChild(children[childIndex]);
+              setCurrentStep('create_child_comprehensive');
             }}
             onComplete={() => setCurrentStep('complete')}
           />
