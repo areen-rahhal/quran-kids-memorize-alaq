@@ -167,17 +167,18 @@ const Index = () => {
     });
   };
 
-  // Handle testing phase completion
+  // Handle testing phase completion - only once per completion
   useEffect(() => {
-    if (currentStep === 'completed' && recitingMode === 'testing') {
+    if (currentStep === 'completed' && recitingMode === 'testing' && !completedTestingPhases.includes(currentPhaseIdx)) {
       setCompletedTestingPhases(prev => {
         if (!prev.includes(currentPhaseIdx)) {
+          console.log('Marking phase', currentPhaseIdx, 'as completed');
           return [...prev, currentPhaseIdx];
         }
         return prev;
       });
     }
-  }, [currentStep, recitingMode, currentPhaseIdx]);
+  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases]);
 
   // Show loading while checking auth
   if (loading) {
