@@ -175,7 +175,7 @@ const Index = () => {
         processingRef.current = false;
       }, 2000);
     }
-  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript]);
+  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript, handleListeningComplete]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = completedTestingPhases.length;

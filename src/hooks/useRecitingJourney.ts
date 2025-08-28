@@ -223,7 +223,11 @@ export const useRecitingJourney = () => {
   };
 
   const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
-    console.log('Starting reciting journey with verses:', verses);
+    console.log('🚀 Starting reciting journey with verses:', verses);
+    
+    // Clear any existing transcript immediately to prevent infinite loops
+    resetTranscript();
+    
     setIsReciting(true);
     setCurrentStep('playing');
     setCurrentVerseIndex(0);
@@ -231,7 +235,6 @@ export const useRecitingJourney = () => {
     setShowFeedback(false);
     setErrorDetails('');
     setHighlightedWords([]);
-    resetTranscript();
     
     loadAndPlayAyah(0, verses);
   }, [resetTranscript]);
