@@ -247,7 +247,7 @@ const SurahNode: React.FC<{
         </div>
         
         {/* Current lesson indicator */}
-        {isCurrentSurah && <div className="mt-3 px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs rounded-full shadow-lg animate-bounce">
+        {isCurrentSurah && <div className="mt-3 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm rounded-full shadow-lg animate-bounce">
             ✨ ابدأ هنا
           </div>}
       </div>
