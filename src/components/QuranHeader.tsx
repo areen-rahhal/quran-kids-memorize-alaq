@@ -37,13 +37,17 @@ export const QuranHeader = ({
             <Star className="h-5 w-5 fill-current" />
             <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
           </div>
-          <ChildProfileSwitcher
-            children={childProfiles}
-            selectedChild={selectedChild}
-            onSelectChild={selectChild}
-            loading={loading}
-          />
         </div>
+      </div>
+      
+      {/* Child Profile Switcher - Positioned in top right corner */}
+      <div className="absolute top-2 right-3">
+        <ChildProfileSwitcher
+          children={childProfiles}
+          selectedChild={selectedChild}
+          onSelectChild={selectChild}
+          loading={loading}
+        />
       </div>
       
       <div className="mt-0">
