@@ -70,8 +70,9 @@ export const useSpeechRecognition = () => {
   }, []);
 
   const resetTranscript = useCallback(() => {
+    console.log('🧹 Resetting transcript from:', transcript, 'to empty');
     setTranscript('');
-  }, []);
+  }, [transcript]);
 
   return {
     isListening,

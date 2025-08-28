@@ -147,6 +147,12 @@ const Index = () => {
       return;
     }
     
+    // CRITICAL FIX: Only log and process if we're actually in a reciting state
+    if (!isReciting) {
+      console.log('⚠️ Ignoring effect because not in reciting mode');
+      return;
+    }
+    
     console.log('Effect triggered - transcript:', transcript, 'isListening:', isListening, 'currentStep:', currentStep, 'isProcessingTranscript:', isProcessingTranscript);
     
     // Update word highlighting during listening
@@ -175,7 +181,7 @@ const Index = () => {
         processingRef.current = false;
       }, 2000);
     }
-  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript, handleListeningComplete]);
+  }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript, handleListeningComplete, isReciting]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   const completedPhaseCount = completedTestingPhases.length;

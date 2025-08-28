@@ -225,18 +225,24 @@ export const useRecitingJourney = () => {
   const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
     console.log('🚀 Starting reciting journey with verses:', verses);
     
-    // Clear any existing transcript immediately to prevent infinite loops
+    // CRITICAL: Force clear transcript with multiple methods
+    console.log('🧹 Forcefully clearing transcript before starting');
+    setIsReciting(false); // Temporarily disable to prevent loops
     resetTranscript();
     
-    setIsReciting(true);
-    setCurrentStep('playing');
-    setCurrentVerseIndex(0);
-    setFeedback(null);
-    setShowFeedback(false);
-    setErrorDetails('');
-    setHighlightedWords([]);
-    
-    loadAndPlayAyah(0, verses);
+    // Wait a moment then start properly
+    setTimeout(() => {
+      setIsReciting(true);
+      setCurrentStep('playing');
+      setCurrentVerseIndex(0);
+      setFeedback(null);
+      setShowFeedback(false);
+      setErrorDetails('');
+      setHighlightedWords([]);
+      
+      console.log('🎵 About to load and play first ayah');
+      loadAndPlayAyah(0, verses);
+    }, 100);
   }, [resetTranscript]);
 
   const handleVerseEnded = useCallback(() => {
