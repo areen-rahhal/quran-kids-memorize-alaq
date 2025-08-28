@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,9 +23,12 @@ const Index = () => {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
   const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [phaseCompletionInProgress, setPhaseCompletionInProgress] = useState(false);
   const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
   const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
+  const processingRef = useRef(false);
 
 
   // Clear localStorage data for testing
@@ -146,9 +149,18 @@ const Index = () => {
     vnum => currentVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
-  // Reset audio when phase or surah changes
+  // When phase changes or surah changes, reset audio (but not during completion flow)
   useEffect(() => {
-    resetAudio();
+    // Don't reset if we just completed a testing phase - let the user navigate naturally
+    if (currentStep === 'completed' && recitingMode === 'testing') {
+      return;
+    }
+    // Reset only when actually changing phases, not during the completion process
+    const timer = setTimeout(() => {
+      resetAudio();
+    }, 100); // Small delay to prevent interference with completion flow
+    
+    return () => clearTimeout(timer);
   }, [currentPhaseIdx, currentSurahId, resetAudio]);
 
   // Reset to phase 0 when surah changes
@@ -172,14 +184,35 @@ const Index = () => {
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   
-  // Simple phase ID calculation
+  // Refs for tracking phase transitions to prevent flickering
+  const completingPhaseRef = useRef<number | null>(null);
+  const transitionLockRef = useRef<boolean>(false);
+  
+  // Generate consistent phase ID for current phase
   const currentPhaseId = currentSurahId * 100 + currentPhaseIdx + 1;
   
-  // Direct completion status calculation
-  const isCurrentPhaseCompleted = completedTestingPhases.includes(currentPhaseId);
+  // Create stable display phase ID that doesn't change during transitions
+  const displayPhaseId = useMemo(() => {
+    if (transitionLockRef.current && completingPhaseRef.current) {
+      return completingPhaseRef.current;
+    }
+    return currentPhaseId;
+  }, [currentPhaseId, phaseCompletionInProgress]);
   
-  // Simple progress calculation
-  const completedPhaseCount = completedTestingPhases.length;
+  // Stable completion status using display phase ID to prevent flickering
+  const isCurrentPhaseCompleted = useMemo(() => {
+    // During transitions, use the completing phase for status
+    if (transitionLockRef.current && completingPhaseRef.current) {
+      return completedTestingPhases.includes(completingPhaseRef.current);
+    }
+    return completedTestingPhases.includes(currentPhaseId);
+  }, [completedTestingPhases, currentPhaseId, phaseCompletionInProgress]);
+  
+  // Stable progress calculation that doesn't flicker during transitions
+  const stableCompletedPhases = phaseCompletionInProgress && !isCurrentPhaseCompleted 
+    ? [...completedTestingPhases, displayPhaseId] 
+    : completedTestingPhases;
+  const completedPhaseCount = stableCompletedPhases.length;
   const totalPhases = currentStudyPhases.length;
   const progress = (completedPhaseCount / totalPhases) * 100;
 
@@ -191,10 +224,16 @@ const Index = () => {
       return [...prev, ...newIds];
     });
   };
+  
+  // Auto-navigation timer ref for cleanup
+  const autoNavigationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle testing phase completion - mark as completed immediately
+  // Handle testing phase completion with automatic navigation using refs to prevent flickering
   useEffect(() => {
-    if (currentStep === 'completed' && recitingMode === 'testing') {
+    if (currentStep === 'completed' && 
+        recitingMode === 'testing' && 
+        !phaseCompletionInProgress) {
+      
       // Check if this phase is already completed to prevent duplicate processing
       if (completedTestingPhases.includes(currentPhaseId)) {
         return;
@@ -202,23 +241,80 @@ const Index = () => {
       
       console.log('Marking phase as completed:', currentPhaseId);
       
-      // Mark phase as completed immediately
+      // Set transition lock and completing phase ref to prevent flickering
+      transitionLockRef.current = true;
+      completingPhaseRef.current = currentPhaseId;
+      setPhaseCompletionInProgress(true);
+      
+      // Mark phase as completed immediately using consistent ID
       setCompletedTestingPhases(prev => {
         if (prev.includes(currentPhaseId)) return prev;
         const newCompleted = [...prev, currentPhaseId];
         console.log('Updated completed phases:', newCompleted);
         return newCompleted;
       });
+      
+      // Auto-navigate to next phase after delay
+      autoNavigationTimerRef.current = setTimeout(() => {
+        const nextPhaseIdx = currentPhaseIdx + 1;
+        if (nextPhaseIdx < totalPhases) {
+          console.log('Auto-navigating to next phase:', nextPhaseIdx);
+          setIsTransitioning(true);
+          setCurrentPhaseIdx(nextPhaseIdx);
+          
+          // Reset transition state and refs after navigation
+          setTimeout(() => {
+            setIsTransitioning(false);
+            setPhaseCompletionInProgress(false);
+            transitionLockRef.current = false;
+            completingPhaseRef.current = null;
+          }, 500);
+        } else {
+          console.log('All phases completed!');
+          toast.success('🎉 تم إنجاز جميع المراحل بنجاح!');
+          setPhaseCompletionInProgress(false);
+          transitionLockRef.current = false;
+          completingPhaseRef.current = null;
+        }
+      }, 2000);
+      
+      return () => {
+        if (autoNavigationTimerRef.current) {
+          clearTimeout(autoNavigationTimerRef.current);
+          autoNavigationTimerRef.current = null;
+        }
+        // Cleanup refs if effect is cancelled
+        transitionLockRef.current = false;
+        completingPhaseRef.current = null;
+      };
     }
-  }, [currentStep, recitingMode, currentPhaseId, completedTestingPhases]);
+  }, [currentStep, recitingMode, phaseCompletionInProgress, currentPhaseId, completedTestingPhases, currentPhaseIdx, totalPhases]);
 
-  // Simple manual navigation
+  // Helper function to handle manual navigation with auto-navigation cleanup
   const handleManualNavigation = (direction: 'next' | 'prev') => {
+    // Cancel auto-navigation if user manually navigates
+    if (autoNavigationTimerRef.current) {
+      clearTimeout(autoNavigationTimerRef.current);
+      autoNavigationTimerRef.current = null;
+      console.log('Auto-navigation cancelled due to manual navigation');
+    }
+
+    // Reset completion states for immediate responsiveness
+    if (currentStep === 'completed') {
+      setPhaseCompletionInProgress(false);
+      transitionLockRef.current = false;
+      completingPhaseRef.current = null;
+    }
+
+    // Perform navigation
+    setIsTransitioning(true);
     if (direction === 'next') {
       setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
     } else {
       setCurrentPhaseIdx(i => Math.max(0, i - 1));
     }
+    
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   // Show loading while checking auth
@@ -332,6 +428,12 @@ const Index = () => {
                 currentPhaseLabel={phase.label}
                 currentPhaseIdx={currentPhaseIdx}
                 totalPhases={totalPhases}
+                 onNextPhase={() => {
+                   // Allow navigation when completed or when not in transition/reciting
+                   if (currentStep === 'completed' || (!isTransitioning && !isReciting)) {
+                     handleManualNavigation('next');
+                   }
+                 }}
               />
             </Card>
             
@@ -339,8 +441,13 @@ const Index = () => {
             <div className="flex flex-col items-center gap-2">
               <div className="flex items-center justify-center gap-2">
                  <Button
-                   onClick={() => handleManualNavigation('prev')}
-                   disabled={currentPhaseIdx === 0}
+                   onClick={() => {
+                     // Allow navigation when completed or when not in transition/reciting
+                     if (currentStep === 'completed' || (!isTransitioning && !isReciting)) {
+                       handleManualNavigation('prev');
+                     }
+                   }}
+                   disabled={currentPhaseIdx === 0 || (isTransitioning && currentStep !== 'completed') || (isReciting && currentStep !== 'completed')}
                   variant="outline"
                   className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
                   size="icon"
@@ -357,8 +464,13 @@ const Index = () => {
                   {phase.label}
                 </span>
                  <Button
-                   onClick={() => handleManualNavigation('next')}
-                   disabled={currentPhaseIdx >= totalPhases - 1}
+                   onClick={() => {
+                     // Allow navigation when completed or when not in transition/reciting
+                     if (currentStep === 'completed' || (!isTransitioning && !isReciting)) {
+                       handleManualNavigation('next');
+                     }
+                   }}
+                   disabled={currentPhaseIdx >= totalPhases - 1 || (isTransitioning && currentStep !== 'completed') || (isReciting && currentStep !== 'completed')}
                   variant="outline"
                   className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
                   size="icon"
