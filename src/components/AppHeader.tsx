@@ -71,14 +71,16 @@ export const AppHeader = () => {
                   </div>
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem className="flex items-center gap-3 p-4 cursor-pointer hover:bg-green-50">
-                  <div className="h-8 w-8 rounded bg-green-100 flex items-center justify-center">
-                    <Users className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div className="font-arabic text-right flex-1">
-                    <p className="font-medium text-gray-900">ملفات الأطفال</p>
-                    <p className="text-xs text-muted-foreground">إدارة حسابات الأطفال</p>
-                  </div>
+                <DropdownMenuItem asChild>
+                  <Link to="/onboarding" className="flex items-center gap-3 p-4 cursor-pointer hover:bg-green-50">
+                    <div className="h-8 w-8 rounded bg-green-100 flex items-center justify-center">
+                      <Users className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div className="font-arabic text-right flex-1">
+                      <p className="font-medium text-gray-900">ملفات الأطفال</p>
+                      <p className="text-xs text-muted-foreground">إدارة حسابات الأطفال</p>
+                    </div>
+                  </Link>
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem className="flex items-center gap-3 p-4 cursor-pointer hover:bg-purple-50">
