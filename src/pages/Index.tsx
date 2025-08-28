@@ -121,10 +121,14 @@ const Index = () => {
     vnum => currentVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
-  // When phase changes or surah changes, reset audio
+  // When phase changes or surah changes, reset audio (but not during completion flow)
   useEffect(() => {
+    // Don't reset if we just completed a testing phase - let the user navigate naturally
+    if (currentStep === 'completed' && recitingMode === 'testing') {
+      return;
+    }
     resetAudio();
-  }, [currentPhaseIdx, currentSurahId, resetAudio]);
+  }, [currentPhaseIdx, currentSurahId, resetAudio, currentStep, recitingMode]);
 
   // Reset to phase 0 when surah changes
   useEffect(() => {
