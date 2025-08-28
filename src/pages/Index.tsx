@@ -145,15 +145,13 @@ const Index = () => {
       const currentVerse = phaseVerseObjs[currentAyahIdx];
       const currentVerseText = currentVerse ? currentVerse.arabic : '';
       
-      const timer = setTimeout(() => {
-        handleListeningComplete(phase.verses, currentVerseText);
-        setIsProcessingTranscript(false);
-      }, 1000);
+      // Call handleListeningComplete directly without setTimeout to avoid issues
+      handleListeningComplete(phase.verses, currentVerseText);
       
-      return () => {
-        clearTimeout(timer);
+      // Reset processing flag after a delay
+      setTimeout(() => {
         setIsProcessingTranscript(false);
-      };
+      }, 2000);
     }
   }, [transcript, isListening, currentStep, phase.verses, phaseVerseObjs, currentAyahIdx, updateWordHighlighting, isProcessingTranscript]);
 
