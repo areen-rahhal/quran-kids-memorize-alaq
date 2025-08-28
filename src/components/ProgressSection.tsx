@@ -289,22 +289,10 @@ export const ProgressSection = ({
     onSurahSelect(surahId);
   };
 
-  // Calculate completion progress
+  // Calculate completion progress - use only real progress data
   const totalSurahs = juz30Surahs.length;
-  
-  // Mock data: Set user at Al-Alaq (19th surah), with previous surahs completed
-  const mockCompletedSurahs = juz30Surahs.slice(0, 18).map(s => s.id); // First 18 surahs completed
-  const mockCompletedPhases: number[] = [];
-  
-  // Add completed phases for completed surahs
-  juz30Surahs.slice(0, 18).forEach(surah => {
-    for (let i = 0; i < surah.phases; i++) {
-      mockCompletedPhases.push(surah.id * 100 + i + 1);
-    }
-  });
-
-  const effectiveCompletedSurahs = [...new Set([...completedSurahs, ...mockCompletedSurahs])];
-  const effectiveCompletedPhases = [...new Set([...completedTestingPhases, ...mockCompletedPhases])];
+  const effectiveCompletedSurahs = completedSurahs;
+  const effectiveCompletedPhases = completedTestingPhases;
   const effectiveCompletedCount = effectiveCompletedSurahs.length;
 
   return (
