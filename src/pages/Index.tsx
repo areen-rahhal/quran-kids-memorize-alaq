@@ -183,9 +183,13 @@ const Index = () => {
   }, [transcript, isReciting, isListening, currentStep, phaseVerseObjs, currentAyahIdx, phase.verses, handleListeningComplete]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
+  
+  // Generate consistent phase ID for current phase (moved up to use before other calculations)
+  const currentPhaseId = currentSurahId * 100 + currentPhaseIdx + 1;
+  
   // Stable progress calculation that doesn't flicker during transitions
-  const stableCompletedPhases = phaseCompletionInProgress && !completedTestingPhases.includes(currentPhaseIdx) 
-    ? [...completedTestingPhases, currentPhaseIdx] 
+  const stableCompletedPhases = phaseCompletionInProgress && !completedTestingPhases.includes(currentPhaseId) 
+    ? [...completedTestingPhases, currentPhaseId] 
     : completedTestingPhases;
   const completedPhaseCount = stableCompletedPhases.length;
   const totalPhases = currentStudyPhases.length;
@@ -199,21 +203,21 @@ const Index = () => {
       return [...prev, ...newIds];
     });
   };
-
+  
   // Handle testing phase completion with automatic navigation
   useEffect(() => {
     if (currentStep === 'completed' && 
         recitingMode === 'testing' && 
-        !completedTestingPhases.includes(currentPhaseIdx) && 
+        !completedTestingPhases.includes(currentPhaseId) && 
         !phaseCompletionInProgress) {
       
-      console.log('Marking phase as completed:', currentPhaseIdx);
+      console.log('Marking phase as completed:', currentPhaseId);
       setPhaseCompletionInProgress(true);
       
-      // Mark phase as completed immediately
+      // Mark phase as completed immediately using consistent ID
       setCompletedTestingPhases(prev => {
-        if (prev.includes(currentPhaseIdx)) return prev;
-        return [...prev, currentPhaseIdx];
+        if (prev.includes(currentPhaseId)) return prev;
+        return [...prev, currentPhaseId];
       });
       
       // Auto-navigate to next phase after delay
@@ -238,7 +242,7 @@ const Index = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases, totalPhases, phaseCompletionInProgress]);
+  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases, totalPhases, phaseCompletionInProgress, currentPhaseId, currentSurahId]);
 
   // Show loading while checking auth
   if (loading) {
@@ -283,11 +287,11 @@ const Index = () => {
                 <h2 className="text-lg md:text-xl font-bold text-emerald-700 mb-0.5 font-arabic">سورة {currentSurah.arabicName}</h2>
                 <div className="flex items-center justify-center space-x-1 gap-1 flex-wrap mt-2">
                   <span className={`text-xs px-3 py-0.5 rounded-full font-arabic shadow border ${
-                    completedTestingPhases.includes(currentPhaseIdx) 
+                    completedTestingPhases.includes(currentPhaseId) 
                       ? 'bg-green-100 text-green-700 border-green-300' 
                       : 'bg-white text-emerald-700 border-amber-100'
                   }`}>
-                    {completedTestingPhases.includes(currentPhaseIdx) && '✓ '}
+                    {completedTestingPhases.includes(currentPhaseId) && '✓ '}
                     {phase.label}
                   </span>
                   <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-amber-50 text-amber-700 border border-amber-100">
@@ -381,11 +385,11 @@ const Index = () => {
                   <CircleArrowRight className="h-6 w-6" />
                 </Button>
                 <span className={`text-base font-arabic font-bold px-2 rounded-full border ${
-                  completedTestingPhases.includes(currentPhaseIdx)
+                  completedTestingPhases.includes(currentPhaseId)
                     ? 'bg-green-100 text-green-700 border-green-300'
                     : 'bg-amber-100 text-amber-700 border-amber-300'
                 }`}>
-                  {completedTestingPhases.includes(currentPhaseIdx) && '✓ '}
+                  {completedTestingPhases.includes(currentPhaseId) && '✓ '}
                   {phase.label}
                 </span>
                  <Button
