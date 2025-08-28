@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 type OnboardingStep = 
-  | 'parent_profile' 
   | 'children_overview' 
   | 'create_child_comprehensive'
   | 'complete';
@@ -41,7 +40,7 @@ export interface ChildProfile {
 const OnboardingFlow = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>('parent_profile');
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('children_overview');
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [editingChildIndex, setEditingChildIndex] = useState<number | null>(null);
@@ -60,87 +59,55 @@ const OnboardingFlow = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if user already has a parent profile
+  // Create parent profile automatically and load existing children
   useEffect(() => {
-    const checkExistingProfile = async () => {
+    const initializeProfile = async () => {
       if (!user) return;
       
       try {
-        const { data: profile } = await supabase
+        // Create or get parent profile
+        const { data: profile, error: profileError } = await supabase
           .from('parent_profiles')
-          .select('*')
-          .eq('user_id', user.id)
+          .upsert({
+            user_id: user.id,
+            full_name: user.user_metadata?.full_name || '',
+            phone_number: user.user_metadata?.phone_number || '',
+          })
+          .select()
           .single();
 
-        if (profile) {
-          setParentProfile(profile);
-          setCurrentStep('children_overview');
-          
-          // Load existing children
-          const { data: childrenData } = await supabase
-            .from('child_profiles')
-            .select(`
-              *,
-              child_memorization_history(surah_number, proficiency),
-              child_target_surahs(surah_number)
-            `)
-            .eq('parent_id', profile.id);
+        if (profileError) throw profileError;
 
-          if (childrenData) {
-            const formattedChildren = childrenData.map(child => ({
-              ...child,
-              memorization_history: child.child_memorization_history || [],
-              target_surahs: (child.child_target_surahs || []).map(t => t.surah_number),
-            }));
-            setChildren(formattedChildren);
-          }
+        setParentProfile(profile);
+        
+        // Load existing children
+        const { data: childrenData } = await supabase
+          .from('child_profiles')
+          .select(`
+            *,
+            child_memorization_history(surah_number, proficiency),
+            child_target_surahs(surah_number)
+          `)
+          .eq('parent_id', profile.id);
+
+        if (childrenData) {
+          const formattedChildren = childrenData.map(child => ({
+            ...child,
+            memorization_history: child.child_memorization_history || [],
+            target_surahs: (child.child_target_surahs || []).map(t => t.surah_number),
+          }));
+          setChildren(formattedChildren);
         }
       } catch (error) {
-        console.error('Error checking profile:', error);
+        console.error('Error initializing profile:', error);
       }
     };
 
     if (user && !loading) {
-      checkExistingProfile();
+      initializeProfile();
     }
   }, [user, loading]);
 
-  const handleParentProfileSave = async (profile: ParentProfile) => {
-    if (!user) return;
-
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('parent_profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: profile.full_name,
-          phone_number: profile.phone_number,
-          profile_picture_url: profile.profile_picture_url,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setParentProfile(data);
-      setCurrentStep('children_overview');
-      
-      toast({
-        title: "تم حفظ البيانات",
-        description: "تم حفظ معلومات الوالد بنجاح",
-      });
-    } catch (error) {
-      console.error('Error saving parent profile:', error);
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ في حفظ البيانات",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleNext = (step: OnboardingStep) => {
     setCurrentStep(step);
@@ -317,15 +284,6 @@ const OnboardingFlow = () => {
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'parent_profile':
-        return (
-          <ParentProfileForm
-            profile={parentProfile || { full_name: '', phone_number: '' }}
-            onSave={handleParentProfileSave}
-            isLoading={isLoading}
-          />
-        );
-
       case 'children_overview':
         return (
           <ChildrenOverview
