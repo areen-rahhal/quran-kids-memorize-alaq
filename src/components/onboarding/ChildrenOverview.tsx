@@ -60,7 +60,7 @@ export const ChildrenOverview = ({ children, onAddChild, onEditChild, onComplete
                 className="p-4 border border-border hover:border-primary/50 transition-all cursor-pointer hover:shadow-md"
                 onClick={() => onEditChild(index)}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between" onClick={() => onEditChild(index)}>
                   <div className="flex items-center space-x-4 space-x-reverse">
                     <div className="relative">
                       <Avatar className="w-16 h-16">
