@@ -153,8 +153,13 @@ const Index = () => {
     if (currentStep === 'completed' && recitingMode === 'testing') {
       return;
     }
-    resetAudio();
-  }, [currentPhaseIdx, currentSurahId, resetAudio, currentStep, recitingMode]);
+    // Reset only when actually changing phases, not during the completion process
+    const timer = setTimeout(() => {
+      resetAudio();
+    }, 100); // Small delay to prevent interference with completion flow
+    
+    return () => clearTimeout(timer);
+  }, [currentPhaseIdx, currentSurahId, resetAudio]);
 
   // Reset to phase 0 when surah changes
   useEffect(() => {
@@ -181,19 +186,40 @@ const Index = () => {
   const progress = (completedPhaseCount / totalPhases) * 100;
 
   const handleMarkPhaseComplete = () => {
+    // Only mark verses as complete if they aren't already
     setCompletedVerses(prev => {
       const newIds = phase.verses.filter(id => !prev.includes(id));
+      if (newIds.length === 0) return prev; // Prevent unnecessary state update
       return [...prev, ...newIds];
     });
   };
 
-  // Handle testing phase completion
+  // Handle testing phase completion with automatic navigation
   useEffect(() => {
     if (currentStep === 'completed' && recitingMode === 'testing' && !completedTestingPhases.includes(currentPhaseIdx)) {
       console.log('Marking phase as completed:', currentPhaseIdx);
-      setCompletedTestingPhases(prev => [...prev, currentPhaseIdx]);
+      
+      // Mark phase as completed
+      setCompletedTestingPhases(prev => {
+        if (prev.includes(currentPhaseIdx)) return prev; // Prevent duplicate
+        return [...prev, currentPhaseIdx];
+      });
+      
+      // Auto-navigate to next phase after a short delay
+      const timer = setTimeout(() => {
+        const nextPhaseIdx = currentPhaseIdx + 1;
+        if (nextPhaseIdx < totalPhases) {
+          console.log('Auto-navigating to next phase:', nextPhaseIdx);
+          setCurrentPhaseIdx(nextPhaseIdx);
+        } else {
+          console.log('All phases completed!');
+          toast.success('🎉 تم إنجاز جميع المراحل بنجاح!');
+        }
+      }, 2000); // 2 second delay to show completion message
+      
+      return () => clearTimeout(timer);
     }
-  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases]);
+  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases, totalPhases]);
 
   // Show loading while checking auth
   if (loading) {
