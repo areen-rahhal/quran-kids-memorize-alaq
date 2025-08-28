@@ -30,10 +30,6 @@ export const QuranHeader = ({
     <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-3 py-2 rounded-b-3xl shadow-xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 font-arabic drop-shadow">
-            <BookOpen className="h-6 w-6 md:h-7 md:w-7" />
-            قرآن الأطفال
-          </h1>
           <p className="text-emerald-100 text-xs font-arabic mt-0.5">تعلم سورة العلق</p>
         </div>
         <div className="flex items-center gap-3">
