@@ -30,7 +30,7 @@ export const QuranHeader = ({
     <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-3 py-2 rounded-b-3xl shadow-xl">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-emerald-100 text-xs font-arabic mt-0.5">تعلم سورة العلق</p>
+          
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
