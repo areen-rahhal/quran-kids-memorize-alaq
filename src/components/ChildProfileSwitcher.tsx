@@ -29,18 +29,18 @@ export const ChildProfileSwitcher = ({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
-        <div className="w-8 h-8 bg-white/30 rounded-full animate-pulse" />
-        <span className="text-sm font-arabic text-white">جارٍ التحميل...</span>
+      <div className="flex items-center gap-2 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+        <div className="w-8 h-8 bg-emerald-200 rounded-full animate-pulse" />
+        <span className="text-sm font-arabic text-emerald-700">جارٍ التحميل...</span>
       </div>
     );
   }
 
   if (!selectedChild || children.length === 0) {
     return (
-      <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
-        <User className="h-4 w-4 text-white" />
-        <span className="text-sm font-arabic text-white">لا يوجد طفل</span>
+      <div className="flex items-center gap-2 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+        <User className="h-4 w-4 text-emerald-700" />
+        <span className="text-sm font-arabic text-emerald-700">لا يوجد طفل</span>
       </div>
     );
   }
@@ -50,18 +50,18 @@ export const ChildProfileSwitcher = ({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full border-2 border-white/30 h-auto"
+          className="flex items-center gap-2 bg-emerald-100 hover:bg-emerald-200 px-3 py-1 rounded-full border-2 border-emerald-300 h-auto"
         >
-          <Avatar className="w-8 h-8 border-2 border-white">
+          <Avatar className="w-8 h-8 border-2 border-emerald-400">
             <AvatarImage src={selectedChild.avatar_url || undefined} />
             <AvatarFallback className="bg-white text-emerald-600 text-xs font-bold">
               {selectedChild.first_name.charAt(0)}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-arabic text-white font-medium">
+          <span className="text-sm font-arabic text-emerald-700 font-medium">
             {selectedChild.first_name}
           </span>
-          <ChevronDown className="h-3 w-3 text-white" />
+          <ChevronDown className="h-3 w-3 text-emerald-700" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
