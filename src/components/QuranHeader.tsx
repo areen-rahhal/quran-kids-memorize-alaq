@@ -4,42 +4,40 @@ import { Progress } from '@/components/ui/progress';
 import { studyPhases } from '@/data/studyPhases';
 
 interface QuranHeaderProps {
+  currentSurahName: string;
   completedPhaseCount: number;
   totalPhases: number;
-  progress: number;
   currentPhaseIdx: number;
   setCurrentPhaseIdx: (idx: number) => void;
-  completedVerses: number[];
   completedTestingPhases: number[];
 }
 
 export const QuranHeader = ({
+  currentSurahName,
   completedPhaseCount,
   totalPhases,
-  progress,
   currentPhaseIdx,
   setCurrentPhaseIdx,
-  completedVerses,
   completedTestingPhases
 }: QuranHeaderProps) => {
+  const progress = (completedPhaseCount / totalPhases) * 100;
 
   return (
-    <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-3 py-2 rounded-b-3xl shadow-xl">
+    <div className="relative z-10 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-3 rounded-t-3xl shadow-xl">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-emerald-100 text-xs font-arabic mt-0.5">تعلم سورة العلق</p>
+          <h2 className="text-lg font-bold font-arabic">{currentSurahName}</h2>
+          <p className="text-emerald-100 text-xs font-arabic mt-0.5">التقدم في هذه السورة</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
-            <Star className="h-5 w-5 fill-current" />
-            <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
-          </div>
+        <div className="flex items-center gap-1 text-amber-100 drop-shadow font-arabic">
+          <Star className="h-5 w-5 fill-current" />
+          <span className="text-base font-bold">{completedPhaseCount}/{totalPhases}</span>
         </div>
       </div>
       
-      <div className="mt-0">
-        <div className="flex justify-between text-xs text-emerald-100 mb-0 whitespace-nowrap font-arabic">
-          <span>التقدم</span>
+      <div className="mt-2">
+        <div className="flex justify-between text-xs text-emerald-100 mb-1 whitespace-nowrap font-arabic">
+          <span>المراحل المكتملة</span>
           <span>%{Math.round(progress)}</span>
         </div>
         <Progress value={progress} className="h-2 bg-emerald-800 rounded-full" />

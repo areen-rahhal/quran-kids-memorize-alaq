@@ -175,24 +175,24 @@ const Index = () => {
   }
 
   return (
-    <div>
-      <QuranHeader
-        completedPhaseCount={completedPhaseCount}
-        totalPhases={totalPhases}
-        progress={progress}
-        currentPhaseIdx={currentPhaseIdx}
-        setCurrentPhaseIdx={setCurrentPhaseIdx}
-        completedVerses={completedVerses}
-        completedTestingPhases={completedTestingPhases}
-      />
-      <div className="flex-1 flex">
+    <div className="flex-1 flex">
       {/* Left Side - Surah Details */}
       <div className="flex-1 bg-gradient-to-br from-emerald-50 via-white to-amber-50 overflow-y-auto relative">
-          {/* Decorative background */}
-          <div className="absolute -top-24 -left-16 w-60 h-60 rounded-full bg-emerald-100 opacity-35 blur-3xl z-0 pointer-events-none" />
-          <div className="absolute -bottom-16 right-0 w-56 h-56 rounded-full bg-amber-100 opacity-40 blur-2xl z-0 pointer-events-none" />
-          
-          <div className="relative z-10 px-3 py-4 md:p-7 space-y-6 md:space-y-9 max-w-2xl mx-auto w-full">
+        {/* Decorative background */}
+        <div className="absolute -top-24 -left-16 w-60 h-60 rounded-full bg-emerald-100 opacity-35 blur-3xl z-0 pointer-events-none" />
+        <div className="absolute -bottom-16 right-0 w-56 h-56 rounded-full bg-amber-100 opacity-40 blur-2xl z-0 pointer-events-none" />
+        
+        {/* Surah Header */}
+        <QuranHeader
+          currentSurahName="سورة العلق"
+          completedPhaseCount={completedPhaseCount}
+          totalPhases={totalPhases}
+          currentPhaseIdx={currentPhaseIdx}
+          setCurrentPhaseIdx={setCurrentPhaseIdx}
+          completedTestingPhases={completedTestingPhases}
+        />
+        
+        <div className="relative z-10 px-3 py-4 md:p-7 space-y-6 md:space-y-9 max-w-2xl mx-auto w-full">
 
             {/* Surah Title & Phase Info */}
             <Card className="p-4 md:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-sm mb-1">
@@ -319,13 +319,13 @@ const Index = () => {
         
         {/* Right Side - Progress Section */}
         <div className="w-80 border-l">
-        <ProgressSection
-          currentSurahId={currentSurahId}
-          completedSurahs={completedSurahs}
-          completedTestingPhases={completedTestingPhases}
-          onSurahSelect={setCurrentSurahId}
-          getSurahProficiency={getSurahProficiency}
-        />
+          <ProgressSection
+            currentSurahId={currentSurahId}
+            completedSurahs={completedSurahs}
+            completedTestingPhases={completedTestingPhases}
+            onSurahSelect={setCurrentSurahId}
+            getSurahProficiency={getSurahProficiency}
+          />
         </div>
       </div>
     </div>
