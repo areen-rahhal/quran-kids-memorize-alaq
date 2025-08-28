@@ -225,6 +225,9 @@ const Index = () => {
     });
   };
   
+  // Auto-navigation timer ref for cleanup
+  const autoNavigationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Handle testing phase completion with automatic navigation using refs to prevent flickering
   useEffect(() => {
     if (currentStep === 'completed' && 
@@ -252,7 +255,7 @@ const Index = () => {
       });
       
       // Auto-navigate to next phase after delay
-      const timer = setTimeout(() => {
+      autoNavigationTimerRef.current = setTimeout(() => {
         const nextPhaseIdx = currentPhaseIdx + 1;
         if (nextPhaseIdx < totalPhases) {
           console.log('Auto-navigating to next phase:', nextPhaseIdx);
@@ -276,13 +279,43 @@ const Index = () => {
       }, 2000);
       
       return () => {
-        clearTimeout(timer);
+        if (autoNavigationTimerRef.current) {
+          clearTimeout(autoNavigationTimerRef.current);
+          autoNavigationTimerRef.current = null;
+        }
         // Cleanup refs if effect is cancelled
         transitionLockRef.current = false;
         completingPhaseRef.current = null;
       };
     }
   }, [currentStep, recitingMode, phaseCompletionInProgress, currentPhaseId, completedTestingPhases, currentPhaseIdx, totalPhases]);
+
+  // Helper function to handle manual navigation with auto-navigation cleanup
+  const handleManualNavigation = (direction: 'next' | 'prev') => {
+    // Cancel auto-navigation if user manually navigates
+    if (autoNavigationTimerRef.current) {
+      clearTimeout(autoNavigationTimerRef.current);
+      autoNavigationTimerRef.current = null;
+      console.log('Auto-navigation cancelled due to manual navigation');
+    }
+
+    // Reset completion states for immediate responsiveness
+    if (currentStep === 'completed') {
+      setPhaseCompletionInProgress(false);
+      transitionLockRef.current = false;
+      completingPhaseRef.current = null;
+    }
+
+    // Perform navigation
+    setIsTransitioning(true);
+    if (direction === 'next') {
+      setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
+    } else {
+      setCurrentPhaseIdx(i => Math.max(0, i - 1));
+    }
+    
+    setTimeout(() => setIsTransitioning(false), 300);
+  };
 
   // Show loading while checking auth
   if (loading) {
@@ -396,10 +429,9 @@ const Index = () => {
                 currentPhaseIdx={currentPhaseIdx}
                 totalPhases={totalPhases}
                  onNextPhase={() => {
-                   if (!isTransitioning && !phaseCompletionInProgress) {
-                     setIsTransitioning(true);
-                     setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
-                     setTimeout(() => setIsTransitioning(false), 300);
+                   // Allow navigation when completed or when not in transition/reciting
+                   if (currentStep === 'completed' || (!isTransitioning && !isReciting)) {
+                     handleManualNavigation('next');
                    }
                  }}
               />
@@ -410,13 +442,12 @@ const Index = () => {
               <div className="flex items-center justify-center gap-2">
                  <Button
                    onClick={() => {
-                     if (!isTransitioning && !phaseCompletionInProgress) {
-                       setIsTransitioning(true);
-                       setCurrentPhaseIdx(i => Math.max(0, i - 1));
-                       setTimeout(() => setIsTransitioning(false), 300);
+                     // Allow navigation when completed or when not in transition/reciting
+                     if (currentStep === 'completed' || (!isTransitioning && !isReciting)) {
+                       handleManualNavigation('prev');
                      }
                    }}
-                   disabled={currentPhaseIdx === 0 || isTransitioning || phaseCompletionInProgress}
+                   disabled={currentPhaseIdx === 0 || (isTransitioning && currentStep !== 'completed') || (isReciting && currentStep !== 'completed')}
                   variant="outline"
                   className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
                   size="icon"
@@ -434,13 +465,12 @@ const Index = () => {
                 </span>
                  <Button
                    onClick={() => {
-                     if (!isTransitioning && !phaseCompletionInProgress) {
-                       setIsTransitioning(true);
-                       setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
-                       setTimeout(() => setIsTransitioning(false), 300);
+                     // Allow navigation when completed or when not in transition/reciting
+                     if (currentStep === 'completed' || (!isTransitioning && !isReciting)) {
+                       handleManualNavigation('next');
                      }
                    }}
-                   disabled={currentPhaseIdx === totalPhases - 1 || isTransitioning || phaseCompletionInProgress}
+                   disabled={currentPhaseIdx >= totalPhases - 1 || (isTransitioning && currentStep !== 'completed') || (isReciting && currentStep !== 'completed')}
                   variant="outline"
                   className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
                   size="icon"
