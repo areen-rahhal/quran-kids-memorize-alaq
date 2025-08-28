@@ -7,14 +7,16 @@ interface ProgressSectionProps {
   completedSurahs: number[];
   completedTestingPhases: number[];
   onSurahSelect: (surahId: number) => void;
+  getSurahProficiency?: (surahNumber: number) => string | null;
 }
 
 interface CircleProps {
-  status: 'locked' | 'current' | 'completed' | 'completed-errors';
+  status: 'locked' | 'current' | 'completed' | 'completed-errors' | 'excellent' | 'very-good' | 'basic' | 'needs-improvement';
   size: 'large' | 'small';
   children: React.ReactNode;
   onClick?: () => void;
   isSpecial?: boolean;
+  proficiency?: string | null;
 }
 
 const Circle: React.FC<CircleProps> = ({ status, size, children, onClick, isSpecial = false }) => {
@@ -26,6 +28,14 @@ const Circle: React.FC<CircleProps> = ({ status, size, children, onClick, isSpec
     switch (status) {
       case 'current':
         return 'bg-blue-500 text-white border-blue-600 shadow-lg ring-4 ring-blue-200';
+      case 'excellent':
+        return 'bg-green-500 text-white border-green-600 shadow-md';
+      case 'very-good':
+        return 'bg-blue-500 text-white border-blue-600 shadow-md';
+      case 'basic':
+        return 'bg-yellow-500 text-white border-yellow-600 shadow-md';
+      case 'needs-improvement':
+        return 'bg-orange-500 text-white border-orange-600 shadow-md';
       case 'completed':
         return 'bg-green-500 text-white border-green-600 shadow-md';
       case 'completed-errors':
@@ -174,8 +184,22 @@ const SurahNode: React.FC<{
   completedTestingPhases: number[];
   onSurahSelect?: (surahId: number) => void;
   onPhaseSelect?: (surahId: number, phaseIndex: number) => void;
-}> = ({ surah, index, isLeft, nextSurah, nextIsLeft, currentSurahId, completedSurahs, completedTestingPhases, onSurahSelect, onPhaseSelect }) => {
+  getSurahProficiency?: (surahNumber: number) => string | null;
+}> = ({ surah, index, isLeft, nextSurah, nextIsLeft, currentSurahId, completedSurahs, completedTestingPhases, onSurahSelect, onPhaseSelect, getSurahProficiency }) => {
   const getSurahStatus = (surahId: number) => {
+    // Check if we have proficiency data for this surah
+    const proficiency = getSurahProficiency?.(surahId);
+    if (proficiency) {
+      // Map proficiency levels to status
+      switch (proficiency) {
+        case 'excellent': return 'excellent';
+        case 'very_good': return 'very-good';
+        case 'basic': return 'basic';
+        case 'needs_improvement': return 'needs-improvement';
+      }
+    }
+    
+    // Fallback to old logic
     if (completedSurahs.includes(surahId)) return 'completed';
     if (surahId === currentSurahId) return 'current';
     return 'locked';
@@ -227,9 +251,18 @@ const SurahNode: React.FC<{
           size="large"
           onClick={() => onSurahSelect?.(surah.id)}
           isSpecial={isCurrentSurah}
+          proficiency={getSurahProficiency?.(surah.id)}
         >
           <div className="text-center leading-tight">
             <div className="font-semibold font-arabic">{surah.arabicName}</div>
+            {getSurahProficiency?.(surah.id) && (
+              <div className="text-xs mt-1">
+                {getSurahProficiency(surah.id) === 'excellent' && '⭐'}
+                {getSurahProficiency(surah.id) === 'very_good' && '✓'}
+                {getSurahProficiency(surah.id) === 'basic' && '○'}
+                {getSurahProficiency(surah.id) === 'needs_improvement' && '△'}
+              </div>
+            )}
           </div>
         </Circle>
         
@@ -282,7 +315,8 @@ export const ProgressSection = ({
   currentSurahId, 
   completedSurahs, 
   completedTestingPhases,
-  onSurahSelect 
+  onSurahSelect,
+  getSurahProficiency
 }: ProgressSectionProps) => {
   const onPhaseSelect = (surahId: number, phaseIndex: number) => {
     // Switch to the surah and phase
@@ -345,6 +379,7 @@ export const ProgressSection = ({
                   completedTestingPhases={effectiveCompletedPhases}
                   onSurahSelect={onSurahSelect}
                   onPhaseSelect={onPhaseSelect}
+                  getSurahProficiency={getSurahProficiency}
                 />
               );
             })}

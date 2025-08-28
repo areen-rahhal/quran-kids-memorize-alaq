@@ -7,12 +7,15 @@ import { CircleArrowLeft, CircleArrowRight, RotateCcw } from 'lucide-react';
 import { AlAlaqVerses, studyPhases, getPhaseData } from '@/data/studyPhases';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
+import { useChildProfiles } from '@/hooks/useChildProfiles';
+import { QuranHeader } from '@/components/QuranHeader';
 import { ProgressSection } from '@/components/ProgressSection';
 import { VerseDisplay } from '@/components/VerseDisplay';
 import { AudioControls } from '@/components/AudioControls';
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { selectedChild, getSurahProficiency, getCompletedSurahs } = useChildProfiles();
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
   const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
@@ -34,7 +37,7 @@ const Index = () => {
     console.log('Progress reset - all data cleared');
   };
 
-  // Load progress from localStorage on mount
+  // Load progress from localStorage on mount and update with child data
   useEffect(() => {
     const savedProgress = localStorage.getItem('ahmad-quran-progress');
     if (savedProgress) {
@@ -49,7 +52,23 @@ const Index = () => {
         console.error('Error loading progress:', error);
       }
     }
-  }, []);
+
+    // Update with child-specific data when available
+    if (selectedChild) {
+      const childCompletedSurahs = getCompletedSurahs();
+      setCompletedSurahs(childCompletedSurahs);
+      
+      // Set current surah to first incomplete surah or default
+      if (childCompletedSurahs.length > 0) {
+        // Find next surah to work on (first incomplete one)
+        const allSurahs = [114, 113, 112, 111, 110]; // Add more as needed
+        const nextSurah = allSurahs.find(id => !childCompletedSurahs.includes(id));
+        if (nextSurah) {
+          setCurrentSurahId(nextSurah);
+        }
+      }
+    }
+  }, [selectedChild, getCompletedSurahs]);
 
   // Save progress to localStorage whenever it changes
   useEffect(() => {
@@ -171,6 +190,15 @@ const Index = () => {
 
   return (
     <div>
+      <QuranHeader
+        completedPhaseCount={completedPhaseCount}
+        totalPhases={totalPhases}
+        progress={progress}
+        currentPhaseIdx={currentPhaseIdx}
+        setCurrentPhaseIdx={setCurrentPhaseIdx}
+        completedVerses={completedVerses}
+        completedTestingPhases={completedTestingPhases}
+      />
       <div className="flex-1 flex">
       {/* Left Side - Surah Details */}
       <div className="flex-1 bg-gradient-to-br from-emerald-50 via-white to-amber-50 overflow-y-auto relative">
@@ -317,12 +345,13 @@ const Index = () => {
         
         {/* Right Side - Progress Section */}
         <div className="w-80 border-l">
-          <ProgressSection 
-            currentSurahId={currentSurahId}
-            completedSurahs={completedSurahs}
-            completedTestingPhases={completedTestingPhases}
-            onSurahSelect={setCurrentSurahId}
-          />
+        <ProgressSection
+          currentSurahId={currentSurahId}
+          completedSurahs={completedSurahs}
+          completedTestingPhases={completedTestingPhases}
+          onSurahSelect={setCurrentSurahId}
+          getSurahProficiency={getSurahProficiency}
+        />
         </div>
       </div>
     </div>
