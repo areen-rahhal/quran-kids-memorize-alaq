@@ -3,24 +3,14 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ParentProfileForm } from '@/components/onboarding/ParentProfileForm';
 import { ChildrenOverview } from '@/components/onboarding/ChildrenOverview';
-import { CreateChildProfile } from '@/components/onboarding/CreateChildProfile';
-import { LearningCapacity } from '@/components/onboarding/LearningCapacity';
-import { LevelHistory } from '@/components/onboarding/LevelHistory';
-import { LearningGoal } from '@/components/onboarding/LearningGoal';
-import { LearningPreference } from '@/components/onboarding/LearningPreference';
-import { SpeechDisorder } from '@/components/onboarding/SpeechDisorder';
+import { ComprehensiveChildProfile } from '@/components/onboarding/ComprehensiveChildProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export type OnboardingStep = 
-
-  | 'children-overview'
-  | 'child-profile'
-  | 'learning-capacity'
-  | 'level-history'
-  | 'learning-goal'
-  | 'learning-preference'
-  | 'speech-disorder'
+type OnboardingStep = 
+  | 'parent_profile' 
+  | 'children_overview' 
+  | 'create_child_comprehensive'
   | 'complete';
 
 export interface ParentProfile {
@@ -44,26 +34,38 @@ export interface ChildProfile {
   has_speech_disorder: boolean;
   speech_disorder_type?: string;
   target_juz?: number;
-  memorization_history: { surah_number: number; proficiency: string }[];
+  memorization_history: { surah_number: number; proficiency: 'basic' | 'very_good' | 'excellent' }[];
   target_surahs: number[];
 }
 
 const OnboardingFlow = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>('children-overview');
-  const [parentProfile, setParentProfile] = useState<ParentProfile>({
-    full_name: '',
-    phone_number: '',
-  });
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('parent_profile');
+  const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
-  const [currentChildIndex, setCurrentChildIndex] = useState(0);
+  const [editingChildIndex, setEditingChildIndex] = useState<number | null>(null);
+  const [currentChild, setCurrentChild] = useState<ChildProfile>({
+    first_name: '',
+    age: 6,
+    child_level: 'beginner',
+    native_language: 'arabic',
+    session_time_minutes: 15,
+    phase_length: 3,
+    learning_goal: 'memorize_new',
+    learning_preference: 'audio',
+    has_speech_disorder: false,
+    memorization_history: [],
+    target_surahs: [],
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   // Check if user already has a parent profile
   useEffect(() => {
     const checkExistingProfile = async () => {
-      if (user) {
+      if (!user) return;
+      
+      try {
         const { data: profile } = await supabase
           .from('parent_profiles')
           .select('*')
@@ -71,15 +73,30 @@ const OnboardingFlow = () => {
           .single();
 
         if (profile) {
-          // User already has a profile, skip to children overview
-          setParentProfile({
-            id: profile.id,
-            full_name: profile.full_name,
-            phone_number: profile.phone_number || '',
-            profile_picture_url: profile.profile_picture_url || undefined,
-          });
-          setCurrentStep('children-overview');
+          setParentProfile(profile);
+          setCurrentStep('children_overview');
+          
+          // Load existing children
+          const { data: childrenData } = await supabase
+            .from('child_profiles')
+            .select(`
+              *,
+              child_memorization_history(surah_number, proficiency),
+              child_target_surahs(surah_number)
+            `)
+            .eq('parent_id', profile.id);
+
+          if (childrenData) {
+            const formattedChildren = childrenData.map(child => ({
+              ...child,
+              memorization_history: child.child_memorization_history || [],
+              target_surahs: (child.child_target_surahs || []).map(t => t.surah_number),
+            }));
+            setChildren(formattedChildren);
+          }
         }
+      } catch (error) {
+        console.error('Error checking profile:', error);
       }
     };
 
@@ -106,8 +123,8 @@ const OnboardingFlow = () => {
 
       if (error) throw error;
 
-      setParentProfile({ ...profile, id: data.id });
-      setCurrentStep('children-overview');
+      setParentProfile(data);
+      setCurrentStep('children_overview');
       
       toast({
         title: "تم حفظ البيانات",
@@ -125,103 +142,154 @@ const OnboardingFlow = () => {
     }
   };
 
-  const handleChildProfileSave = async (childProfile: Partial<ChildProfile>) => {
-    if (!parentProfile.id) return;
-
-    const updatedChildren = [...children];
-    updatedChildren[currentChildIndex] = {
-      ...updatedChildren[currentChildIndex],
-      ...childProfile,
-    } as ChildProfile;
-    
-    setChildren(updatedChildren);
-    setCurrentStep('learning-capacity');
+  const handleNext = (step: OnboardingStep) => {
+    setCurrentStep(step);
   };
 
-  const handleNext = () => {
-    const steps: OnboardingStep[] = [
-      'child-profile',
-      'learning-capacity',
-      'level-history',
-      'learning-goal',
-      'learning-preference',
-      'speech-disorder',
-      'complete'
-    ];
+  const handleChildComplete = async (childData: Partial<ChildProfile>) => {
+    if (!parentProfile?.id) return;
     
-    const currentIndex = steps.indexOf(currentStep);
-    if (currentIndex < steps.length - 1) {
-      setCurrentStep(steps[currentIndex + 1]);
-    }
-  };
-
-  const handleChildComplete = async () => {
-    if (!parentProfile.id) return;
-
-    setIsLoading(true);
     try {
-      const currentChild = children[currentChildIndex];
+      setIsLoading(true);
       
-      // Save child profile
-      const { data: savedChild, error: childError } = await supabase
-        .from('child_profiles')
-        .upsert({
-          parent_id: parentProfile.id,
-          first_name: currentChild.first_name,
-          age: currentChild.age,
-          child_level: currentChild.child_level,
-          native_language: currentChild.native_language,
-          avatar_url: currentChild.avatar_url,
-          session_time_minutes: currentChild.session_time_minutes,
-          phase_length: currentChild.phase_length,
-          learning_goal: currentChild.learning_goal,
-          learning_preference: currentChild.learning_preference,
-          has_speech_disorder: currentChild.has_speech_disorder,
-          speech_disorder_type: currentChild.speech_disorder_type,
-          target_juz: currentChild.target_juz,
-        })
-        .select()
-        .single();
+      // Check if we're editing an existing child
+      if (editingChildIndex !== null) {
+        // Update existing child
+        const childToUpdate = children[editingChildIndex];
+        if (childToUpdate.id) {
+          const { data: updatedChild, error: updateError } = await supabase
+            .from('child_profiles')
+            .update({
+              first_name: childData.first_name!,
+              age: childData.age!,
+              child_level: childData.child_level!,
+              native_language: childData.native_language!,
+              avatar_url: childData.avatar_url,
+              session_time_minutes: childData.session_time_minutes!,
+              phase_length: childData.phase_length!,
+              learning_goal: childData.learning_goal!,
+              learning_preference: childData.learning_preference!,
+              has_speech_disorder: childData.has_speech_disorder || false,
+              speech_disorder_type: childData.speech_disorder_type,
+              target_juz: childData.target_juz,
+            })
+            .eq('id', childToUpdate.id)
+            .select()
+            .single();
 
-      if (childError) throw childError;
+          if (updateError) throw updateError;
 
-      // Save memorization history
-      if (currentChild.memorization_history.length > 0) {
-        const historyData = currentChild.memorization_history.map(h => ({
-          child_id: savedChild.id,
-          surah_number: h.surah_number,
-          proficiency: h.proficiency as 'basic' | 'very_good' | 'excellent',
-        }));
+          // Update memorization history
+          await supabase
+            .from('child_memorization_history')
+            .delete()
+            .eq('child_id', childToUpdate.id);
 
-        const { error: historyError } = await supabase
-          .from('child_memorization_history')
-          .upsert(historyData);
+          if (childData.memorization_history && childData.memorization_history.length > 0) {
+            const historyInserts = childData.memorization_history.map(item => ({
+              child_id: childToUpdate.id,
+              surah_number: item.surah_number,
+              proficiency: item.proficiency as 'basic' | 'very_good' | 'excellent',
+            }));
 
-        if (historyError) throw historyError;
+            await supabase
+              .from('child_memorization_history')
+              .insert(historyInserts);
+          }
+
+          // Update target surahs
+          await supabase
+            .from('child_target_surahs')
+            .delete()
+            .eq('child_id', childToUpdate.id);
+
+          if (childData.target_surahs && childData.target_surahs.length > 0) {
+            const targetInserts = childData.target_surahs.map(surahNumber => ({
+              child_id: childToUpdate.id,
+              surah_number: surahNumber,
+            }));
+
+            await supabase
+              .from('child_target_surahs')
+              .insert(targetInserts);
+          }
+
+          // Update children list
+          const updatedChildren = [...children];
+          updatedChildren[editingChildIndex] = { ...updatedChild, memorization_history: childData.memorization_history || [], target_surahs: childData.target_surahs || [] };
+          setChildren(updatedChildren);
+          setEditingChildIndex(null);
+
+          toast({
+            title: "تم تحديث البيانات",
+            description: `تم تحديث ملف ${childData.first_name} بنجاح`,
+          });
+        }
+      } else {
+        // Create new child
+        const { data: savedChild, error: childError } = await supabase
+          .from('child_profiles')
+          .insert({
+            parent_id: parentProfile.id,
+            first_name: childData.first_name!,
+            age: childData.age!,
+            child_level: childData.child_level!,
+            native_language: childData.native_language!,
+            avatar_url: childData.avatar_url,
+            session_time_minutes: childData.session_time_minutes!,
+            phase_length: childData.phase_length!,
+            learning_goal: childData.learning_goal!,
+            learning_preference: childData.learning_preference!,
+            has_speech_disorder: childData.has_speech_disorder || false,
+            speech_disorder_type: childData.speech_disorder_type,
+            target_juz: childData.target_juz,
+          })
+          .select()
+          .single();
+
+        if (childError) throw childError;
+
+        // Save memorization history if any
+        if (childData.memorization_history && childData.memorization_history.length > 0) {
+          const historyInserts = childData.memorization_history.map(item => ({
+            child_id: savedChild.id,
+            surah_number: item.surah_number,
+            proficiency: item.proficiency as 'basic' | 'very_good' | 'excellent',
+          }));
+
+          const { error: historyError } = await supabase
+            .from('child_memorization_history')
+            .insert(historyInserts);
+
+          if (historyError) throw historyError;
+        }
+
+        // Save target surahs if any
+        if (childData.target_surahs && childData.target_surahs.length > 0) {
+          const targetInserts = childData.target_surahs.map(surahNumber => ({
+            child_id: savedChild.id,
+            surah_number: surahNumber,
+          }));
+
+          const { error: targetError } = await supabase
+            .from('child_target_surahs')
+            .insert(targetInserts);
+
+          if (targetError) throw targetError;
+        }
+
+        // Add child to current children list
+        setChildren(prev => [...prev, { ...savedChild, memorization_history: childData.memorization_history || [], target_surahs: childData.target_surahs || [] }]);
+        
+        toast({
+          title: "تم إنشاء الملف",
+          description: `تم إنشاء ملف ${childData.first_name} بنجاح`,
+        });
       }
-
-      // Save target surahs
-      if (currentChild.target_surahs.length > 0) {
-        const surahData = currentChild.target_surahs.map(s => ({
-          child_id: savedChild.id,
-          surah_number: s,
-        }));
-
-        const { error: surahError } = await supabase
-          .from('child_target_surahs')
-          .upsert(surahData);
-
-        if (surahError) throw surahError;
-      }
-
-      toast({
-        title: "تم حفظ البيانات",
-        description: `تم حفظ ملف ${currentChild.first_name} بنجاح`,
-      });
-
-      setCurrentStep('children-overview');
+      
+      setCurrentStep('children_overview');
     } catch (error) {
-      console.error('Error saving child profile:', error);
+      console.error('Error saving child:', error);
       toast({
         title: "خطأ",
         description: "حدث خطأ في حفظ ملف الطفل",
@@ -249,118 +317,57 @@ const OnboardingFlow = () => {
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      
-      case 'children-overview':
+      case 'parent_profile':
+        return (
+          <ParentProfileForm
+            profile={parentProfile || { full_name: '', phone_number: '' }}
+            onSave={handleParentProfileSave}
+            isLoading={isLoading}
+          />
+        );
+
+      case 'children_overview':
         return (
           <ChildrenOverview
             children={children}
             onAddChild={() => {
-              if (children.length < 5) {
-                setChildren([...children, {
-                  first_name: '',
-                  age: 5,
-                  child_level: 'beginner',
-                  native_language: 'arabic',
-                  session_time_minutes: 15,
-                  phase_length: 3,
-                  learning_goal: 'memorize_new',
-                  learning_preference: 'audio',
-                  has_speech_disorder: false,
-                  memorization_history: [],
-                  target_surahs: [],
-                }]);
-                setCurrentChildIndex(children.length);
-                setCurrentStep('child-profile');
-              }
+              setEditingChildIndex(null);
+              setCurrentChild({
+                first_name: '',
+                age: 6,
+                child_level: 'beginner',
+                native_language: 'arabic',
+                session_time_minutes: 15,
+                phase_length: 3,
+                learning_goal: 'memorize_new',
+                learning_preference: 'audio',
+                has_speech_disorder: false,
+                memorization_history: [],
+                target_surahs: [],
+              });
+              setCurrentStep('create_child_comprehensive');
             }}
-            onEditChild={(index) => {
-              setCurrentChildIndex(index);
-              setCurrentStep('child-profile');
+            onEditChild={(childIndex) => {
+              setEditingChildIndex(childIndex);
+              setCurrentChild(children[childIndex]);
+              setCurrentStep('create_child_comprehensive');
             }}
             onComplete={() => setCurrentStep('complete')}
           />
         );
-      
-      case 'child-profile':
+
+      case 'create_child_comprehensive':
         return (
-          <CreateChildProfile
-            child={children[currentChildIndex]}
-            onNext={handleChildProfileSave}
-            onBack={() => setCurrentStep('children-overview')}
-          />
-        );
-      
-      case 'learning-capacity':
-        return (
-          <LearningCapacity
-            child={children[currentChildIndex]}
-            onNext={(data) => {
-              const updatedChildren = [...children];
-              updatedChildren[currentChildIndex] = { ...updatedChildren[currentChildIndex], ...data };
-              setChildren(updatedChildren);
-              handleNext();
+          <ComprehensiveChildProfile
+            child={currentChild}
+            onNext={(childData) => {
+              handleChildComplete(childData);
             }}
-            onBack={() => setCurrentStep('child-profile')}
-          />
-        );
-      
-      case 'level-history':
-        return (
-          <LevelHistory
-            child={children[currentChildIndex]}
-            onNext={(data) => {
-              const updatedChildren = [...children];
-              updatedChildren[currentChildIndex] = { ...updatedChildren[currentChildIndex], ...data };
-              setChildren(updatedChildren);
-              handleNext();
-            }}
-            onBack={() => setCurrentStep('learning-capacity')}
-          />
-        );
-      
-      case 'learning-goal':
-        return (
-          <LearningGoal
-            child={children[currentChildIndex]}
-            onNext={(data) => {
-              const updatedChildren = [...children];
-              updatedChildren[currentChildIndex] = { ...updatedChildren[currentChildIndex], ...data };
-              setChildren(updatedChildren);
-              handleNext();
-            }}
-            onBack={() => setCurrentStep('level-history')}
-          />
-        );
-      
-      case 'learning-preference':
-        return (
-          <LearningPreference
-            child={children[currentChildIndex]}
-            onNext={(data) => {
-              const updatedChildren = [...children];
-              updatedChildren[currentChildIndex] = { ...updatedChildren[currentChildIndex], ...data };
-              setChildren(updatedChildren);
-              handleNext();
-            }}
-            onBack={() => setCurrentStep('learning-goal')}
-          />
-        );
-      
-      case 'speech-disorder':
-        return (
-          <SpeechDisorder
-            child={children[currentChildIndex]}
-            onNext={(data) => {
-              const updatedChildren = [...children];
-              updatedChildren[currentChildIndex] = { ...updatedChildren[currentChildIndex], ...data };
-              setChildren(updatedChildren);
-              handleChildComplete();
-            }}
-            onBack={() => setCurrentStep('learning-preference')}
+            onBack={() => setCurrentStep('children_overview')}
             isLoading={isLoading}
           />
         );
-      
+
       case 'complete':
         return (
           <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 flex items-center justify-center">
@@ -376,7 +383,7 @@ const OnboardingFlow = () => {
             </div>
           </div>
         );
-      
+
       default:
         return null;
     }
