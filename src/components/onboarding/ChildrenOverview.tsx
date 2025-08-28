@@ -2,8 +2,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, CheckCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Plus, Trophy, Star, Clock } from 'lucide-react';
 import type { ChildProfile } from '@/pages/OnboardingFlow';
+import { juz30Surahs } from '@/data/juz30';
 
 interface ChildrenOverviewProps {
   children: ChildProfile[];
@@ -28,6 +30,14 @@ export const ChildrenOverview = ({ children, onAddChild, onEditChild, onComplete
   const canAddMore = children.length < 5;
   const hasChildren = children.length > 0;
 
+  // Calculate progress for each child
+  const getChildProgress = (child: ChildProfile) => {
+    const totalSurahs = juz30Surahs.length; // 37 surahs in Juz 30
+    const completedSurahs = child.memorization_history ? child.memorization_history.length : 0;
+    const progressPercentage = Math.round((completedSurahs / totalSurahs) * 100);
+    return { completedSurahs, totalSurahs, progressPercentage };
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl p-6 bg-white shadow-xl border-emerald-200">
@@ -42,49 +52,73 @@ export const ChildrenOverview = ({ children, onAddChild, onEditChild, onComplete
 
         <div className="space-y-4">
           {/* Children List */}
-          {children.map((child, index) => (
-            <Card key={index} className="p-4 border border-gray-200 hover:border-emerald-300 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 space-x-reverse">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={child.avatar_url} />
-                    <AvatarFallback className="bg-emerald-100 text-emerald-600 font-arabic">
-                      {child.first_name ? child.first_name[0] : '؟'}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div>
-                    <h3 className="font-semibold text-gray-900 font-arabic">
-                      {child.first_name || 'بدون اسم'}
-                    </h3>
-                    <div className="flex items-center space-x-2 space-x-reverse mt-1">
-                      <span className="text-sm text-gray-600 font-arabic">
-                        {child.age} سنة
-                      </span>
-                      <Badge className={`text-xs font-arabic ${levelColors[child.child_level]}`}>
-                        {levelLabels[child.child_level]}
-                      </Badge>
+          {children.map((child, index) => {
+            const progress = getChildProgress(child);
+            return (
+              <Card 
+                key={index} 
+                className="p-4 border border-border hover:border-primary/50 transition-all cursor-pointer hover:shadow-md"
+                onClick={() => onEditChild(index)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4 space-x-reverse">
+                    <div className="relative">
+                      <Avatar className="w-16 h-16">
+                        <AvatarImage src={child.avatar_url} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-arabic text-lg">
+                          {child.first_name ? child.first_name[0] : '؟'}
+                        </AvatarFallback>
+                      </Avatar>
+                      {child.first_name && (
+                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                          <Star className="w-3 h-3 text-primary-foreground fill-current" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-bold text-lg text-foreground font-arabic">
+                          {child.first_name || 'بدون اسم'}
+                        </h3>
+                        <Badge className={`text-xs font-arabic px-2 py-1 ${levelColors[child.child_level]}`}>
+                          {levelLabels[child.child_level]}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center space-x-4 space-x-reverse text-sm text-muted-foreground font-arabic mb-3">
+                        <span>{child.age} سنوات</span>
+                        <span className="flex items-center space-x-1 space-x-reverse">
+                          <Clock className="w-4 h-4" />
+                          <span>آخر نشاط: اليوم {child.learning_preference === 'visual' ? 'بصري' : child.learning_preference === 'audio' ? 'سمعي' : 'حسي'}</span>
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Progress value={progress.progressPercentage} className="h-2" />
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center space-x-4 space-x-reverse font-arabic">
+                            <span className="flex items-center space-x-1 space-x-reverse">
+                              <Trophy className="w-4 h-4 text-amber-500" />
+                              <span>5 يوم</span>
+                            </span>
+                            <span className="flex items-center space-x-1 space-x-reverse">
+                              <Star className="w-4 h-4 text-blue-500" />
+                              <span>{progress.completedSurahs}/{progress.totalSurahs} سورة</span>
+                            </span>
+                            <span className="text-muted-foreground">15 دقيقة</span>
+                          </div>
+                          <div className="text-lg font-bold text-primary">
+                            {progress.progressPercentage}%
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  {child.first_name && (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEditChild(index)}
-                    className="font-arabic"
-                  >
-                    <Edit className="w-4 h-4 ml-1" />
-                    {child.first_name ? 'تعديل' : 'إكمال'}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
 
           {/* Add Child Button */}
           {canAddMore && (
