@@ -92,8 +92,11 @@ const Index = () => {
     audioRef,
     currentAyahIdx,
     hasAttemptedPlay,
+    isLoading,
+    retryCount,
     handlePlayPause,
     resetAudio,
+    retryAudio,
     onAudioEnded,
     onAudioError,
     isReciting,
@@ -285,6 +288,9 @@ const Index = () => {
                   onAudioEnded(phase.verses);
                 }}
                 onAudioError={onAudioError}
+                isLoading={isLoading}
+                retryCount={retryCount}
+                onRetryAudio={() => retryAudio(phase.verses)}
                 isReciting={isReciting}
                 isListening={isListening}
                 currentStep={currentStep}

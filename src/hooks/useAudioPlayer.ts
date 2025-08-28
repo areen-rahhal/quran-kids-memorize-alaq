@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { getAudioUrl, getAlternativeAudioUrl, getThirdAudioUrl } from '@/utils/audioUtils';
+import { getAllAudioUrls, testAudioUrl } from '@/utils/audioUtils';
 import { useRecitingJourney } from './useRecitingJourney';
 
 export const useAudioPlayer = (currentSurahId: number = 114) => {
@@ -8,6 +8,8 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [hasAttemptedPlay, setHasAttemptedPlay] = useState(false);
   const [showAudioError, setShowAudioError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const {
@@ -36,18 +38,15 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     if (!audioRef.current || ayahIndex >= verses.length) return;
     
     const ayahId = verses[ayahIndex];
-    const urls = [
-      getAudioUrl(currentSurahId, ayahId),
-      getAlternativeAudioUrl(currentSurahId, ayahId),
-      getThirdAudioUrl(currentSurahId, ayahId)
-    ];
+    const urls = getAllAudioUrls(currentSurahId, ayahId);
     
-    console.log(`Loading ayah ${ayahId} from Surah ${currentSurahId} at index ${ayahIndex}`);
+    console.log(`🎵 Loading ayah ${ayahId} from Surah ${currentSurahId} at index ${ayahIndex}`);
     
     setAudioError(null);
     setShowAudioError(false);
     setHasAttemptedPlay(true);
     setCurrentAyahIdx(ayahIndex);
+    setIsLoading(true);
     
     // Stop any current audio
     audioRef.current.pause();
@@ -56,27 +55,44 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     // Try each URL until one works
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i];
-      console.log(`Trying audio URL ${i + 1}/${urls.length}: ${url}`);
+      console.log(`🎵 Trying audio source ${i + 1}/${urls.length}: ${url}`);
       
       try {
+        // Test URL accessibility first
+        const isAccessible = await testAudioUrl(url);
+        if (!isAccessible) {
+          console.warn(`🎵 URL ${i + 1} not accessible, skipping...`);
+          continue;
+        }
+        
         audioRef.current.src = url;
         audioRef.current.load();
+        
+        // Add a small delay to let the audio load
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         await audioRef.current.play();
-        console.log(`Audio playing successfully from source ${i + 1}`);
+        console.log(`✅ Audio playing successfully from source ${i + 1}`);
         setIsPlaying(true);
+        setIsLoading(false);
+        setRetryCount(0);
         return; // Success! Exit the function
         
       } catch (error) {
-        console.error(`Audio source ${i + 1} failed:`, error);
+        console.error(`❌ Audio source ${i + 1} failed:`, error);
         if (i === urls.length - 1) {
           // All sources failed
-          setAudioError('Failed to load audio. Please check your internet connection.');
+          const errorMsg = retryCount > 0 
+            ? `All audio sources failed after ${retryCount + 1} attempts. Please check your connection.`
+            : 'Failed to load audio from all sources. Click retry to try again.';
+          setAudioError(errorMsg);
           setShowAudioError(true);
           setIsPlaying(false);
+          setIsLoading(false);
         }
       }
     }
-  }, [currentSurahId]);
+  }, [currentSurahId, retryCount]);
 
   const onAudioEnded = useCallback((verses: number[]) => {
     console.log('🎵 AUDIO ENDED EVENT TRIGGERED');
@@ -165,11 +181,18 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     setAudioError(null);
     setShowAudioError(false);
     setHasAttemptedPlay(false);
+    setRetryCount(0);
+    setIsLoading(false);
     // Only stop reciting journey if we're not currently reciting
     if (!isReciting) {
       stopRecitingJourney();
     }
   }, [stopRecitingJourney, isReciting]);
+
+  const retryAudio = useCallback((verses: number[]) => {
+    setRetryCount(prev => prev + 1);
+    loadAndPlayAyah(currentAyahIdx, verses);
+  }, [loadAndPlayAyah, currentAyahIdx]);
 
   return {
     isPlaying,
@@ -178,8 +201,11 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     audioRef,
     currentAyahIdx: isReciting ? currentVerseIndex : currentAyahIdx,
     hasAttemptedPlay,
+    isLoading,
+    retryCount,
     handlePlayPause,
     resetAudio,
+    retryAudio,
     onAudioEnded,
     onAudioError,
     // Reciting journey props
