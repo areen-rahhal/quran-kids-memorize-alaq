@@ -51,9 +51,8 @@ const Circle: React.FC<CircleProps> = ({
         ${sizeClasses} 
         ${getStatusColors()}
         rounded-full border-3 flex items-center justify-center
-        transition-all duration-300 hover:scale-105 z-50 relative font-medium
+        z-50 relative font-medium
         ${status !== 'locked' ? 'cursor-pointer' : 'cursor-not-allowed'}
-        ${status === 'current' ? 'animate-pulse' : ''}
         transform translate-x-[30px] -translate-y-5
       `} disabled={status === 'locked'}>
       {children}
