@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CircleArrowLeft, CircleArrowRight, RotateCcw } from 'lucide-react';
+import { CircleArrowLeft, CircleArrowRight } from 'lucide-react';
 import { AlAlaqVerses, studyPhases, getPhaseData } from '@/data/studyPhases';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,20 +22,6 @@ const Index = () => {
   const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
 
-  // Function to reset all progress data
-  const resetProgress = () => {
-    // Clear localStorage
-    localStorage.removeItem('ahmad-quran-progress');
-    
-    // Reset all state to initial values
-    setCurrentPhaseIdx(0);
-    setCompletedVerses([]);
-    setCompletedTestingPhases([]);
-    setCurrentSurahId(114); // An-Nas
-    setCompletedSurahs([]);
-    
-    console.log('Progress reset - all data cleared');
-  };
 
   // Load progress from localStorage on mount and update with child data
   useEffect(() => {
@@ -207,18 +193,6 @@ const Index = () => {
           <div className="absolute -bottom-16 right-0 w-56 h-56 rounded-full bg-amber-100 opacity-40 blur-2xl z-0 pointer-events-none" />
           
           <div className="relative z-10 px-3 py-4 md:p-7 space-y-6 md:space-y-9 max-w-2xl mx-auto w-full">
-            {/* Reset Progress Button */}
-            <div className="flex justify-end">
-              <Button
-                onClick={resetProgress}
-                variant="outline"
-                size="sm"
-                className="text-red-600 border-red-300 hover:bg-red-50 font-arabic"
-              >
-                <RotateCcw className="h-4 w-4 ml-2" />
-                إعادة تعيين التقدم
-              </Button>
-            </div>
 
             {/* Surah Title & Phase Info */}
             <Card className="p-4 md:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-sm mb-1">
