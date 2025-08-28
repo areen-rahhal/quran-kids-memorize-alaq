@@ -152,8 +152,11 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     setAudioError(null);
     setShowAudioError(false);
     setHasAttemptedPlay(false);
-    stopRecitingJourney();
-  }, [stopRecitingJourney]);
+    // Only stop reciting journey if we're not currently reciting
+    if (!isReciting) {
+      stopRecitingJourney();
+    }
+  }, [stopRecitingJourney, isReciting]);
 
   return {
     isPlaying,
