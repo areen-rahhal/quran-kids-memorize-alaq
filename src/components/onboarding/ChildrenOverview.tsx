@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Trophy, Star, Clock } from 'lucide-react';
+import { Plus, Trophy, Star, Clock, Edit } from 'lucide-react';
 import type { ChildProfile } from '@/pages/OnboardingFlow';
 import { juz30Surahs } from '@/data/juz30';
 
@@ -57,64 +57,53 @@ export const ChildrenOverview = ({ children, onAddChild, onEditChild, onComplete
             return (
               <Card 
                 key={index} 
-                className="p-4 border border-border hover:border-primary/50 transition-all cursor-pointer hover:shadow-md"
-                onClick={() => onEditChild(index)}
+                className="p-4 border border-border hover:border-primary/50 transition-all hover:shadow-md"
               >
-                <div className="flex items-center justify-between" onClick={() => onEditChild(index)}>
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4 space-x-reverse">
-                    <div className="relative">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={child.avatar_url} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-arabic text-lg">
-                          {child.first_name ? child.first_name[0] : '؟'}
-                        </AvatarFallback>
-                      </Avatar>
-                      {child.first_name && (
-                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                          <Star className="w-3 h-3 text-primary-foreground fill-current" />
-                        </div>
-                      )}
-                    </div>
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={child.avatar_url} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-arabic">
+                        {child.first_name ? child.first_name[0] : '؟'}
+                      </AvatarFallback>
+                    </Avatar>
                     
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-bold text-lg text-foreground font-arabic">
+                        <h3 className="font-bold text-foreground font-arabic">
                           {child.first_name || 'بدون اسم'}
                         </h3>
-                        <Badge className={`text-xs font-arabic px-2 py-1 ${levelColors[child.child_level]}`}>
+                        <Badge className={`text-xs font-arabic ${levelColors[child.child_level]}`}>
                           {levelLabels[child.child_level]}
                         </Badge>
                       </div>
                       
-                      <div className="flex items-center space-x-4 space-x-reverse text-sm text-muted-foreground font-arabic mb-3">
-                        <span>{child.age} سنوات</span>
-                        <span className="flex items-center space-x-1 space-x-reverse">
-                          <Clock className="w-4 h-4" />
-                          <span>آخر نشاط: اليوم {child.learning_preference === 'visual' ? 'بصري' : child.learning_preference === 'audio' ? 'سمعي' : 'حسي'}</span>
-                        </span>
+                      <div className="text-sm text-muted-foreground font-arabic mb-2">
+                        {child.age} سنوات
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <Progress value={progress.progressPercentage} className="h-2" />
                         <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center space-x-4 space-x-reverse font-arabic">
-                            <span className="flex items-center space-x-1 space-x-reverse">
-                              <Trophy className="w-4 h-4 text-amber-500" />
-                              <span>5 يوم</span>
-                            </span>
-                            <span className="flex items-center space-x-1 space-x-reverse">
-                              <Star className="w-4 h-4 text-blue-500" />
-                              <span>{progress.completedSurahs}/{progress.totalSurahs} سورة</span>
-                            </span>
-                            <span className="text-muted-foreground">15 دقيقة</span>
-                          </div>
-                          <div className="text-lg font-bold text-primary">
+                          <span className="font-arabic text-muted-foreground">
+                            {progress.completedSurahs}/{progress.totalSurahs} سورة
+                          </span>
+                          <span className="font-bold text-primary">
                             {progress.progressPercentage}%
-                          </div>
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEditChild(index)}
+                    className="mr-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
                 </div>
               </Card>
             );
