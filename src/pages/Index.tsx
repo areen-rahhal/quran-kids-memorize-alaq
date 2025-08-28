@@ -344,6 +344,7 @@ const Index = () => {
                 currentPhaseIdx={currentPhaseIdx}
                 totalPhases={totalPhases}
                  onNextPhase={() => {
+                   console.log('Next phase clicked - currentStep:', currentStep, 'isReciting:', isReciting);
                    if (currentStep === 'completed' || !isReciting) {
                      handleManualNavigation('next');
                    }
