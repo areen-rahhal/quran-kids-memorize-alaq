@@ -187,8 +187,11 @@ const Index = () => {
   // Generate consistent phase ID for current phase (moved up to use before other calculations)
   const currentPhaseId = currentSurahId * 100 + currentPhaseIdx + 1;
   
+  // Memoized completion status to prevent flickering
+  const isCurrentPhaseCompleted = completedTestingPhases.includes(currentPhaseId);
+  
   // Stable progress calculation that doesn't flicker during transitions
-  const stableCompletedPhases = phaseCompletionInProgress && !completedTestingPhases.includes(currentPhaseId) 
+  const stableCompletedPhases = phaseCompletionInProgress && !isCurrentPhaseCompleted 
     ? [...completedTestingPhases, currentPhaseId] 
     : completedTestingPhases;
   const completedPhaseCount = stableCompletedPhases.length;
@@ -204,12 +207,16 @@ const Index = () => {
     });
   };
   
-  // Handle testing phase completion with automatic navigation
+  // Handle testing phase completion with automatic navigation - simplified dependencies
   useEffect(() => {
     if (currentStep === 'completed' && 
         recitingMode === 'testing' && 
-        !completedTestingPhases.includes(currentPhaseId) && 
         !phaseCompletionInProgress) {
+      
+      // Check if this phase is already completed to prevent duplicate processing
+      if (completedTestingPhases.includes(currentPhaseId)) {
+        return;
+      }
       
       console.log('Marking phase as completed:', currentPhaseId);
       setPhaseCompletionInProgress(true);
@@ -217,7 +224,9 @@ const Index = () => {
       // Mark phase as completed immediately using consistent ID
       setCompletedTestingPhases(prev => {
         if (prev.includes(currentPhaseId)) return prev;
-        return [...prev, currentPhaseId];
+        const newCompleted = [...prev, currentPhaseId];
+        console.log('Updated completed phases:', newCompleted);
+        return newCompleted;
       });
       
       // Auto-navigate to next phase after delay
@@ -242,7 +251,7 @@ const Index = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [currentStep, recitingMode, currentPhaseIdx, completedTestingPhases, totalPhases, phaseCompletionInProgress, currentPhaseId, currentSurahId]);
+  }, [currentStep, recitingMode, phaseCompletionInProgress]); // Removed problematic dependencies
 
   // Show loading while checking auth
   if (loading) {
@@ -287,11 +296,11 @@ const Index = () => {
                 <h2 className="text-lg md:text-xl font-bold text-emerald-700 mb-0.5 font-arabic">سورة {currentSurah.arabicName}</h2>
                 <div className="flex items-center justify-center space-x-1 gap-1 flex-wrap mt-2">
                   <span className={`text-xs px-3 py-0.5 rounded-full font-arabic shadow border ${
-                    completedTestingPhases.includes(currentPhaseId) 
+                    isCurrentPhaseCompleted 
                       ? 'bg-green-100 text-green-700 border-green-300' 
                       : 'bg-white text-emerald-700 border-amber-100'
                   }`}>
-                    {completedTestingPhases.includes(currentPhaseId) && '✓ '}
+                    {isCurrentPhaseCompleted && '✓ '}
                     {phase.label}
                   </span>
                   <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-amber-50 text-amber-700 border border-amber-100">
@@ -385,11 +394,11 @@ const Index = () => {
                   <CircleArrowRight className="h-6 w-6" />
                 </Button>
                 <span className={`text-base font-arabic font-bold px-2 rounded-full border ${
-                  completedTestingPhases.includes(currentPhaseId)
+                  isCurrentPhaseCompleted
                     ? 'bg-green-100 text-green-700 border-green-300'
                     : 'bg-amber-100 text-amber-700 border-amber-300'
                 }`}>
-                  {completedTestingPhases.includes(currentPhaseId) && '✓ '}
+                  {isCurrentPhaseCompleted && '✓ '}
                   {phase.label}
                 </span>
                  <Button
