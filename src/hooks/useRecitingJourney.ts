@@ -265,39 +265,49 @@ export const useRecitingJourney = () => {
       setShowFeedback(true);
       
       if (isCorrect) {
-        console.log('Reciting is correct, moving to next verse');
+        console.log('✅ Reciting is correct, moving to next verse');
+        console.log('🔄 Current mode:', recitingMode);
+        console.log('📍 Current verse index:', currentVerseIndex);
+        console.log('📝 Total verses in phase:', verses.length);
+        
         resetTranscript();
         setHighlightedWords([]);
         
         // In testing mode, reveal this verse
         if (recitingMode === 'testing') {
           setRevealedTestingVerses(prev => [...prev, verses[currentVerseIndex]]);
+          console.log('🧪 Testing mode: verse revealed');
         }
         
         // In learning mode, track completed verses
         if (recitingMode === 'learning') {
           setCompletedLearningVerses(prev => [...prev, verses[currentVerseIndex]]);
+          console.log('📚 Learning mode: verse completed');
         }
         
         const nextIndex = currentVerseIndex + 1;
-        console.log('Next index will be:', nextIndex);
+        console.log('➡️ Next index will be:', nextIndex);
         
         if (nextIndex < verses.length) {
+          console.log('📖 More verses available, proceeding to next...');
           setTimeout(() => {
+            console.log('🎯 Setting verse index to:', nextIndex);
             setCurrentVerseIndex(nextIndex);
             
             // In learning mode, proceed to next verse
             if (recitingMode === 'learning') {
+              console.log('🎵 Learning mode: Playing next verse');
               setCurrentStep('playing');
               setFeedback(null);
               setShowFeedback(false);
               setErrorDetails('');
               
               setTimeout(() => {
-                console.log('Playing next verse at index:', nextIndex);
+                console.log('🔊 Playing next verse at index:', nextIndex);
                 loadAndPlayAyah(nextIndex, verses);
               }, 500);
             } else {
+              console.log('🧪 Testing mode: Starting listening for next verse');
               // In testing mode, directly start listening for next verse
               setCurrentStep('testing');
               setFeedback(null);
@@ -305,18 +315,22 @@ export const useRecitingJourney = () => {
               setErrorDetails('');
               
               setTimeout(() => {
+                console.log('🎤 Starting listening for testing mode');
                 startListening();
               }, 800);
             }
           }, 3000);
         } else {
+          console.log('🏁 All verses in phase completed!');
           setTimeout(() => {
-            console.log('All verses completed!');
+            console.log('✨ Phase completion handling...');
             
             // If learning mode and all verses completed, ask if ready for testing
             if (recitingMode === 'learning') {
+              console.log('📚 Learning completed, asking for testing readiness');
               setCurrentStep('ready-check');
             } else {
+              console.log('🧪 Testing completed');
               // Testing mode completed
               setCurrentStep('completed');
               setIsReciting(false);
