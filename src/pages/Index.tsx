@@ -26,6 +26,11 @@ const Index = () => {
   const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
 
 
+  // Clear localStorage data for testing
+  useEffect(() => {
+    localStorage.removeItem('ahmad-quran-progress');
+  }, []);
+
   // Load progress from localStorage on mount and update with child data
   useEffect(() => {
     const savedProgress = localStorage.getItem('ahmad-quran-progress');
