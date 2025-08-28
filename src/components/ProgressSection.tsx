@@ -107,7 +107,7 @@ const PathWithPhases: React.FC<{
   const controlY = midY;
   const pathD = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
 
-  // Calculate positions for phase circles along the curve
+  // Calculate positions for phase circles along the curve - in ascending order (higher phase numbers closer to next surah)
   const phasePositions = phases.slice(0, 3).map((_, index) => {
     const t = (index + 1) / (phases.length + 1); // Distribute evenly along curve
     return getPointOnCurve(startX, startY, endX, endY, t);
@@ -137,9 +137,11 @@ const PathWithPhases: React.FC<{
         <path d={pathD} stroke={isCompleted ? `url(#completedPath-${surahId})` : `url(#incompletePath-${surahId})`} strokeWidth="6" fill="none" strokeLinecap="round" className={isCompleted ? "drop-shadow-sm" : ""} />
       </svg>
       
-      {/* Phase circles positioned on the path */}
+      {/* Phase circles positioned on the path - in ascending order */}
       {phasePositions.map((position, index) => {
       if (index >= phases.length) return null;
+      // Reverse the index for ascending display (higher numbers closer to next surah)
+      const reversedIndex = phases.length - 1 - index;
       return <div key={index} className="absolute pointer-events-auto" style={{
         left: position.x - 24,
         // Center the circle (24px = half of 48px width)
@@ -147,8 +149,8 @@ const PathWithPhases: React.FC<{
         // Center the circle (24px = half of 48px height)
         zIndex: 25
       }}>
-            <Circle status={getPhaseStatus(index)} size="small" onClick={() => onPhaseSelect?.(surahId, index)}>
-              {index + 1}
+            <Circle status={getPhaseStatus(reversedIndex)} size="small" onClick={() => onPhaseSelect?.(surahId, reversedIndex)}>
+              {reversedIndex + 1}
             </Circle>
           </div>;
     })}
@@ -252,8 +254,8 @@ const SurahNode: React.FC<{
           </div>}
       </div>
       
-      {/* If this is the last surah, show remaining phases below it */}
-      {!nextSurah && phases.length > 0 && surahStatus !== 'locked' && <div className="absolute flex flex-col items-center gap-2" style={{
+      {/* If this is the last surah, show remaining phases below it - in ascending order */}
+      {!nextSurah && phases.length > 0 && surahStatus !== 'locked' && <div className="absolute flex flex-col-reverse items-center gap-2" style={{
       left: currentX - 24,
       top: currentY + 60,
       zIndex: 25
