@@ -43,7 +43,7 @@ export const ChildrenOverview = ({ children, onAddChild, onEditChild, onComplete
       <Card className="w-full max-w-2xl p-6 bg-white shadow-xl border-emerald-200">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-emerald-700 font-arabic mb-2">
-            ملفات الأطفال
+            الملفات الشخصية
           </h1>
           <p className="text-muted-foreground font-arabic text-sm">
             أضف ملفات أطفالك لبدء رحلة التعلم (حتى 5 أطفال)
