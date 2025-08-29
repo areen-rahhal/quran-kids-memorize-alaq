@@ -1,138 +1,48 @@
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CircleArrowLeft, CircleArrowRight } from 'lucide-react';
 import { AlAlaqVerses, studyPhases, getPhaseData } from '@/data/studyPhases';
 import { AnNasVerses, anNasStudyPhases, getAnNasPhaseData } from '@/data/anNasData';
 import { getCurrentSurah } from '@/data/juz30';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useChildProfiles } from '@/hooks/useChildProfiles';
 import { QuranHeader } from '@/components/QuranHeader';
 import { ProgressSection } from '@/components/ProgressSection';
 import { VerseDisplay } from '@/components/VerseDisplay';
-import { AudioControls } from '@/components/AudioControls';
-
-import { toast } from 'sonner';
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const { selectedChild, getSurahProficiency, getCompletedSurahs } = useChildProfiles();
+  const { selectedChild } = useChildProfiles();
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
-  const [completedVerses, setCompletedVerses] = useState<number[]>([]);
-  const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
-  // Removed complex state variables - using direct calculations instead
-  const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
-  const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
-  const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
-  const processingRef = useRef(false);
+  const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas
+  const [completedPhases, setCompletedPhases] = useState<Set<number>>(new Set());
+  const [isTestActive, setIsTestActive] = useState(false);
+  const [showNextPhasePrompt, setShowNextPhasePrompt] = useState(false);
 
 
-  // Clear localStorage data for testing
+  // Load completed phases from localStorage
   useEffect(() => {
-    localStorage.removeItem('ahmad-quran-progress');
-  }, []);
-
-  // Clear localStorage data for testing
-  useEffect(() => {
-    localStorage.removeItem('ahmad-quran-progress');
-  }, []);
-
-  // Load progress from localStorage on mount and update with child data
-  useEffect(() => {
-    const savedProgress = localStorage.getItem('ahmad-quran-progress');
+    const savedProgress = localStorage.getItem('ahmad-quran-completed-phases');
     if (savedProgress) {
       try {
-        const progress = JSON.parse(savedProgress);
-        setCompletedVerses(progress.completedVerses || []);
-        setCompletedTestingPhases(progress.completedTestingPhases || []);
-        setCurrentPhaseIdx(progress.currentPhaseIdx || 0);
-        setCurrentSurahId(progress.currentSurahId || 114);
-        setCompletedSurahs(progress.completedSurahs || []);
+        const completedPhaseIds = JSON.parse(savedProgress);
+        setCompletedPhases(new Set(completedPhaseIds));
       } catch (error) {
-        console.error('Error loading progress:', error);
+        console.error('Error loading completed phases:', error);
       }
     }
+  }, []);
 
-    // Update with child-specific data when available
-    if (selectedChild) {
-      const childCompletedSurahs = getCompletedSurahs();
-      setCompletedSurahs(childCompletedSurahs);
-      
-      // Set current surah to first incomplete surah or default
-      if (childCompletedSurahs.length > 0) {
-        // Find next surah to work on (first incomplete one)
-        const allSurahs = [114, 113, 112, 111, 110]; // Add more as needed
-        const nextSurah = allSurahs.find(id => !childCompletedSurahs.includes(id));
-        if (nextSurah) {
-          setCurrentSurahId(nextSurah);
-        }
-      }
-    }
-  }, [selectedChild, getCompletedSurahs]);
-
-  // Save progress to localStorage whenever it changes
+  // Save completed phases to localStorage
   useEffect(() => {
-    const progress = {
-      completedVerses,
-      completedTestingPhases,
-      currentPhaseIdx,
-      currentSurahId,
-      completedSurahs,
-      lastUpdated: new Date().toISOString()
-    };
-    localStorage.setItem('ahmad-quran-progress', JSON.stringify(progress));
-  }, [completedVerses, completedTestingPhases, currentPhaseIdx, currentSurahId, completedSurahs]);
+    localStorage.setItem('ahmad-quran-completed-phases', JSON.stringify(Array.from(completedPhases)));
+  }, [completedPhases]);
 
-  const {
-    isPlaying,
-    audioError,
-    showAudioError,
-    audioRef,
-    currentAyahIdx,
-    hasAttemptedPlay,
-    isLoading,
-    retryCount,
-    handlePlayPause,
-    resetAudio,
-    retryAudio,
-    onAudioEnded,
-    onAudioError,
-    isReciting,
-    currentStep,
-    isListening,
-    transcript,
-    feedback,
-    showFeedback,
-    errorDetails,
-    highlightedWords,
-    recitingMode,
-    revealedTestingVerses,
-    handleStartReciting,
-    handleStopReciting,
-    handleListeningComplete,
-    updateWordHighlighting,
-    handleReadyForTesting,
-    handleRestartLearning
-  } = useAudioPlayer(currentSurahId);
 
-  // Enhanced debugging functions
-  const handleForceStartListening = () => {
-    console.log('🔧 MANUAL: Force starting speech recognition');
-    toast.info('🎤 محاولة بدء الاستماع يدوياً...');
-  };
-
-  const handleForceClearTranscript = () => {
-    console.log('🔧 MANUAL: Force clearing transcript');
-    toast.info('🧹 محاولة مسح النص...');
-  };
-
-  const handleForceNextStep = () => {
-    console.log('🔧 MANUAL: Force proceeding to next step');
-    toast.info('⏭️ محاولة الانتقال للخطوة التالية...');
-  };
 
   // Get current surah data
   const currentSurah = getCurrentSurah(currentSurahId);
@@ -148,69 +58,50 @@ const Index = () => {
     vnum => currentVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
-  // When phase changes or surah changes, reset audio (but not during completion flow)
-  useEffect(() => {
-    // Don't reset if we just completed a testing phase - let the user navigate naturally
-    if (currentStep === 'completed' && recitingMode === 'testing') {
-      return;
-    }
-    // Reset only when actually changing phases, not during the completion process
-    const timer = setTimeout(() => {
-      resetAudio();
-    }, 100); // Small delay to prevent interference with completion flow
-    
-    return () => clearTimeout(timer);
-  }, [currentPhaseIdx, currentSurahId, resetAudio]);
+  // Simple phase status calculation
+  const currentPhaseId = currentSurahId * 100 + currentPhaseIdx + 1;
+  const isCurrentPhaseCompleted = completedPhases.has(currentPhaseId);
+  const totalPhases = currentStudyPhases.length;
 
   // Reset to phase 0 when surah changes
   useEffect(() => {
     setCurrentPhaseIdx(0);
   }, [currentSurahId]);
 
-  // Simple transcript processing effect
-  useEffect(() => {
-    if (isReciting && !isListening && transcript && transcript.trim().length > 0) {
-      console.log('Processing transcript:', transcript);
-      
-      if (currentStep === 'listening' || currentStep === 'testing') {
-        const currentVerse = phaseVerseObjs[currentAyahIdx];
-        const currentVerseText = currentVerse ? currentVerse.arabic : '';
-        
-        handleListeningComplete(phase.verses, currentVerseText);
-      }
+  // Test completion handler
+  const handleTestComplete = () => {
+    console.log('Test completed for phase:', currentPhaseId);
+    
+    // Mark phase as completed if not already
+    if (!completedPhases.has(currentPhaseId)) {
+      setCompletedPhases(prev => new Set([...prev, currentPhaseId]));
     }
-  }, [transcript, isReciting, isListening, currentStep, phaseVerseObjs, currentAyahIdx, phase.verses, handleListeningComplete]);
-
-  const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
-  
-  // Simple direct calculations - no more complex state management
-  const currentPhaseId = currentSurahId * 100 + currentPhaseIdx + 1;
-  const isCurrentPhaseCompleted = completedTestingPhases.includes(currentPhaseId);
-  const completedPhaseCount = completedTestingPhases.length;
-  const totalPhases = currentStudyPhases.length;
-  const progress = (completedPhaseCount / totalPhases) * 100;
-
-  const handleMarkPhaseComplete = () => {
-    // Only mark verses as complete if they aren't already
-    setCompletedVerses(prev => {
-      const newIds = phase.verses.filter(id => !prev.includes(id));
-      if (newIds.length === 0) return prev; // Prevent unnecessary state update
-      return [...prev, ...newIds];
-    });
+    
+    setIsTestActive(false);
+    setShowNextPhasePrompt(true);
   };
-  
-  // Simple phase completion - just mark as complete when testing is done
-  useEffect(() => {
-    if (currentStep === 'completed' && recitingMode === 'testing') {
-      // Only mark if not already completed
-      if (!completedTestingPhases.includes(currentPhaseId)) {
-        console.log('Marking phase as completed:', currentPhaseId);
-        setCompletedTestingPhases(prev => [...prev, currentPhaseId]);
-      }
-    }
-  }, [currentStep, recitingMode, currentPhaseId, completedTestingPhases]);
 
-  // Simple navigation - just update the phase index
+  // Start test function
+  const handleStartTest = () => {
+    console.log('Starting test for phase:', currentPhaseId);
+    setIsTestActive(true);
+    // Here you would initialize your test logic
+  };
+
+  // Navigate to next phase
+  const handleProceedToNextPhase = () => {
+    setShowNextPhasePrompt(false);
+    if (currentPhaseIdx < totalPhases - 1) {
+      setCurrentPhaseIdx(prev => prev + 1);
+    }
+  };
+
+  // Stay on current phase
+  const handleStayOnPhase = () => {
+    setShowNextPhasePrompt(false);
+  };
+
+  // Simple navigation
   const handleManualNavigation = (direction: 'next' | 'prev') => {
     if (direction === 'next') {
       setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
@@ -247,11 +138,11 @@ const Index = () => {
         {/* Surah Header */}
         <QuranHeader
           currentSurahName={`سورة ${currentSurah.arabicName}`}
-          completedPhaseCount={completedPhaseCount}
+          completedPhaseCount={completedPhases.size}
           totalPhases={totalPhases}
           currentPhaseIdx={currentPhaseIdx}
           setCurrentPhaseIdx={setCurrentPhaseIdx}
-          completedTestingPhases={completedTestingPhases}
+          completedTestingPhases={Array.from(completedPhases)}
         />
         
         <div className="relative z-10 px-3 py-4 md:p-7 space-y-6 md:space-y-9 max-w-2xl mx-auto w-full">
@@ -288,50 +179,44 @@ const Index = () => {
                 phaseVerseObjs={phaseVerseObjs}
                 currentPhaseIdx={currentPhaseIdx}
                 totalPhases={totalPhases}
-                currentAyahIdx={currentAyahIdx}
-                isPlaying={isPlaying || isReciting}
-                highlightedWords={highlightedWords}
-                expectedText={phaseVerseObjs[currentAyahIdx]?.arabic || ''}
-                isListening={isListening}
-                recitingMode={recitingMode}
-                revealedTestingVerses={revealedTestingVerses}
-                currentStep={currentStep}
+                currentAyahIdx={0}
+                isPlaying={false}
+                highlightedWords={[]}
+                expectedText=""
+                isListening={false}
+                recitingMode="learning"
+                revealedTestingVerses={[]}
+                currentStep="playing"
               />
               
-              <AudioControls
-                isPlaying={isPlaying}
-                audioError={audioError}
-                showAudioError={showAudioError}
-                isPhaseComplete={isPhaseComplete}
-                hasAttemptedPlay={hasAttemptedPlay}
-                onPlayPause={() => handlePlayPause(phase.verses)}
-                onMarkComplete={handleMarkPhaseComplete}
-                audioRef={audioRef}
-                onAudioEnded={() => {
-                  console.log('🔊 Audio ended event triggered from Index component');
-                  onAudioEnded(phase.verses);
-                }}
-                onAudioError={onAudioError}
-                isLoading={isLoading}
-                retryCount={retryCount}
-                onRetryAudio={() => retryAudio(phase.verses)}
-                isReciting={isReciting}
-                isListening={isListening}
-                currentStep={currentStep}
-                transcript={transcript}
-                feedback={feedback}
-                showFeedback={showFeedback}
-                errorDetails={errorDetails}
-                onStartReciting={() => handleStartReciting(phase.verses)}
-                onStopReciting={handleStopReciting}
-                recitingMode={recitingMode}
-                onReadyForTesting={handleReadyForTesting}
-                onRestartLearning={handleRestartLearning}
-                currentPhaseLabel={phase.label}
-                currentPhaseIdx={currentPhaseIdx}
-                totalPhases={totalPhases}
-                 onNextPhase={() => handleManualNavigation('next')}
-              />
+              {/* Simple Test Controls */}
+              <div className="flex justify-center gap-4 mt-6">
+                <Button
+                  onClick={handleStartTest}
+                  disabled={isTestActive}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 font-arabic text-lg rounded-full shadow-lg"
+                >
+                  {isTestActive ? 'جاري الاختبار...' : 'بدء الاختبار'}
+                </Button>
+              </div>
+              
+              {/* Test completion simulation */}
+              {isTestActive && (
+                <div className="text-center mt-4">
+                  <div className="text-lg font-arabic p-6 rounded-xl border-2 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300 text-blue-800 shadow-lg">
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <span className="text-4xl">🎤</span>
+                      <span className="text-xl font-bold">اقرأ الآيات من الذاكرة</span>
+                      <Button
+                        onClick={handleTestComplete}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 font-arabic rounded-full"
+                      >
+                        إنهاء الاختبار (محاكاة)
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
             
             {/* Phase navigation */}
@@ -367,36 +252,52 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-            
-            {/* Completion Message */}
-            {completedVerses.length === currentVerses.length && (
-              <Card className="p-7 relative mt-7 bg-gradient-to-r from-amber-100 to-yellow-100 border-amber-300 animate-enter rounded-2xl shadow-2xl ring-4 ring-amber-200">
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                  <span className="text-6xl animate-bounce">🎉</span>
-                </div>
-                <div className="text-center space-y-2 mt-4">
-                  <h3 className="text-xl md:text-2xl font-bold text-amber-700 font-arabic mb-1">مبروك!</h3>
-                  <p className="text-amber-600 font-arabic text-base" dir="rtl">
-                    لقد أكملت حفظ سورة {currentSurah.arabicName}! بارك الله في جهودك في حفظ كلام الله
-                  </p>
-                </div>
-              </Card>
-            )}
-          </div>
         </div>
         
-        
-        {/* Right Side - Progress Section */}
-        <div className="w-80 border-l">
-          <ProgressSection
-            currentSurahId={currentSurahId}
-            completedSurahs={completedSurahs}
-            completedTestingPhases={completedTestingPhases}
-            onSurahSelect={setCurrentSurahId}
-            getSurahProficiency={getSurahProficiency}
-          />
-        </div>
+        {/* Next Phase Prompt Dialog */}
+        <Dialog open={showNextPhasePrompt} onOpenChange={setShowNextPhasePrompt}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center font-arabic text-lg">
+                ممتاز! أكملت المرحلة بنجاح 🎉
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-center space-y-4 p-4">
+              <p className="font-arabic text-base text-gray-700">
+                هل تريد الانتقال إلى المرحلة التالية؟
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  onClick={handleProceedToNextPhase}
+                  disabled={currentPhaseIdx >= totalPhases - 1}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 font-arabic rounded-full"
+                >
+                  نعم، المرحلة التالية
+                </Button>
+                <Button
+                  onClick={handleStayOnPhase}
+                  variant="outline"
+                  className="border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-2 font-arabic rounded-full"
+                >
+                  لا، البقاء هنا
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+        
+      {/* Right Side - Progress Section */}
+      <div className="w-80 border-l">
+        <ProgressSection
+          currentSurahId={currentSurahId}
+          completedSurahs={[]}
+          completedTestingPhases={Array.from(completedPhases)}
+          onSurahSelect={setCurrentSurahId}
+          getSurahProficiency={() => "0"}
+        />
+      </div>
+    </div>
   );
 };
 
