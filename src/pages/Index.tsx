@@ -8,11 +8,13 @@ import { CircleArrowLeft, CircleArrowRight } from 'lucide-react';
 import { AlAlaqVerses, studyPhases, getPhaseData } from '@/data/studyPhases';
 import { AnNasVerses, anNasStudyPhases, getAnNasPhaseData } from '@/data/anNasData';
 import { getCurrentSurah } from '@/data/juz30';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useChildProfiles } from '@/hooks/useChildProfiles';
 import { QuranHeader } from '@/components/QuranHeader';
 import { ProgressSection } from '@/components/ProgressSection';
 import { VerseDisplay } from '@/components/VerseDisplay';
+import { AudioControls } from '@/components/AudioControls';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -20,8 +22,40 @@ const Index = () => {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas
   const [completedPhases, setCompletedPhases] = useState<Set<number>>(new Set());
-  const [isTestActive, setIsTestActive] = useState(false);
   const [showNextPhasePrompt, setShowNextPhasePrompt] = useState(false);
+
+  // Audio player and learning functionality
+  const {
+    isPlaying,
+    audioError,
+    showAudioError,
+    audioRef,
+    currentAyahIdx,
+    hasAttemptedPlay,
+    isLoading,
+    retryCount,
+    handlePlayPause,
+    resetAudio,
+    retryAudio,
+    onAudioEnded,
+    onAudioError,
+    isReciting,
+    currentStep,
+    isListening,
+    transcript,
+    feedback,
+    showFeedback,
+    errorDetails,
+    highlightedWords,
+    recitingMode,
+    revealedTestingVerses,
+    handleStartReciting,
+    handleStopReciting,
+    handleListeningComplete,
+    updateWordHighlighting,
+    handleReadyForTesting,
+    handleRestartLearning
+  } = useAudioPlayer(currentSurahId);
 
 
   // Load completed phases from localStorage
@@ -68,24 +102,29 @@ const Index = () => {
     setCurrentPhaseIdx(0);
   }, [currentSurahId]);
 
-  // Test completion handler
-  const handleTestComplete = () => {
-    console.log('Test completed for phase:', currentPhaseId);
-    
-    // Mark phase as completed if not already
-    if (!completedPhases.has(currentPhaseId)) {
-      setCompletedPhases(prev => new Set([...prev, currentPhaseId]));
+  // Enhanced test completion handler - triggered when test step completes
+  useEffect(() => {
+    if (currentStep === 'completed' && recitingMode === 'testing') {
+      console.log('Test completed for phase:', currentPhaseId);
+      
+      // Mark phase as completed if not already
+      if (!completedPhases.has(currentPhaseId)) {
+        setCompletedPhases(prev => new Set([...prev, currentPhaseId]));
+      }
+      
+      // Show next phase prompt after a delay
+      setTimeout(() => {
+        setShowNextPhasePrompt(true);
+      }, 2000);
     }
-    
-    setIsTestActive(false);
-    setShowNextPhasePrompt(true);
-  };
+  }, [currentStep, recitingMode, currentPhaseId, completedPhases]);
 
-  // Start test function
-  const handleStartTest = () => {
-    console.log('Starting test for phase:', currentPhaseId);
-    setIsTestActive(true);
-    // Here you would initialize your test logic
+  // Simple learning test transition - user chooses when to start testing
+  const handleStartCustomTest = () => {
+    console.log('Starting custom test for phase:', currentPhaseId);
+    if (handleReadyForTesting) {
+      handleReadyForTesting();
+    }
   };
 
   // Navigate to next phase
@@ -94,6 +133,8 @@ const Index = () => {
     if (currentPhaseIdx < totalPhases - 1) {
       setCurrentPhaseIdx(prev => prev + 1);
     }
+    // Reset audio when moving to next phase
+    resetAudio();
   };
 
   // Stay on current phase
@@ -179,44 +220,63 @@ const Index = () => {
                 phaseVerseObjs={phaseVerseObjs}
                 currentPhaseIdx={currentPhaseIdx}
                 totalPhases={totalPhases}
-                currentAyahIdx={0}
-                isPlaying={false}
-                highlightedWords={[]}
-                expectedText=""
-                isListening={false}
-                recitingMode="learning"
-                revealedTestingVerses={[]}
-                currentStep="playing"
+                currentAyahIdx={currentAyahIdx}
+                isPlaying={isPlaying || isReciting}
+                highlightedWords={highlightedWords}
+                expectedText={phaseVerseObjs[currentAyahIdx]?.arabic || ''}
+                isListening={isListening}
+                recitingMode={recitingMode}
+                revealedTestingVerses={revealedTestingVerses}
+                currentStep={currentStep}
               />
               
-              {/* Simple Test Controls */}
-              <div className="flex justify-center gap-4 mt-6">
+              {/* Audio Controls - Learning and Testing */}
+              <AudioControls
+                isPlaying={isPlaying}
+                audioError={audioError}
+                showAudioError={showAudioError}
+                isPhaseComplete={false}
+                hasAttemptedPlay={hasAttemptedPlay}
+                onPlayPause={() => handlePlayPause(phase.verses)}
+                onMarkComplete={() => {}}
+                audioRef={audioRef}
+                onAudioEnded={() => {
+                  console.log('🔊 Audio ended event triggered from Index component');
+                  onAudioEnded(phase.verses);
+                }}
+                onAudioError={onAudioError}
+                isLoading={isLoading}
+                retryCount={retryCount}
+                onRetryAudio={() => retryAudio(phase.verses)}
+                isReciting={isReciting}
+                isListening={isListening}
+                currentStep={currentStep}
+                transcript={transcript}
+                feedback={feedback}
+                showFeedback={showFeedback}
+                errorDetails={errorDetails}
+                onStartReciting={() => handleStartReciting(phase.verses)}
+                onStopReciting={handleStopReciting}
+                recitingMode={recitingMode}
+                onReadyForTesting={handleStartCustomTest}
+                onRestartLearning={handleRestartLearning}
+                currentPhaseLabel={phase.label}
+                currentPhaseIdx={currentPhaseIdx}
+                totalPhases={totalPhases}
+                onNextPhase={() => handleManualNavigation('next')}
+              />
+              
+              {/* Simple additional test button */}
+              <div className="flex justify-center gap-4 mt-4">
                 <Button
-                  onClick={handleStartTest}
-                  disabled={isTestActive}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 font-arabic text-lg rounded-full shadow-lg"
+                  onClick={handleStartCustomTest}
+                  disabled={isReciting && recitingMode === 'testing'}
+                  variant="outline"
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 font-arabic rounded-full border-purple-600"
                 >
-                  {isTestActive ? 'جاري الاختبار...' : 'بدء الاختبار'}
+                  {recitingMode === 'testing' && isReciting ? 'جاري الاختبار...' : 'اختبار سريع'}
                 </Button>
               </div>
-              
-              {/* Test completion simulation */}
-              {isTestActive && (
-                <div className="text-center mt-4">
-                  <div className="text-lg font-arabic p-6 rounded-xl border-2 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300 text-blue-800 shadow-lg">
-                    <div className="flex flex-col items-center justify-center gap-4">
-                      <span className="text-4xl">🎤</span>
-                      <span className="text-xl font-bold">اقرأ الآيات من الذاكرة</span>
-                      <Button
-                        onClick={handleTestComplete}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 font-arabic rounded-full"
-                      >
-                        إنهاء الاختبار (محاكاة)
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </Card>
             
             {/* Phase navigation */}
