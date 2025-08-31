@@ -4,7 +4,7 @@ import { juz30Surahs } from '../data/juz30';
 interface ProgressSectionProps {
   currentSurahId: number;
   completedSurahs: number[];
-  completedTestingPhases: number[];
+  completedPhases: Set<number>;
   onSurahSelect: (surahId: number) => void;
   getSurahProficiency?: (surahNumber: number) => string | null;
 }
@@ -84,7 +84,7 @@ const PathWithPhases: React.FC<{
   isCompleted: boolean;
   phases: number[];
   surahId: number;
-  completedTestingPhases: number[];
+  completedPhases: Set<number>;
   currentSurahId: number;
   onPhaseSelect?: (surahId: number, phaseIndex: number) => void;
 }> = ({
@@ -95,7 +95,7 @@ const PathWithPhases: React.FC<{
   isCompleted,
   phases,
   surahId,
-  completedTestingPhases,
+  completedPhases,
   currentSurahId,
   onPhaseSelect
 }) => {
@@ -113,9 +113,8 @@ const PathWithPhases: React.FC<{
     return getPointOnCurve(startX, startY, endX, endY, t);
   });
   const getPhaseStatus = (phaseIndex: number) => {
-    const phaseId = surahId * 100 + phaseIndex + 1; // Changed to avoid conflicts
-    if (completedTestingPhases.includes(phaseId)) {
-      // For now, assume no errors - you can extend this logic later
+    const phaseId = surahId * 100 + phaseIndex + 1;
+    if (completedPhases.has(phaseId)) {
       return 'completed';
     }
     if (surahId === currentSurahId) return 'current';
@@ -164,7 +163,7 @@ const SurahNode: React.FC<{
   nextIsLeft: boolean;
   currentSurahId: number;
   completedSurahs: number[];
-  completedTestingPhases: number[];
+  completedPhases: Set<number>;
   onSurahSelect?: (surahId: number) => void;
   onPhaseSelect?: (surahId: number, phaseIndex: number) => void;
   getSurahProficiency?: (surahNumber: number) => string | null;
@@ -176,7 +175,7 @@ const SurahNode: React.FC<{
   nextIsLeft,
   currentSurahId,
   completedSurahs,
-  completedTestingPhases,
+  completedPhases,
   onSurahSelect,
   onPhaseSelect,
   getSurahProficiency
@@ -221,7 +220,7 @@ const SurahNode: React.FC<{
     height: '160px'
   }}>
       {/* Path connector with phases to next surah */}
-      {nextSurah && <PathWithPhases startX={currentX} startY={currentY} endX={nextX} endY={nextY} isCompleted={isCompleted} phases={phases} surahId={surah.id} completedTestingPhases={completedTestingPhases} currentSurahId={currentSurahId} onPhaseSelect={onPhaseSelect} />}
+      {nextSurah && <PathWithPhases startX={currentX} startY={currentY} endX={nextX} endY={nextY} isCompleted={isCompleted} phases={phases} surahId={surah.id} completedPhases={completedPhases} currentSurahId={currentSurahId} onPhaseSelect={onPhaseSelect} />}
       
       {/* Surah container */}
       <div className="absolute flex flex-col items-center" style={{
@@ -262,7 +261,7 @@ const SurahNode: React.FC<{
     }}>
           {phases.slice(0, 4).map(phaseIndex => {
         const phaseId = surah.id * 100 + phaseIndex + 1;
-        const phaseStatus = completedTestingPhases.includes(phaseId) ? 'completed' : surah.id === currentSurahId ? 'current' : 'locked';
+        const phaseStatus = completedPhases.has(phaseId) ? 'completed' : surah.id === currentSurahId ? 'current' : 'locked';
         return <Circle key={phaseIndex} status={phaseStatus} size="small" onClick={() => onPhaseSelect?.(surah.id, phaseIndex)}>
                 {phaseIndex + 1}
               </Circle>;
@@ -273,7 +272,7 @@ const SurahNode: React.FC<{
 export const ProgressSection = ({
   currentSurahId,
   completedSurahs,
-  completedTestingPhases,
+  completedPhases,
   onSurahSelect,
   getSurahProficiency
 }: ProgressSectionProps) => {
@@ -282,10 +281,10 @@ export const ProgressSection = ({
     onSurahSelect(surahId);
   };
 
-  // Calculate completion progress - use only real progress data
+  // Calculate completion progress
   const totalSurahs = juz30Surahs.length;
   const effectiveCompletedSurahs = completedSurahs;
-  const effectiveCompletedPhases = completedTestingPhases;
+  const effectiveCompletedPhases = completedPhases;
   const effectiveCompletedCount = effectiveCompletedSurahs.length;
   return <div className="w-80 h-full bg-gradient-to-t from-purple-50 via-blue-50 via-green-50 to-orange-50 relative overflow-hidden">
       {/* Header */}
@@ -320,7 +319,7 @@ export const ProgressSection = ({
             const isLeft = index % 2 === 0;
             const nextSurah = juz30Surahs[index + 1];
             const nextIsLeft = (index + 1) % 2 === 0;
-            return <SurahNode key={surah.id} surah={surah} index={index} isLeft={isLeft} nextSurah={nextSurah} nextIsLeft={nextIsLeft} currentSurahId={currentSurahId} completedSurahs={effectiveCompletedSurahs} completedTestingPhases={effectiveCompletedPhases} onSurahSelect={onSurahSelect} onPhaseSelect={onPhaseSelect} getSurahProficiency={getSurahProficiency} />;
+            return <SurahNode key={surah.id} surah={surah} index={index} isLeft={isLeft} nextSurah={nextSurah} nextIsLeft={nextIsLeft} currentSurahId={currentSurahId} completedSurahs={effectiveCompletedSurahs} completedPhases={effectiveCompletedPhases} onSurahSelect={onSurahSelect} onPhaseSelect={onPhaseSelect} getSurahProficiency={getSurahProficiency} />;
           })}
           </div>
         </div>

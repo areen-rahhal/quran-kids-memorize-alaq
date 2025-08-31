@@ -22,7 +22,7 @@ const Index = () => {
   const { selectedChild, getSurahProficiency, getCompletedSurahs } = useChildProfiles();
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
-  const [completedTestingPhases, setCompletedTestingPhases] = useState<number[]>([]);
+  const [completedPhases, setCompletedPhases] = useState<Set<number>>(new Set());
   // Removed complex state variables - using direct calculations instead
   const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
@@ -47,7 +47,7 @@ const Index = () => {
       try {
         const progress = JSON.parse(savedProgress);
         setCompletedVerses(progress.completedVerses || []);
-        setCompletedTestingPhases(progress.completedTestingPhases || []);
+        setCompletedPhases(new Set(progress.completedTestingPhases || []));
         setCurrentPhaseIdx(progress.currentPhaseIdx || 0);
         setCurrentSurahId(progress.currentSurahId || 114);
         setCompletedSurahs(progress.completedSurahs || []);
@@ -77,14 +77,14 @@ const Index = () => {
   useEffect(() => {
     const progress = {
       completedVerses,
-      completedTestingPhases,
+      completedTestingPhases: [...completedPhases],
       currentPhaseIdx,
       currentSurahId,
       completedSurahs,
       lastUpdated: new Date().toISOString()
     };
     localStorage.setItem('ahmad-quran-progress', JSON.stringify(progress));
-  }, [completedVerses, completedTestingPhases, currentPhaseIdx, currentSurahId, completedSurahs]);
+  }, [completedVerses, completedPhases, currentPhaseIdx, currentSurahId, completedSurahs]);
 
   const {
     isPlaying,
@@ -148,16 +148,11 @@ const Index = () => {
     vnum => currentVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
-  // When phase changes or surah changes, reset audio (but not during completion flow)
+  // Reset audio when phase or surah changes
   useEffect(() => {
-    // Don't reset if we just completed a testing phase - let the user navigate naturally
-    if (currentStep === 'completed' && recitingMode === 'testing') {
-      return;
-    }
-    // Reset only when actually changing phases, not during the completion process
     const timer = setTimeout(() => {
       resetAudio();
-    }, 100); // Small delay to prevent interference with completion flow
+    }, 100);
     
     return () => clearTimeout(timer);
   }, [currentPhaseIdx, currentSurahId, resetAudio]);
@@ -183,10 +178,10 @@ const Index = () => {
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   
-  // Simple direct calculations - no more complex state management
+  // Simple direct calculations
   const currentPhaseId = currentSurahId * 100 + currentPhaseIdx + 1;
-  const isCurrentPhaseCompleted = completedTestingPhases.includes(currentPhaseId);
-  const completedPhaseCount = completedTestingPhases.length;
+  const isCurrentPhaseCompleted = completedPhases.has(currentPhaseId);
+  const completedPhaseCount = completedPhases.size;
   const totalPhases = currentStudyPhases.length;
   const progress = (completedPhaseCount / totalPhases) * 100;
 
@@ -199,24 +194,44 @@ const Index = () => {
     });
   };
   
-  // Simple phase completion - just mark as complete when testing is done
+  // Test completion handler
+  const handleTestComplete = (phaseId: number) => {
+    // Mark phase as completed (handles both new and returning users)
+    setCompletedPhases(prev => new Set([...prev, phaseId]));
+    
+    // Show completion dialog after brief delay
+    setTimeout(() => {
+      if (currentPhaseIdx < totalPhases - 1) {
+        const shouldProceed = window.confirm("تهانينا! هل تريد الانتقال للمرحلة التالية؟");
+        if (shouldProceed) {
+          setCurrentPhaseIdx(prev => prev + 1);
+        }
+      } else {
+        alert("مبروك! لقد أكملت جميع مراحل هذه السورة!");
+      }
+    }, 1500);
+  };
+  
+  // Handle test completion when step becomes 'completed' and mode is 'testing'
   useEffect(() => {
     if (currentStep === 'completed' && recitingMode === 'testing') {
-      // Only mark if not already completed
-      if (!completedTestingPhases.includes(currentPhaseId)) {
-        console.log('Marking phase as completed:', currentPhaseId);
-        setCompletedTestingPhases(prev => [...prev, currentPhaseId]);
-      }
+      handleTestComplete(currentPhaseId);
     }
-  }, [currentStep, recitingMode, currentPhaseId, completedTestingPhases]);
+  }, [currentStep, recitingMode, currentPhaseId]);
 
-  // Simple navigation - just update the phase index
+  // Navigation handlers
   const handleManualNavigation = (direction: 'next' | 'prev') => {
     if (direction === 'next') {
       setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
     } else {
       setCurrentPhaseIdx(i => Math.max(0, i - 1));
     }
+  };
+  
+  // Test mode handler
+  const handleStartTest = () => {
+    console.log('Starting test mode for phase:', currentPhaseId);
+    handleStartReciting(phase.verses, 'testing');
   };
 
   // Show loading while checking auth
@@ -251,7 +266,7 @@ const Index = () => {
           totalPhases={totalPhases}
           currentPhaseIdx={currentPhaseIdx}
           setCurrentPhaseIdx={setCurrentPhaseIdx}
-          completedTestingPhases={completedTestingPhases}
+          completedPhases={completedPhases}
         />
         
         <div className="relative z-10 px-3 py-4 md:p-7 space-y-6 md:space-y-9 max-w-2xl mx-auto w-full">
@@ -330,7 +345,8 @@ const Index = () => {
                 currentPhaseLabel={phase.label}
                 currentPhaseIdx={currentPhaseIdx}
                 totalPhases={totalPhases}
-                 onNextPhase={() => handleManualNavigation('next')}
+                onNextPhase={() => handleManualNavigation('next')}
+                onStartTest={handleStartTest}
               />
             </Card>
             
@@ -391,7 +407,7 @@ const Index = () => {
           <ProgressSection
             currentSurahId={currentSurahId}
             completedSurahs={completedSurahs}
-            completedTestingPhases={completedTestingPhases}
+            completedPhases={completedPhases}
             onSurahSelect={setCurrentSurahId}
             getSurahProficiency={getSurahProficiency}
           />

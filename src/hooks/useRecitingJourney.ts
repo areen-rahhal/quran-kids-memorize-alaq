@@ -222,22 +222,34 @@ export const useRecitingJourney = () => {
     setHighlightedWords(highlighted);
   };
 
-  const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>) => {
-    console.log('🚀 Starting reciting journey with verses:', verses);
+  const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>, mode: 'learning' | 'testing' = 'learning') => {
+    console.log('🚀 Starting reciting journey with verses:', verses, 'mode:', mode);
     
-    // Simple reset and start
+    // Reset state
     setIsReciting(true);
-    setCurrentStep('playing');
     setCurrentVerseIndex(0);
     setFeedback(null);
     setShowFeedback(false);
     setErrorDetails('');
     setHighlightedWords([]);
+    setRecitingMode(mode);
     resetTranscript();
     
-    console.log('🎵 Loading and playing first ayah');
-    loadAndPlayAyah(0, verses);
-  }, [resetTranscript]);
+    if (mode === 'testing') {
+      // Test mode: start directly with listening
+      console.log('🧪 Test mode: Starting listening immediately');
+      setCurrentStep('testing');
+      setRevealedTestingVerses([]);
+      setTimeout(() => {
+        startListening();
+      }, 800);
+    } else {
+      // Learning mode: start with audio playback
+      console.log('🎵 Learning mode: Loading and playing first ayah');
+      setCurrentStep('playing');
+      loadAndPlayAyah(0, verses);
+    }
+  }, [resetTranscript, startListening]);
 
   const handleVerseEnded = useCallback(() => {
     console.log('🎵 handleVerseEnded called - isReciting:', isReciting, 'currentStep:', currentStep);

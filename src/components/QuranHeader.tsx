@@ -6,7 +6,7 @@ interface QuranHeaderProps {
   totalPhases: number;
   currentPhaseIdx: number;
   setCurrentPhaseIdx: (idx: number) => void;
-  completedTestingPhases: number[];
+  completedPhases: Set<number>;
 }
 export const QuranHeader = ({
   currentSurahName,
@@ -14,7 +14,7 @@ export const QuranHeader = ({
   totalPhases,
   currentPhaseIdx,
   setCurrentPhaseIdx,
-  completedTestingPhases
+  completedPhases
 }: QuranHeaderProps) => {
   const progress = (completedPhaseCount / totalPhases) * 100;
 

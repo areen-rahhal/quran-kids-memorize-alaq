@@ -35,6 +35,7 @@ interface AudioControlsProps {
   currentPhaseIdx?: number;
   totalPhases?: number;
   onNextPhase?: () => void;
+  onStartTest?: () => void;
 }
 
 export const AudioControls = ({
@@ -66,7 +67,8 @@ export const AudioControls = ({
   currentPhaseLabel = '',
   currentPhaseIdx = 0,
   totalPhases = 0,
-  onNextPhase
+  onNextPhase,
+  onStartTest
 }: AudioControlsProps) => {
   return (
     <>
@@ -269,13 +271,15 @@ export const AudioControls = ({
           {isReciting ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
         </Button>
         
-        <Button
-          onClick={onReadyForTesting}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 font-arabic text-base rounded-full shadow-md transition-all"
-        >
-          <Mic className="h-4 w-4 ml-2 fill-current" />
-          بدء الاختبار
-        </Button>
+        {!isReciting && onStartTest && (
+          <Button
+            onClick={onStartTest}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 font-arabic text-base rounded-full shadow-md transition-all"
+          >
+            <Mic className="h-4 w-4 ml-2 fill-current" />
+            بدء الاختبار
+          </Button>
+        )}
       </div>
     </>
   );
