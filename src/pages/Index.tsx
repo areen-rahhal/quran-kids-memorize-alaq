@@ -20,7 +20,10 @@ import { toast } from 'sonner';
 const Index = () => {
   const { user, loading } = useAuth();
   const { selectedChild, getSurahProficiency, getCompletedSurahs } = useChildProfiles();
-  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
+  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(() => {
+    console.log('🎯 Initial currentPhaseIdx state');
+    return 0;
+  });
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
   const [completedPhases, setCompletedPhases] = useState<Set<number>>(new Set());
   // Removed complex state variables - using direct calculations instead
@@ -49,6 +52,7 @@ const Index = () => {
         const progress = JSON.parse(savedProgress);
         setCompletedVerses(progress.completedVerses || []);
         setCompletedPhases(new Set(progress.completedTestingPhases || []));
+        console.log('📁 Restoring saved progress - currentPhaseIdx:', progress.currentPhaseIdx || 0);
         setCurrentPhaseIdx(progress.currentPhaseIdx || 0);
         setCurrentSurahId(progress.currentSurahId || 114);
         setCompletedSurahs(progress.completedSurahs || []);
@@ -164,10 +168,18 @@ const Index = () => {
 
   // Reset to phase 0 when surah changes (only if phase doesn't exist)
   useEffect(() => {
+    console.log('🔄 useEffect [currentSurahId, currentStudyPhases.length] - surah changed:', {
+      currentSurahId,
+      phasesLength: currentStudyPhases.length,
+      currentPhaseIdx,
+      willReset: currentPhaseIdx >= currentStudyPhases.length
+    });
+    
     if (currentPhaseIdx >= currentStudyPhases.length) {
+      console.log('⚠️ Resetting phase index to 0 because current phase is out of bounds');
       setCurrentPhaseIdx(0);
     }
-  }, [currentSurahId, currentPhaseIdx, currentStudyPhases.length]);
+  }, [currentSurahId, currentStudyPhases.length]); // Removed currentPhaseIdx from dependencies
 
   // Simple transcript processing effect
   useEffect(() => {
@@ -216,6 +228,7 @@ const Index = () => {
       if (currentPhaseIdx < totalPhases - 1) {
         const shouldProceed = window.confirm("تهانينا! هل تريد الانتقال للمرحلة التالية؟");
         if (shouldProceed) {
+          console.log('🎉 Test completed, advancing to next phase:', currentPhaseIdx + 1);
           setCurrentPhaseIdx(prev => prev + 1);
         }
       } else {
@@ -228,16 +241,18 @@ const Index = () => {
 
   // Navigation handlers
   const handleManualNavigation = (direction: 'next' | 'prev') => {
+    console.log('🚀 handleManualNavigation called:', { direction, currentPhaseIdx, totalPhases });
+    
     if (direction === 'next') {
       setCurrentPhaseIdx(prev => {
         const nextIdx = Math.min(totalPhases - 1, prev + 1);
-        console.log('Navigating to next phase:', prev, '->', nextIdx);
+        console.log('➡️ Navigating to next phase:', prev, '->', nextIdx);
         return nextIdx;
       });
     } else {
       setCurrentPhaseIdx(prev => {
         const prevIdx = Math.max(0, prev - 1);
-        console.log('Navigating to prev phase:', prev, '->', prevIdx);
+        console.log('⬅️ Navigating to prev phase:', prev, '->', prevIdx);
         return prevIdx;
       });
     }
