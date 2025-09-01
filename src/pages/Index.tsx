@@ -162,10 +162,12 @@ const Index = () => {
     }
   }, [currentPhaseIdx, currentSurahId, resetAudio, isProcessingTestCompletion]);
 
-  // Reset to phase 0 when surah changes
+  // Reset to phase 0 when surah changes (only if phase doesn't exist)
   useEffect(() => {
-    setCurrentPhaseIdx(0);
-  }, [currentSurahId]);
+    if (currentPhaseIdx >= currentStudyPhases.length) {
+      setCurrentPhaseIdx(0);
+    }
+  }, [currentSurahId, currentPhaseIdx, currentStudyPhases.length]);
 
   // Simple transcript processing effect
   useEffect(() => {
@@ -227,9 +229,17 @@ const Index = () => {
   // Navigation handlers
   const handleManualNavigation = (direction: 'next' | 'prev') => {
     if (direction === 'next') {
-      setCurrentPhaseIdx(i => Math.min(totalPhases - 1, i + 1));
+      setCurrentPhaseIdx(prev => {
+        const nextIdx = Math.min(totalPhases - 1, prev + 1);
+        console.log('Navigating to next phase:', prev, '->', nextIdx);
+        return nextIdx;
+      });
     } else {
-      setCurrentPhaseIdx(i => Math.max(0, i - 1));
+      setCurrentPhaseIdx(prev => {
+        const prevIdx = Math.max(0, prev - 1);
+        console.log('Navigating to prev phase:', prev, '->', prevIdx);
+        return prevIdx;
+      });
     }
   };
   
@@ -378,7 +388,7 @@ const Index = () => {
                 </span>
                  <Button
                    onClick={() => handleManualNavigation('next')}
-                   disabled={currentPhaseIdx >= totalPhases - 1}
+                   disabled={false}
                   variant="outline"
                   className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
                   size="icon"
