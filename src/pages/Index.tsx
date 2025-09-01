@@ -27,6 +27,7 @@ const Index = () => {
   const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
   const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
+  const [isProcessingTestCompletion, setIsProcessingTestCompletion] = useState(false);
   const processingRef = useRef(false);
 
 
@@ -73,18 +74,20 @@ const Index = () => {
     }
   }, [selectedChild, getCompletedSurahs]);
 
-  // Save progress to localStorage whenever it changes
+  // Save progress to localStorage whenever it changes (skip during test completion processing)
   useEffect(() => {
-    const progress = {
-      completedVerses,
-      completedTestingPhases: [...completedPhases],
-      currentPhaseIdx,
-      currentSurahId,
-      completedSurahs,
-      lastUpdated: new Date().toISOString()
-    };
-    localStorage.setItem('ahmad-quran-progress', JSON.stringify(progress));
-  }, [completedVerses, completedPhases, currentPhaseIdx, currentSurahId, completedSurahs]);
+    if (!isProcessingTestCompletion) {
+      const progress = {
+        completedVerses,
+        completedTestingPhases: [...completedPhases],
+        currentPhaseIdx,
+        currentSurahId,
+        completedSurahs,
+        lastUpdated: new Date().toISOString()
+      };
+      localStorage.setItem('ahmad-quran-progress', JSON.stringify(progress));
+    }
+  }, [completedVerses, completedPhases, currentPhaseIdx, currentSurahId, completedSurahs, isProcessingTestCompletion]);
 
   const {
     isPlaying,
@@ -148,14 +151,16 @@ const Index = () => {
     vnum => currentVerses.find(v => v.id === vnum)
   ).filter(Boolean) as {id: number, arabic: string}[];
 
-  // Reset audio when phase or surah changes
+  // Reset audio when phase or surah changes (skip during test completion processing)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      resetAudio();
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [currentPhaseIdx, currentSurahId, resetAudio]);
+    if (!isProcessingTestCompletion) {
+      const timer = setTimeout(() => {
+        resetAudio();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentPhaseIdx, currentSurahId, resetAudio, isProcessingTestCompletion]);
 
   // Reset to phase 0 when surah changes
   useEffect(() => {
@@ -196,11 +201,16 @@ const Index = () => {
   
   // Test completion handler
   const handleTestComplete = (phaseId: number) => {
+    console.log('Test completed for phase:', phaseId);
+    setIsProcessingTestCompletion(true);
+    
     // Mark phase as completed (handles both new and returning users)
     setCompletedPhases(prev => new Set([...prev, phaseId]));
     
     // Show completion dialog after brief delay
     setTimeout(() => {
+      setIsProcessingTestCompletion(false);
+      
       if (currentPhaseIdx < totalPhases - 1) {
         const shouldProceed = window.confirm("تهانينا! هل تريد الانتقال للمرحلة التالية؟");
         if (shouldProceed) {
@@ -212,12 +222,7 @@ const Index = () => {
     }, 1500);
   };
   
-  // Handle test completion when step becomes 'completed' and mode is 'testing'
-  useEffect(() => {
-    if (currentStep === 'completed' && recitingMode === 'testing') {
-      handleTestComplete(currentPhaseId);
-    }
-  }, [currentStep, recitingMode, currentPhaseId]);
+  // Test completion is now handled directly in useRecitingJourney via callback
 
   // Navigation handlers
   const handleManualNavigation = (direction: 'next' | 'prev') => {
@@ -231,7 +236,7 @@ const Index = () => {
   // Test mode handler
   const handleStartTest = () => {
     console.log('Starting test mode for phase:', currentPhaseId);
-    handleStartReciting(phase.verses, 'testing');
+    handleStartReciting(phase.verses, 'testing', () => handleTestComplete(currentPhaseId));
   };
 
   // Show loading while checking auth

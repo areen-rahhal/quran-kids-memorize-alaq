@@ -222,8 +222,13 @@ export const useRecitingJourney = () => {
     setHighlightedWords(highlighted);
   };
 
-  const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>, mode: 'learning' | 'testing' = 'learning') => {
+  const [testCompleteCallback, setTestCompleteCallback] = useState<(() => void) | undefined>();
+
+  const startRecitingJourney = useCallback((verses: number[], loadAndPlayAyah: (index: number, verses: number[]) => Promise<void>, mode: 'learning' | 'testing' = 'learning', onTestComplete?: () => void) => {
     console.log('🚀 Starting reciting journey with verses:', verses, 'mode:', mode);
+    
+    // Store the callback in state so it's available throughout the journey
+    setTestCompleteCallback(() => onTestComplete);
     
     // Reset state
     setIsReciting(true);
@@ -349,10 +354,16 @@ export const useRecitingJourney = () => {
               setCurrentStep('ready-check');
             } else {
               console.log('🧪 Testing completed');
-              // Testing mode completed
+              // Testing mode completed - call completion callback directly
               setCurrentStep('completed');
               setIsReciting(false);
               setCurrentVerseIndex(0);
+              
+              // Call completion callback if provided (prevents useEffect loop)
+              if (testCompleteCallback) {
+                console.log('🎯 Calling test completion callback directly');
+                setTimeout(() => testCompleteCallback(), 100);
+              }
             }
             
             setFeedback(null);

@@ -143,9 +143,9 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     }
   }, [isPlaying, loadAndPlayAyah]);
 
-  const handleStartReciting = useCallback((verses: number[], mode: 'learning' | 'testing' = 'learning') => {
+  const handleStartReciting = useCallback((verses: number[], mode: 'learning' | 'testing' = 'learning', onTestComplete?: () => void) => {
     console.log('Starting reciting journey from audio player, mode:', mode);
-    startRecitingJourney(verses, loadAndPlayAyah, mode);
+    startRecitingJourney(verses, loadAndPlayAyah, mode, onTestComplete);
   }, [startRecitingJourney, loadAndPlayAyah]);
 
   const handleStopReciting = useCallback(() => {
