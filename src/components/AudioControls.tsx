@@ -19,7 +19,7 @@ interface AudioControlsProps {
   // Reciting journey props
   isReciting: boolean;
   isListening: boolean;
-  currentStep: 'playing' | 'listening' | 'completed' | 'ready-check' | 'testing';
+  currentStep: 'playing' | 'listening' | 'completed' | 'ready-check' | 'testing' | 'feedback-testing';
   transcript: string;
   feedback: 'correct' | 'incorrect' | null;
   showFeedback: boolean;
@@ -134,7 +134,7 @@ export const AudioControls = ({
           )}
           
           
-          {showFeedback && feedback && (
+          {(showFeedback || currentStep === 'feedback-testing') && feedback && (
             <div className={`text-sm font-arabic p-5 rounded-xl border-2 shadow-lg ${
               feedback === 'correct' 
                 ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800' 
@@ -202,8 +202,20 @@ export const AudioControls = ({
         </div>
       )}
       
+      {/* Feedback Testing Step - special display for feedback during testing */}
+      {currentStep === 'feedback-testing' && (
+        <div className="text-center mb-4">
+          <div className="text-sm font-arabic p-4 rounded-xl border-2 bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-300 text-amber-800 shadow-lg">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">⏳</span>
+              <span className="font-bold">جاري معالجة النتيجة...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Testing mode indicator - show when in testing mode regardless of step */}
-      {recitingMode === 'testing' && currentStep !== 'completed' && currentStep !== 'ready-check' && (
+      {recitingMode === 'testing' && currentStep !== 'completed' && currentStep !== 'ready-check' && currentStep !== 'feedback-testing' && (
         <div className="text-center mb-4">
           <div className="text-sm font-arabic p-4 rounded-xl border-2 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-300 text-purple-800 shadow-lg">
             <div className="flex items-center justify-center gap-2">

@@ -4,7 +4,7 @@ import { useSpeechRecognition } from './useSpeechRecognition';
 
 export const useRecitingJourney = () => {
   const [isReciting, setIsReciting] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'playing' | 'listening' | 'completed' | 'ready-check' | 'testing'>('playing');
+  const [currentStep, setCurrentStep] = useState<'playing' | 'listening' | 'completed' | 'ready-check' | 'testing' | 'feedback-testing'>('playing');
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -331,16 +331,20 @@ export const useRecitingJourney = () => {
               }, 500);
             } else {
               console.log('🧪 Testing mode: Starting listening for next verse');
-              // In testing mode, directly start listening for next verse
-              setCurrentStep('testing');
-              setFeedback(null);
-              setShowFeedback(false);
-              setErrorDetails('');
+              // In testing mode, keep feedback visible longer before next verse
+              setCurrentStep('feedback-testing');
               
               setTimeout(() => {
-                console.log('🎤 Starting listening for testing mode');
-                startListening();
-              }, 800);
+                setCurrentStep('testing');
+                setFeedback(null);
+                setShowFeedback(false);
+                setErrorDetails('');
+                
+                setTimeout(() => {
+                  console.log('🎤 Starting listening for testing mode');
+                  startListening();
+                }, 800);
+              }, 3000); // Show feedback for 3 seconds
             }
           }, 3000);
         } else {
@@ -389,7 +393,7 @@ export const useRecitingJourney = () => {
           setTimeout(() => {
             startListening();
           }, 800);
-        }, 5000); // Show error for 5 seconds before retry
+        }, 6000); // Show error feedback for 6 seconds before retry
       }
     }
   }, [transcript, currentVerseIndex, stopListening, resetTranscript, startListening, recitingMode]);

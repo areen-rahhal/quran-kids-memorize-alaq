@@ -10,7 +10,7 @@ interface VerseDisplayProps {
   isListening?: boolean;
   recitingMode?: 'learning' | 'testing';
   revealedTestingVerses?: number[];
-  currentStep?: string;
+  currentStep?: 'playing' | 'listening' | 'completed' | 'ready-check' | 'testing' | 'feedback-testing';
 }
 
 export const VerseDisplay = ({ 
@@ -24,7 +24,7 @@ export const VerseDisplay = ({
   isListening = false,
   recitingMode = 'learning',
   revealedTestingVerses = [],
-  currentStep = ''
+  currentStep = 'playing'
 }: VerseDisplayProps) => {
   
   // Helper function to normalize Arabic text for comparison
@@ -138,7 +138,7 @@ export const VerseDisplay = ({
         <span className="flex flex-wrap gap-x-1 gap-y-2 justify-center items-baseline font-arabic text-gray-900 bg-white rounded-xl text-[0.91rem] md:text-base leading-relaxed" dir="rtl">
           {phaseVerseObjs.map((v, index) => {
             const isRevealed = revealedTestingVerses.includes(v.id);
-            const isCurrentAyah = currentStep === 'testing' && index === currentAyahIdx;
+            const isCurrentAyah = (currentStep === 'testing' || currentStep === 'feedback-testing') && index === currentAyahIdx;
             
             return (
               <span key={v.id} className="inline-flex items-baseline" dir="rtl">
