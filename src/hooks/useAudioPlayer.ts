@@ -51,6 +51,9 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     // Stop any current audio
     audioRef.current.pause();
     audioRef.current.currentTime = 0;
+    audioRef.current.src = '';
+    
+    let audioPlayedSuccessfully = false;
     
     // Try each URL until one works
     for (let i = 0; i < urls.length; i++) {
@@ -76,6 +79,7 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
         setIsPlaying(true);
         setIsLoading(false);
         setRetryCount(0);
+        audioPlayedSuccessfully = true;
         return; // Success! Exit the function
         
       } catch (error) {
@@ -91,6 +95,11 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
           setIsLoading(false);
         }
       }
+    }
+    
+    // If no audio played successfully, ensure src is cleared
+    if (!audioPlayedSuccessfully && audioRef.current) {
+      audioRef.current.src = '';
     }
   }, [currentSurahId, retryCount]);
 
