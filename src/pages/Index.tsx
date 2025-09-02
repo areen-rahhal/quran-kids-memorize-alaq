@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,18 +20,12 @@ import { toast } from 'sonner';
 const Index = () => {
   const { user, loading } = useAuth();
   const { selectedChild, getSurahProficiency, getCompletedSurahs } = useChildProfiles();
-  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(() => {
-    console.log('🎯 Initial currentPhaseIdx state');
-    return 0;
-  });
+  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [completedVerses, setCompletedVerses] = useState<number[]>([]);
   const [completedPhases, setCompletedPhases] = useState<Set<number>>(new Set());
-  // Removed complex state variables - using direct calculations instead
-  const [currentSurahId, setCurrentSurahId] = useState(114); // Start with An-Nas (first surah to learn)
+  const [currentSurahId, setCurrentSurahId] = useState(114);
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
-  const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
   const [isProcessingTestCompletion, setIsProcessingTestCompletion] = useState(false);
-  const processingRef = useRef(false);
 
 
   // Clear localStorage data for testing
@@ -52,7 +46,6 @@ const Index = () => {
         const progress = JSON.parse(savedProgress);
         setCompletedVerses(progress.completedVerses || []);
         setCompletedPhases(new Set(progress.completedTestingPhases || []));
-        console.log('📁 Restoring saved progress - currentPhaseIdx:', progress.currentPhaseIdx || 0);
         setCurrentPhaseIdx(progress.currentPhaseIdx || 0);
         setCurrentSurahId(progress.currentSurahId || 114);
         setCompletedSurahs(progress.completedSurahs || []);
@@ -168,32 +161,17 @@ const Index = () => {
 
   // Reset to phase 0 when surah changes (only if phase doesn't exist)
   useEffect(() => {
-    console.log('🔄 useEffect [currentSurahId, currentStudyPhases.length] - surah changed:', {
-      currentSurahId,
-      phasesLength: currentStudyPhases.length,
-      currentPhaseIdx,
-      willReset: currentPhaseIdx >= currentStudyPhases.length
-    });
-    
     if (currentPhaseIdx >= currentStudyPhases.length) {
-      console.log('⚠️ Resetting phase index to 0 because current phase is out of bounds');
       setCurrentPhaseIdx(0);
     }
-  }, [currentSurahId, currentStudyPhases.length]); // Removed currentPhaseIdx from dependencies
+  }, [currentSurahId, currentStudyPhases.length]);
 
-  // Simple transcript processing effect
+  // Simple transcript processing effect with guard
   useEffect(() => {
-    if (isReciting && !isListening && transcript && transcript.trim().length > 0) {
-      console.log('Processing transcript:', transcript);
-      
-      if (currentStep === 'listening' || currentStep === 'testing') {
-        const currentVerse = phaseVerseObjs[currentAyahIdx];
-        const currentVerseText = currentVerse ? currentVerse.arabic : '';
-        
-        handleListeningComplete(phase.verses, currentVerseText);
-      }
+    if (transcript && isListening && isReciting && !isProcessingTestCompletion) {
+      updateWordHighlighting(transcript, phaseVerseObjs.map(v => v.arabic).join(' '));
     }
-  }, [transcript, isReciting, isListening, currentStep, phaseVerseObjs, currentAyahIdx, phase.verses, handleListeningComplete]);
+  }, [transcript, isListening, isReciting, updateWordHighlighting, phaseVerseObjs, isProcessingTestCompletion]);
 
   const isPhaseComplete = phase.verses.every(id => completedVerses.includes(id));
   
@@ -213,56 +191,43 @@ const Index = () => {
     });
   };
   
-  // Test completion handler
-  const handleTestComplete = (phaseId: number) => {
-    console.log('Test completed for phase:', phaseId);
+  // Direct test completion handler - replaces problematic useEffect
+  const handleTestComplete = useCallback(() => {
     setIsProcessingTestCompletion(true);
     
-    // Mark phase as completed (handles both new and returning users)
-    setCompletedPhases(prev => new Set([...prev, phaseId]));
-    
-    // Show completion dialog after brief delay
-    setTimeout(() => {
-      setIsProcessingTestCompletion(false);
-      
-      if (currentPhaseIdx < totalPhases - 1) {
-        const shouldProceed = window.confirm("تهانينا! هل تريد الانتقال للمرحلة التالية؟");
-        if (shouldProceed) {
-          console.log('🎉 Test completed, advancing to next phase:', currentPhaseIdx + 1);
-          setCurrentPhaseIdx(prev => prev + 1);
-        }
-      } else {
-        alert("مبروك! لقد أكملت جميع مراحل هذه السورة!");
+    if (currentPhaseIdx < totalPhases - 1) {
+      const shouldProceed = window.confirm("تهانينا! هل تريد الانتقال للمرحلة التالية؟");
+      if (shouldProceed) {
+        setCurrentPhaseIdx(prev => prev + 1);
       }
-    }, 1500);
-  };
+    } else {
+      alert("تهانينا! لقد أكملت جميع المراحل في هذه السورة!");
+      setCompletedSurahs(prev => [...prev, currentSurahId]);
+      setCompletedPhases(new Set());
+      setCurrentPhaseIdx(0);
+    }
+    
+    setTimeout(() => setIsProcessingTestCompletion(false), 100);
+  }, [currentPhaseIdx, totalPhases, currentSurahId]);
   
   // Test completion is now handled directly in useRecitingJourney via callback
 
   // Navigation handlers
-  const handleManualNavigation = (direction: 'next' | 'prev') => {
-    console.log('🚀 handleManualNavigation called:', { direction, currentPhaseIdx, totalPhases });
+  const handleManualNavigation = useCallback((direction: 'next' | 'prev') => {
+    if (isProcessingTestCompletion) return;
     
     if (direction === 'next') {
-      setCurrentPhaseIdx(prev => {
-        const nextIdx = Math.min(totalPhases - 1, prev + 1);
-        console.log('➡️ Navigating to next phase:', prev, '->', nextIdx);
-        return nextIdx;
-      });
+      setCurrentPhaseIdx(prev => Math.min(totalPhases - 1, prev + 1));
     } else {
-      setCurrentPhaseIdx(prev => {
-        const prevIdx = Math.max(0, prev - 1);
-        console.log('⬅️ Navigating to prev phase:', prev, '->', prevIdx);
-        return prevIdx;
-      });
+      setCurrentPhaseIdx(prev => Math.max(0, prev - 1));
     }
-  };
+  }, [totalPhases, isProcessingTestCompletion]);
   
-  // Test mode handler
-  const handleStartTest = () => {
-    console.log('Starting test mode for phase:', currentPhaseId);
-    handleStartReciting(phase.verses, 'testing', () => handleTestComplete(currentPhaseId));
-  };
+  const handleStartTest = useCallback(() => {
+    if (selectedChild && !isProcessingTestCompletion) {
+      handleStartReciting(phase.verses, 'testing', handleTestComplete);
+    }
+  }, [selectedChild, phase.verses, handleStartReciting, handleTestComplete, isProcessingTestCompletion]);
 
   // Show loading while checking auth
   if (loading) {
