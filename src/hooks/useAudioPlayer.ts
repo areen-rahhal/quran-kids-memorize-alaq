@@ -123,9 +123,37 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
   }, [currentAyahIdx, loadAndPlayAyah, isReciting, handleVerseEnded, currentStep]);
 
   const onAudioError = useCallback(() => {
-    console.error('Audio error occurred');
+    let errorMessage = 'Failed to load audio. Please check your internet connection.';
+    
+    if (audioRef.current?.error) {
+      const mediaError = audioRef.current.error;
+      console.error('Audio MediaError occurred:', {
+        code: mediaError.code,
+        message: mediaError.message
+      });
+      
+      switch (mediaError.code) {
+        case MediaError.MEDIA_ERR_ABORTED:
+          errorMessage = 'Audio playback was aborted.';
+          break;
+        case MediaError.MEDIA_ERR_NETWORK:
+          errorMessage = 'Network error occurred while loading audio.';
+          break;
+        case MediaError.MEDIA_ERR_DECODE:
+          errorMessage = 'Audio file is corrupted or in an unsupported format.';
+          break;
+        case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+          errorMessage = 'Audio format is not supported by your browser.';
+          break;
+        default:
+          errorMessage = `Audio error occurred (code: ${mediaError.code}).`;
+      }
+    } else {
+      console.error('Audio error occurred without MediaError details');
+    }
+    
     if (hasAttemptedPlay) {
-      setAudioError('Failed to load audio. Please check your internet connection.');
+      setAudioError(errorMessage);
       setShowAudioError(true);
     }
     setIsPlaying(false);
