@@ -28,17 +28,13 @@ const Circle: React.FC<CircleProps> = ({
     switch (status) {
       case 'current':
         return 'bg-blue-500 text-white border-blue-600 shadow-lg';
-      case 'excellent':
+  
       case 'completed':
         return 'bg-green-500 text-white border-green-600 shadow-md';
-      case 'very-good':
-        return 'bg-blue-500 text-white border-blue-600 shadow-md';
-      case 'basic':
-        return 'bg-yellow-500 text-white border-yellow-600 shadow-md';
+      
       case 'needs-improvement':
         return 'bg-orange-500 text-white border-orange-600 shadow-md';
-      case 'completed-errors':
-        return 'bg-orange-500 text-white border-orange-600 shadow-md';
+    
       default:
         return 'bg-gray-300 text-gray-600 border-gray-400';
     }
