@@ -10,7 +10,8 @@ import { getCurrentSurah } from '@/data/juz30';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useChildProfiles } from '@/hooks/useChildProfiles';
-import { QuranHeader } from '@/components/QuranHeader';
+import { SurahPhasesSummary } from '@/components/SurahPhasesSummary';
+import { CurrentPhaseLearning } from '@/components/CurrentPhaseLearning';
 import { ProgressSection } from '@/components/ProgressSection';
 import { VerseDisplay } from '@/components/VerseDisplay';
 import { AudioControls } from '@/components/AudioControls';
@@ -289,130 +290,32 @@ const Index = () => {
         <div className="absolute -top-24 -left-16 w-60 h-60 rounded-full bg-emerald-100 opacity-35 blur-3xl z-0 pointer-events-none" />
         <div className="absolute -bottom-16 right-0 w-56 h-56 rounded-full bg-amber-100 opacity-40 blur-2xl z-0 pointer-events-none" />
         
-        {/* Surah Header */}
-        <QuranHeader
-          currentSurahName={`سورة ${currentSurah.arabicName}`}
-          completedPhaseCount={completedPhaseCount}
-          totalPhases={totalPhases}
-          currentPhaseIdx={currentPhaseIdx}
-          setCurrentPhaseIdx={setCurrentPhaseIdx}
-          completedPhases={completedPhases}
-        />
-        
         <div className="relative z-10 px-3 py-4 md:p-7 space-y-6 md:space-y-9 max-w-2xl mx-auto w-full">
+          {/* Component One - Surah Phases Summary */}
+          <SurahPhasesSummary
+            currentSurahName={`سورة ${currentSurah.arabicName}`}
+            totalPhases={totalPhases}
+            completedPhases={completedPhases}
+            currentPhaseIdx={currentPhaseIdx}
+            currentSurahId={currentSurahId}
+          />
 
-            {/* Surah Title & Phase Info */}
-            <Card className="p-4 md:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-sm mb-1">
-              <div className="text-center">
-                <h2 className="text-lg md:text-xl font-bold text-emerald-700 mb-0.5 font-arabic">سورة {currentSurah.arabicName}</h2>
-                <div className="flex items-center justify-center space-x-1 gap-1 flex-wrap mt-2">
-                  <span className={`text-xs px-3 py-0.5 rounded-full font-arabic shadow border ${
-                    isCurrentPhaseCompleted 
-                      ? 'bg-green-100 text-green-700 border-green-300' 
-                      : 'bg-white text-emerald-700 border-amber-100'
-                  }`}>
-                    {isCurrentPhaseCompleted && '✓ '}
-                    {phase.label}
-                  </span>
-                  <span className="text-xs px-3 py-0.5 rounded-full font-arabic bg-amber-50 text-amber-700 border border-amber-100">
-                    {phase.description}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 mt-1 font-arabic">{currentSurah.verses} آية • مكية</p>
-              </div>
-            </Card>
-
-            {/* Phase Verses */}
-            <Card className="relative overflow-visible p-3 md:p-6 bg-white shadow-xl border-l-8 border-emerald-500 rounded-2xl flex flex-col justify-center items-center min-h-[70px]">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-200 border-emerald-100 border px-4 py-1 rounded-full shadow-lg font-arabic text-emerald-700 text-xs md:text-sm font-bold flex items-center gap-2">
-                <span>{phase.label}</span>
-                <span>({phase.description})</span>
-              </div>
-              
-              <VerseDisplay 
-                phaseVerseObjs={phaseVerseObjs}
-                currentPhaseIdx={currentPhaseIdx}
-                totalPhases={totalPhases}
-                currentAyahIdx={currentAyahIdx}
-                isPlaying={isPlaying || isReciting}
-                highlightedWords={highlightedWords}
-                expectedText={phaseVerseObjs[currentAyahIdx]?.arabic || ''}
-                isListening={isListening}
-                recitingMode={recitingMode}
-                revealedTestingVerses={revealedTestingVerses}
-                currentStep={currentStep}
-              />
-              
-              <AudioControls
-                isPlaying={isPlaying}
-                audioError={audioError}
-                showAudioError={showAudioError}
-                isPhaseComplete={isPhaseComplete}
-                hasAttemptedPlay={hasAttemptedPlay}
-                onPlayPause={() => handlePlayPause(phase.verses)}
-                onMarkComplete={handleMarkPhaseComplete}
-                audioRef={audioRef}
-                onAudioEnded={() => {
-                  console.log('🔊 Audio ended event triggered from Index component');
-                  onAudioEnded(phase.verses);
-                }}
-                onAudioError={onAudioError}
-                isLoading={isLoading}
-                retryCount={retryCount}
-                onRetryAudio={() => retryAudio(phase.verses)}
-                isReciting={isReciting}
-                isListening={isListening}
-                currentStep={currentStep}
-                transcript={transcript}
-                feedback={feedback}
-                showFeedback={showFeedback}
-                errorDetails={errorDetails}
-                onStartReciting={() => handleStartReciting(phase.verses)}
-                onStopReciting={handleStopReciting}
-                recitingMode={recitingMode}
-                onReadyForTesting={handleReadyForTesting}
-                onRestartLearning={handleRestartLearning}
-                currentPhaseLabel={phase.label}
-                currentPhaseIdx={currentPhaseIdx}
-                totalPhases={totalPhases}
-                onNextPhase={() => handleManualNavigation('next')}
-                onStartTest={handleStartTest}
-              />
-            </Card>
-            
-            {/* Phase navigation */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center justify-center gap-2">
-                 <Button
-                   onClick={() => handleManualNavigation('prev')}
-                   disabled={currentPhaseIdx === 0}
-                  variant="outline"
-                  className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
-                  size="icon"
-                  aria-label="السابق"
-                >
-                  <CircleArrowRight className="h-6 w-6" />
-                </Button>
-                <span className={`text-base font-arabic font-bold px-2 rounded-full border ${
-                  isCurrentPhaseCompleted
-                    ? 'bg-green-100 text-green-700 border-green-300'
-                    : 'bg-amber-100 text-amber-700 border-amber-300'
-                }`}>
-                  {isCurrentPhaseCompleted && '✓ '}
-                  {phase.label}
-                </span>
-                 <Button
-                   onClick={() => handleManualNavigation('next')}
-                   disabled={false}
-                  variant="outline"
-                  className="rounded-full border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 font-arabic p-0 w-10 h-10 flex items-center justify-center"
-                  size="icon"
-                  aria-label="التالي"
-                >
-                  <CircleArrowLeft className="h-6 w-6" />
-                </Button>
-              </div>
-            </div>
+          {/* Component Two - Current Phase Learning */}
+          <CurrentPhaseLearning
+            currentPhaseIdx={currentPhaseIdx}
+            totalPhases={totalPhases}
+            phaseLabel={phase.label}
+            phaseDescription={phase.description}
+            phaseVerseObjs={phaseVerseObjs}
+            onPlayListening={() => handlePlayPause(phase.verses)}
+            onStartPractice={() => handleStartReciting(phase.verses)}
+            onStartTest={handleStartTest}
+            onPreviousPhase={() => handleManualNavigation('prev')}
+            onNextPhase={() => handleManualNavigation('next')}
+            canGoPrevious={currentPhaseIdx > 0}
+            canGoNext={currentPhaseIdx < totalPhases - 1}
+            isLoading={isLoading}
+          />
             
             {/* Completion Message */}
             {completedVerses.length === currentVerses.length && (
