@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Play, Mic, CircleArrowLeft, CircleArrowRight } from 'lucide-react';
+import { Play, Dumbbell, FileText, CircleArrowLeft, CircleArrowRight } from 'lucide-react';
 
 interface CurrentPhaseLearningProps {
   currentPhaseIdx: number;
@@ -68,31 +68,32 @@ export const CurrentPhaseLearning = ({
       </div>
 
       {/* Learning Mode Buttons */}
-      <div className="space-y-3 mb-6">
+      <div className="flex gap-3 mb-6 justify-center">
         <Button
           onClick={onPlayListening}
           disabled={isLoading}
-          className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-arabic"
+          className="h-12 w-12 bg-blue-500 hover:bg-blue-600 text-white rounded-xl"
+          size="icon"
         >
-          <Play className="ml-2 h-5 w-5" />
-          وضع الاستماع
+          <Play className="h-5 w-5" />
         </Button>
         
         <Button
           onClick={onStartPractice}
           disabled={isLoading}
-          className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-arabic"
+          className="h-12 w-12 bg-green-500 hover:bg-green-600 text-white rounded-xl"
+          size="icon"
         >
-          <Mic className="ml-2 h-5 w-5" />
-          وضع الممارسة
+          <Dumbbell className="h-5 w-5" />
         </Button>
         
         <Button
           onClick={onStartTest}
           disabled={isLoading}
-          className="w-full h-12 bg-purple-500 hover:bg-purple-600 text-white font-arabic"
+          className="h-12 w-12 bg-purple-500 hover:bg-purple-600 text-white rounded-xl"
+          size="icon"
         >
-          بدء الاختبار
+          <FileText className="h-5 w-5" />
         </Button>
       </div>
 
