@@ -68,32 +68,32 @@ export const CurrentPhaseLearning = ({
       </div>
 
       {/* Learning Mode Buttons */}
-      <div className="flex gap-3 mb-6 justify-center">
+      <div className="flex gap-4 mb-6 justify-center">
         <Button
           onClick={onPlayListening}
           disabled={isLoading}
-          className="h-12 w-12 bg-blue-500 hover:bg-blue-600 text-white rounded-xl"
+          className="h-14 w-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           size="icon"
         >
-          <Play className="h-5 w-5" />
+          <Play className="h-6 w-6" />
         </Button>
         
         <Button
           onClick={onStartPractice}
           disabled={isLoading}
-          className="h-12 w-12 bg-green-500 hover:bg-green-600 text-white rounded-xl"
+          className="h-14 w-14 bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           size="icon"
         >
-          <Dumbbell className="h-5 w-5" />
+          <Dumbbell className="h-6 w-6" />
         </Button>
         
         <Button
           onClick={onStartTest}
           disabled={isLoading}
-          className="h-12 w-12 bg-purple-500 hover:bg-purple-600 text-white rounded-xl"
+          className="h-14 w-14 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           size="icon"
         >
-          <FileText className="h-5 w-5" />
+          <FileText className="h-6 w-6" />
         </Button>
       </div>
 
