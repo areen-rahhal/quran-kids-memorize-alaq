@@ -23,19 +23,19 @@ const createSurahWithPhases = (surahData: typeof juz30Surahs[0], index: number):
   const phaseCount = Math.max(2, Math.ceil(surahData.verses / 3));
   const phases: Phase[] = [];
   
-  // Default: All phases locked except for the first surah (An-Nas)
+  // Default: All phases locked except for the last surah (An-Nas) which is the starting point
   for (let i = 1; i <= phaseCount; i++) {
     let status: Phase['status'] = 'locked';
-    if (index === 0) { // First surah (An-Nas) - current starting point
+    if (index === juz30Surahs.length - 1) { // Last surah (An-Nas) - current starting point
       if (i === 1) status = 'current';
       else status = 'locked';
     }
     phases.push({ id: i, status });
   }
 
-  // Default: Only first surah (An-Nas) is current, rest are locked
+  // Default: Only last surah (An-Nas) is current, rest are locked
   let surahStatus: Surah['status'] = 'locked';
-  if (index === 0) surahStatus = 'current'; // An-Nas is the starting point
+  if (index === juz30Surahs.length - 1) surahStatus = 'current'; // An-Nas is the starting point
 
   return {
     id: surahData.id,
@@ -227,9 +227,6 @@ export const ProgressSection: React.FC<LearningPathProps> = ({
 
   const progressPercentage = calculateProgress();
   
-  // Create a reversed copy to show An-Naba at top, An-Nas at bottom
-  const reversedQuranData = [...quranData].reverse();
-  
   return (
     <div className="w-full h-full bg-gradient-to-b from-blue-50 to-purple-50 relative overflow-hidden">
       {/* Enhanced Goal Section for Kids */}
@@ -323,13 +320,13 @@ export const ProgressSection: React.FC<LearningPathProps> = ({
 
           {/* Vertical Journey Path */}
           <div className="relative flex flex-col items-center">
-            {reversedQuranData.map((surah, index) => (
+            {quranData.map((surah, index) => (
               <SurahNode
                 key={surah.id}
                 surah={surah}
                 index={index}
                 isFirst={index === 0}
-                isLast={index === reversedQuranData.length - 1}
+                isLast={index === quranData.length - 1}
                 onSurahSelect={onSurahSelect}
                 onPhaseSelect={onPhaseSelect}
               />
