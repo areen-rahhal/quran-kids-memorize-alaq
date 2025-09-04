@@ -338,11 +338,11 @@ const Index = () => {
         {/* Right Side - Progress Section */}
         <div className="w-80 border-l">
           <ProgressSection
-            currentSurahId={currentSurahId}
-            completedSurahs={completedSurahs}
-            completedPhases={completedPhases}
-            onSurahSelect={setCurrentSurahId}
-            getSurahProficiency={getSurahProficiency}
+            onSurahSelect={(surah) => setCurrentSurahId(surah.id)}
+            onPhaseSelect={(surah, phase) => {
+              setCurrentSurahId(surah.id);
+              // Handle phase selection if needed
+            }}
           />
         </div>
       </div>

@@ -1,8 +1,54 @@
 import React from 'react';
 import { ScrollArea } from './ui/scroll-area';
-import { quranData, Surah, Phase } from './QuranData';
+import { juz30Surahs } from '@/data/juz30';
 import { Trophy, MapPin, Target, Star, Sparkles, Heart } from 'lucide-react';
-import wireframeImage from 'figma:asset/0a03f4b5b83c61911d6a9fe2cebb675d44020842.png';
+
+// Define the data structures
+export interface Phase {
+  id: number;
+  status: 'locked' | 'current' | 'completed' | 'completed-errors';
+}
+
+export interface Surah {
+  id: number;
+  name: string;
+  arabicName: string;
+  verses: number;
+  phases: Phase[];
+  status: 'locked' | 'current' | 'completed' | 'completed-errors';
+}
+
+// Create mock data with phases for demonstration
+const createSurahWithPhases = (surahData: typeof juz30Surahs[0], index: number): Surah => {
+  const phaseCount = Math.max(2, Math.ceil(surahData.verses / 3));
+  const phases: Phase[] = [];
+  
+  for (let i = 1; i <= phaseCount; i++) {
+    let status: Phase['status'] = 'locked';
+    if (index < 35) status = 'completed'; // Most surahs completed
+    else if (index === 35) { // Current surah (Al-Asr)
+      if (i === 1) status = 'completed';
+      else if (i === 2) status = 'current';
+      else status = 'locked';
+    }
+    phases.push({ id: i, status });
+  }
+
+  let surahStatus: Surah['status'] = 'locked';
+  if (index < 35) surahStatus = 'completed';
+  else if (index === 35) surahStatus = 'current';
+
+  return {
+    id: surahData.id,
+    name: surahData.name,
+    arabicName: surahData.arabicName,
+    verses: surahData.verses,
+    phases,
+    status: surahStatus
+  };
+};
+
+const quranData: Surah[] = juz30Surahs.map((surah, index) => createSurahWithPhases(surah, index));
 
 interface CircleProps {
   status: 'locked' | 'current' | 'completed' | 'completed-errors';
@@ -139,7 +185,7 @@ interface LearningPathProps {
   onPhaseSelect?: (surah: Surah, phase: Phase) => void;
 }
 
-export const LearningPath: React.FC<LearningPathProps> = ({ 
+export const ProgressSection: React.FC<LearningPathProps> = ({ 
   onSurahSelect, 
   onPhaseSelect 
 }) => {
