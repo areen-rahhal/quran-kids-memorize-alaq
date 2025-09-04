@@ -86,11 +86,12 @@ const Circle: React.FC<CircleProps> = ({ status, size, children, onClick, isSpec
         ${sizeClasses} 
         ${getStatusColors()}
         rounded-full flex items-center justify-center
-        transition-all duration-200 hover:scale-105 relative font-medium
-        ${status !== 'locked' ? 'cursor-pointer' : 'cursor-not-allowed'}
+        transition-all duration-200 hover:scale-105 relative font-medium z-10
+        ${status !== 'locked' ? 'cursor-pointer hover:shadow-lg' : 'cursor-not-allowed'}
         ${status === 'current' ? 'ring-2 ring-blue-300' : ''}
       `}
       disabled={status === 'locked'}
+      style={{ pointerEvents: status === 'locked' ? 'none' : 'auto' }}
     >
       {children}
     </button>
