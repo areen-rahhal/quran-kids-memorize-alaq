@@ -18,25 +18,24 @@ export interface Surah {
   status: 'locked' | 'current' | 'completed' | 'completed-errors';
 }
 
-// Create mock data with phases for demonstration
+// Create surah data with default status - journey starts from An-Nas (bottom) to Al-Naba (top)
 const createSurahWithPhases = (surahData: typeof juz30Surahs[0], index: number): Surah => {
   const phaseCount = Math.max(2, Math.ceil(surahData.verses / 3));
   const phases: Phase[] = [];
   
+  // Default: All phases locked except for the first surah (An-Nas)
   for (let i = 1; i <= phaseCount; i++) {
     let status: Phase['status'] = 'locked';
-    if (index < 35) status = 'completed'; // Most surahs completed
-    else if (index === 35) { // Current surah (Al-Asr)
-      if (i === 1) status = 'completed';
-      else if (i === 2) status = 'current';
+    if (index === 0) { // First surah (An-Nas) - current starting point
+      if (i === 1) status = 'current';
       else status = 'locked';
     }
     phases.push({ id: i, status });
   }
 
+  // Default: Only first surah (An-Nas) is current, rest are locked
   let surahStatus: Surah['status'] = 'locked';
-  if (index < 35) surahStatus = 'completed';
-  else if (index === 35) surahStatus = 'current';
+  if (index === 0) surahStatus = 'current'; // An-Nas is the starting point
 
   return {
     id: surahData.id,
@@ -143,7 +142,7 @@ const SurahNode: React.FC<SurahNodeProps> = ({
       )}
 
       {/* Main Surah Circle */}
-      <div className="relative flex flex-col items-center">
+      <div className="relative flex flex-col items-center" data-current={isCurrentSurah}>
         <Circle
           status={surah.status}
           size="large"
@@ -189,6 +188,18 @@ export const ProgressSection: React.FC<LearningPathProps> = ({
   onSurahSelect, 
   onPhaseSelect 
 }) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  
+  // Auto-scroll to current surah on mount
+  React.useEffect(() => {
+    const currentSurahElement = scrollRef.current?.querySelector('[data-current="true"]');
+    if (currentSurahElement) {
+      currentSurahElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+  }, []);
   // Calculate progress based on completed surahs and phases
   const calculateProgress = () => {
     const totalSurahs = quranData.length;
@@ -307,7 +318,7 @@ export const ProgressSection: React.FC<LearningPathProps> = ({
       
       {/* Scrollable Journey Path */}
       <ScrollArea className="h-[calc(100vh-120px)] relative">
-        <div className="flex flex-col items-center py-3 px-4 min-h-full">
+        <div ref={scrollRef} className="flex flex-col items-center py-3 px-4 min-h-full">
         
 
           {/* Vertical Journey Path */}
