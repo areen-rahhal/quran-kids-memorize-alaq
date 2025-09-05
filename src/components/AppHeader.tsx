@@ -46,7 +46,7 @@ export const AppHeader = () => {
           <h1 className="text-xl font-bold font-arabic text-emerald-700">
             تطبيق حفظ القرآن
           </h1>
-          <p className="text-xs text-muted-foreground font-arabic">طريقك لحفظ كلام الله</p>
+         
         </div>
         
         {/* Child Profile Switcher - Top Right Corner */}
@@ -67,7 +67,6 @@ export const AppHeader = () => {
                 <div className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
                   <div className="text-sm text-foreground font-arabic text-right">
                     <p className="font-semibold text-gray-900">{user.user_metadata?.display_name || 'أحمد محمد'}</p>
-                    <p className="text-xs text-muted-foreground">ولي أمر</p>
                   </div>
                   <Avatar className="h-10 w-10 bg-gradient-to-br from-emerald-400 to-blue-500">
                     <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-blue-500 text-white">
