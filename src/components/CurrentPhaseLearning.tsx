@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Play, Dumbbell, FileText, CircleArrowLeft, CircleArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CurrentPhaseLearningProps {
   currentPhaseIdx: number;
@@ -33,6 +34,66 @@ export const CurrentPhaseLearning = ({
   canGoNext,
   isLoading = false
 }: CurrentPhaseLearningProps) => {
+  
+  // Debug handlers with console logs and toasts
+  const handlePlayClick = () => {
+    console.log('🎵 Play button clicked!', { 
+      hasHandler: !!onPlayListening, 
+      isLoading, 
+      verses: phaseVerseObjs?.map(v => v.id) 
+    });
+    toast.info('جارٍ تشغيل الصوت...');
+    if (onPlayListening) {
+      onPlayListening();
+    } else {
+      console.error('❌ onPlayListening handler is missing!');
+      toast.error('خطأ: غير قادر على تشغيل الصوت');
+    }
+  };
+
+  const handlePracticeClick = () => {
+    console.log('🏃 Practice button clicked!', { 
+      hasHandler: !!onStartPractice, 
+      isLoading, 
+      verses: phaseVerseObjs?.map(v => v.id) 
+    });
+    toast.info('بدء التدريب...');
+    if (onStartPractice) {
+      onStartPractice();
+    } else {
+      console.error('❌ onStartPractice handler is missing!');
+      toast.error('خطأ: غير قادر على بدء التدريب');
+    }
+  };
+
+  const handleTestClick = () => {
+    console.log('📝 Test button clicked!', { 
+      hasHandler: !!onStartTest, 
+      isLoading, 
+      verses: phaseVerseObjs?.map(v => v.id) 
+    });
+    toast.info('بدء الاختبار...');
+    if (onStartTest) {
+      onStartTest();
+    } else {
+      console.error('❌ onStartTest handler is missing!');
+      toast.error('خطأ: غير قادر على بدء الاختبار');
+    }
+  };
+
+  // Debug component state
+  console.log('🔍 CurrentPhaseLearning render:', {
+    currentPhaseIdx,
+    totalPhases,
+    phaseLabel,
+    isLoading,
+    versesCount: phaseVerseObjs?.length,
+    hasHandlers: {
+      onPlayListening: !!onPlayListening,
+      onStartPractice: !!onStartPractice,
+      onStartTest: !!onStartTest
+    }
+  });
   return (
     <Card className="p-6 bg-white border border-gray-200 shadow-sm">
       {/* Phase Header */}
@@ -70,28 +131,35 @@ export const CurrentPhaseLearning = ({
       {/* Learning Mode Buttons */}
       <div className="flex gap-4 mb-6 justify-center">
         <Button
-          onClick={onPlayListening}
+          onClick={handlePlayClick}
           disabled={isLoading}
-          className="h-14 w-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-14 w-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
           size="icon"
+          type="button"
         >
-          <Play className="h-6 w-6" />
+          {isLoading ? (
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          ) : (
+            <Play className="h-6 w-6" />
+          )}
         </Button>
         
         <Button
-          onClick={onStartPractice}
+          onClick={handlePracticeClick}
           disabled={isLoading}
-          className="h-14 w-14 bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-14 w-14 bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
           size="icon"
+          type="button"
         >
           <Dumbbell className="h-6 w-6" />
         </Button>
         
         <Button
-          onClick={onStartTest}
+          onClick={handleTestClick}
           disabled={isLoading}
-          className="h-14 w-14 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-14 w-14 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
           size="icon"
+          type="button"
         >
           <FileText className="h-6 w-6" />
         </Button>
