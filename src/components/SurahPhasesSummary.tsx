@@ -1,5 +1,6 @@
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 interface SurahPhasesSummaryProps {
   currentSurahName: string;
