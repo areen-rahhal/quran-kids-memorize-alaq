@@ -80,34 +80,21 @@ export const AudioControls = ({
         style={{ display: "none" }}
       />
       
-      {/* Loading indicator */}
-      {isLoading && (
-        <div className="text-center mb-2">
-          <div className="text-blue-600 text-sm font-arabic animate-pulse">
-            🔄 جاري تحميل الصوت...
-          </div>
-        </div>
-      )}
 
-      {/* Enhanced audio error with retry */}
+      {/* Final fallback friendly error (only shown if background recovery fails) */}
       {showAudioError && audioError && (
         <div className="text-center mb-2 space-y-2">
-          <div className="text-red-500 text-sm font-arabic bg-red-50 p-3 rounded border border-red-200">
-            ❌ {audioError}
-            {retryCount > 0 && (
-              <div className="text-xs mt-1 text-red-400">
-                المحاولة #{retryCount + 1}
-              </div>
-            )}
+          <div className="text-amber-700 text-sm font-arabic bg-amber-50 p-3 rounded border border-amber-200">
+            {audioError}
           </div>
           {onRetryAudio && (
             <Button
               onClick={onRetryAudio}
               variant="outline"
               size="sm"
-              className="border-red-300 text-red-600 hover:bg-red-50 font-arabic"
+              className="border-amber-300 text-amber-700 hover:bg-amber-50 font-arabic"
             >
-              🔄 إعادة المحاولة
+              إعادة المحاولة
             </Button>
           )}
         </div>
