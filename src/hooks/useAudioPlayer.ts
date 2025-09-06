@@ -132,41 +132,46 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
   }, [currentAyahIdx, loadAndPlayAyah, isReciting, handleVerseEnded, currentStep]);
 
   const onAudioError = useCallback(() => {
-    let errorMessage = 'Failed to load audio. Please check your internet connection.';
-    
+    // Suppress transient errors while we're still probing multiple sources in the background
+    if (isLoading) {
+      return;
+    }
+
+    let errorMessage = 'تعذّر توليد الصوت لهذه الآيات الآن. تأكّد من اتصال الإنترنت، عطّل مانع الإعلانات/الـVPN إن وُجد، ثم اضغط "إعادة المحاولة" أو حدّث الصفحة.';
+
     if (audioRef.current?.error) {
       const mediaError = audioRef.current.error;
       console.error('Audio MediaError occurred:', {
         code: mediaError.code,
         message: mediaError.message
       });
-      
+
       switch (mediaError.code) {
         case MediaError.MEDIA_ERR_ABORTED:
-          errorMessage = 'Audio playback was aborted.';
+          errorMessage = 'تم إيقاف تشغيل الصوت.';
           break;
         case MediaError.MEDIA_ERR_NETWORK:
-          errorMessage = 'Network error occurred while loading audio.';
+          errorMessage = 'تعذّر تحميل الصوت بسبب مشكلة في الشبكة. تحقّق من اتصالك ثم أعد المحاولة.';
           break;
         case MediaError.MEDIA_ERR_DECODE:
-          errorMessage = 'Audio file is corrupted or in an unsupported format.';
+          errorMessage = 'تعذّر تشغيل ملف الصوت. حاول مرة أخرى لاحقًا.';
           break;
         case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-          errorMessage = 'Audio format is not supported by your browser.';
+          errorMessage = 'المصدر الحالي للصوت غير متاح. سنحاول مصادر أخرى تلقائيًا، وإن فشلت، أعد المحاولة لاحقًا.';
           break;
         default:
-          errorMessage = `Audio error occurred (code: ${mediaError.code}).`;
+          errorMessage = `حدث خطأ في الصوت (code: ${mediaError.code}).`;
       }
     } else {
       console.error('Audio error occurred without MediaError details');
     }
-    
+
     if (hasAttemptedPlay) {
       setAudioError(errorMessage);
       setShowAudioError(true);
     }
     setIsPlaying(false);
-  }, [hasAttemptedPlay]);
+  }, [hasAttemptedPlay, isLoading]);
 
   const handlePlayPause = useCallback((verses: number[]) => {
     console.log('🎵 handlePlayPause called with verses:', verses);
