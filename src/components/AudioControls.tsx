@@ -123,17 +123,17 @@ export const AudioControls = ({
           
           {showFeedback && feedback && (
             <div className={`text-sm font-arabic p-5 rounded-xl border-2 shadow-lg ${
-              feedback === 'correct' 
-                ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800' 
+              feedback === 'correct'
+                ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800'
                 : 'bg-gradient-to-br from-red-50 to-pink-50 border-red-300 text-red-800'
             }`}>
-              {feedback === 'correct' ? (
+              {feedback === 'correct' && recitingMode !== 'testing' ? (
                 <div className="flex flex-col items-center justify-center gap-3">
                   <span className="text-4xl animate-bounce">🎉</span>
                   <span className="text-xl font-bold">ممتاز! بارك الله فيك</span>
                   <span className="text-sm">الانتقال للآية التالية...</span>
                 </div>
-              ) : (
+              ) : feedback === 'incorrect' ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-3xl">🔄</span>
@@ -155,7 +155,7 @@ export const AudioControls = ({
                      🎤 سيبدأ الاستماع مرة أخرى...
                    </div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>
