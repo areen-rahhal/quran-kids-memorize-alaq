@@ -40,6 +40,7 @@ interface CurrentPhaseLearningProps {
     recitingMode: 'learning' | 'testing';
     onReadyForTesting: () => void;
     onRestartLearning: () => void;
+    revealedTestingVerses?: number[];
   };
 }
 
@@ -71,25 +72,28 @@ export const CurrentPhaseLearning = ({
         </p>
       </div>
 
-      {/* Verses Display */}
+      {/* Verses Display (hidden in testing mode until recited correctly) */}
       <div className="bg-green-50 rounded-xl p-4 mb-6 text-center">
         <div className="font-arabic text-gray-900 text-lg leading-relaxed" dir="rtl">
-          {phaseVerseObjs.map((verse, index) => (
+          {(
+            audioProps.recitingMode === 'testing'
+              ? phaseVerseObjs.filter(v => (audioProps.revealedTestingVerses || []).includes(v.id))
+              : phaseVerseObjs
+          ).map((verse, index, arr) => (
             <span key={verse.id} className="inline-flex items-baseline">
               <span className="px-1">{verse.arabic}</span>
               <span
                 className="inline-flex items-center justify-center bg-white border border-amber-300 px-1 mx-1 text-sm font-bold rounded-full shadow-sm relative -top-0.5"
-                style={{
-                  minWidth: 24,
-                  minHeight: 24,
-                  fontFamily: 'Amiri, serif',
-                }}
+                style={{ minWidth: 24, minHeight: 24, fontFamily: 'Amiri, serif' }}
               >
                 {verse.id}
               </span>
-              {index < phaseVerseObjs.length - 1 && ' '}
+              {index < arr.length - 1 && ' '}
             </span>
           ))}
+          {audioProps.recitingMode === 'testing' && (!audioProps.revealedTestingVerses || audioProps.revealedTestingVerses.length === 0) && (
+            <span className="text-gray-500 text-sm">سيظهر نص الآية بعد التلاوة الصحيحة</span>
+          )}
         </div>
       </div>
 
