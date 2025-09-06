@@ -1,4 +1,3 @@
-
 // Audio utilities for Quran recitation with verified reliable sources
 export function getAudioUrl(surah: number, ayah: number): string {
   const surahStr = surah.toString().padStart(3, '0');
@@ -34,9 +33,10 @@ export async function testAudioUrl(url: string): Promise<boolean> {
 
 // Get all audio URLs for a verse
 export function getAllAudioUrls(surah: number, ayah: number): string[] {
+  // Try the most reliable sources first to reduce visible errors
   return [
-    getAudioUrl(surah, ayah),
+    getThirdAudioUrl(surah, ayah),
     getAlternativeAudioUrl(surah, ayah),
-    getThirdAudioUrl(surah, ayah)
+    getAudioUrl(surah, ayah)
   ];
 }
