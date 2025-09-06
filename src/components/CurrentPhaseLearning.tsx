@@ -81,9 +81,19 @@ export const CurrentPhaseLearning = ({
             const isRevealed = !isTesting || revealedSet.has(verse.id);
             return (
               <span key={verse.id} className="inline-flex items-baseline">
-                {isRevealed ? (
-                  <span className="px-1">{verse.arabic}</span>
-                ) : null}
+                <span className="px-1">
+                  {isRevealed ? (
+                    verse.arabic
+                  ) : (
+                    <span
+                      className="inline-block align-middle text-gray-400 tracking-widest select-none"
+                      aria-hidden="true"
+                      style={{ minWidth: '5rem' }}
+                    >
+                      ··········
+                    </span>
+                  )}
+                </span>
                 <span
                   className="inline-flex items-center justify-center bg-white border border-amber-300 px-1 mx-1 text-sm font-bold rounded-full shadow-sm relative -top-0.5"
                   style={{ minWidth: 24, minHeight: 24, fontFamily: 'Amiri, serif' }}
@@ -94,9 +104,6 @@ export const CurrentPhaseLearning = ({
               </span>
             );
           })}
-          {audioProps.recitingMode === 'testing' && (!audioProps.revealedTestingVerses || audioProps.revealedTestingVerses.length === 0) && (
-            <span className="text-gray-500 text-sm">سيظهر نص الآية بعد التلاوة الصحيحة</span>
-          )}
         </div>
       </div>
 
