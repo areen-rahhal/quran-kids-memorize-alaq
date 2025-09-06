@@ -171,6 +171,8 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
   const handlePlayPause = useCallback((verses: number[]) => {
     console.log('🎵 handlePlayPause called with verses:', verses);
     console.log('🎵 Current isPlaying state:', isPlaying);
+    console.log('🎵 Audio ref current:', audioRef.current);
+    console.log('🎵 Current surah ID:', currentSurahId);
     
     if (isPlaying) {
       console.log('🎵 Pausing audio');
@@ -179,11 +181,11 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
       }
       setIsPlaying(false);
     } else {
-      console.log('🎵 Starting audio playback');
+      console.log('🎵 Starting audio playback - calling loadAndPlayAyah with index 0 and verses:', verses);
       setCurrentAyahIdx(0);
       loadAndPlayAyah(0, verses);
     }
-  }, [isPlaying, loadAndPlayAyah]);
+  }, [isPlaying, loadAndPlayAyah, currentSurahId]);
 
   const handleStartReciting = useCallback((verses: number[], mode: 'learning' | 'testing' = 'learning', onTestComplete?: () => void) => {
     console.log('Starting reciting journey from audio player, mode:', mode);

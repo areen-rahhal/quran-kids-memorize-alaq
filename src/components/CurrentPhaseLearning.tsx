@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Play, Dumbbell, FileText, CircleArrowLeft, CircleArrowRight } from 'lucide-react';
+import { AudioControls } from '@/components/AudioControls';
 
 interface CurrentPhaseLearningProps {
   currentPhaseIdx: number;
@@ -16,6 +17,30 @@ interface CurrentPhaseLearningProps {
   canGoPrevious: boolean;
   canGoNext: boolean;
   isLoading?: boolean;
+  // Audio player props
+  audioProps: {
+    isPlaying: boolean;
+    audioError: string | null;
+    showAudioError: boolean;
+    audioRef: React.RefObject<HTMLAudioElement>;
+    onAudioEnded: () => void;
+    onAudioError: () => void;
+    isLoading: boolean;
+    retryCount: number;
+    onRetryAudio: () => void;
+    // Reciting journey props
+    isReciting: boolean;
+    isListening: boolean;
+    currentStep: 'playing' | 'listening' | 'completed' | 'ready-check' | 'testing';
+    transcript: string;
+    feedback: 'correct' | 'incorrect' | null;
+    showFeedback: boolean;
+    errorDetails: string;
+    onStopReciting: () => void;
+    recitingMode: 'learning' | 'testing';
+    onReadyForTesting: () => void;
+    onRestartLearning: () => void;
+  };
 }
 
 export const CurrentPhaseLearning = ({
@@ -31,7 +56,8 @@ export const CurrentPhaseLearning = ({
   onNextPhase,
   canGoPrevious,
   canGoNext,
-  isLoading = false
+  isLoading = false,
+  audioProps
 }: CurrentPhaseLearningProps) => {
   return (
     <Card className="p-6 bg-white border border-gray-200 shadow-sm">
@@ -73,10 +99,10 @@ export const CurrentPhaseLearning = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🎵 Play button clicked');
+            console.log('🎵 Play button clicked - calling onPlayListening');
             onPlayListening();
           }}
-          disabled={isLoading}
+          disabled={isLoading || audioProps.isReciting}
           className="h-14 w-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           size="icon"
         >
@@ -87,10 +113,10 @@ export const CurrentPhaseLearning = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🏃 Practice button clicked');
+            console.log('🏃 Practice button clicked - calling onStartPractice');
             onStartPractice();
           }}
-          disabled={isLoading}
+          disabled={isLoading || audioProps.isReciting}
           className="h-14 w-14 bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           size="icon"
         >
@@ -101,16 +127,50 @@ export const CurrentPhaseLearning = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('📝 Test button clicked');
+            console.log('📝 Test button clicked - calling onStartTest');
             onStartTest();
           }}
-          disabled={isLoading}
+          disabled={isLoading || audioProps.isReciting}
           className="h-14 w-14 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           size="icon"
         >
           <FileText className="h-6 w-6" />
         </Button>
       </div>
+
+      {/* Audio Controls Integration - Shows reciting journey status */}
+      <AudioControls
+        isPlaying={audioProps.isPlaying}
+        audioError={audioProps.audioError}
+        showAudioError={audioProps.showAudioError}
+        isPhaseComplete={false}
+        hasAttemptedPlay={audioProps.isPlaying}
+        onPlayPause={() => {}} // Not used - handled by buttons above
+        onMarkComplete={() => {}} // Not used
+        audioRef={audioProps.audioRef}
+        onAudioEnded={audioProps.onAudioEnded}
+        onAudioError={audioProps.onAudioError}
+        isLoading={audioProps.isLoading}
+        retryCount={audioProps.retryCount}
+        onRetryAudio={audioProps.onRetryAudio}
+        isReciting={audioProps.isReciting}
+        isListening={audioProps.isListening}
+        currentStep={audioProps.currentStep}
+        transcript={audioProps.transcript}
+        feedback={audioProps.feedback}
+        showFeedback={audioProps.showFeedback}
+        errorDetails={audioProps.errorDetails}
+        onStartReciting={() => {}} // Not used - handled by buttons above
+        onStopReciting={audioProps.onStopReciting}
+        recitingMode={audioProps.recitingMode}
+        onReadyForTesting={audioProps.onReadyForTesting}
+        onRestartLearning={audioProps.onRestartLearning}
+        currentPhaseLabel={phaseLabel}
+        currentPhaseIdx={currentPhaseIdx}
+        totalPhases={totalPhases}
+        onNextPhase={onNextPhase}
+        onStartTest={() => {}} // Not used - handled by buttons above
+      />
 
       {/* Phase Navigation */}
       <div className="flex items-center justify-between">

@@ -247,40 +247,7 @@ export const AudioControls = ({
             </div>
           )}
       
-      <div className="flex justify-center gap-4 mt-4 items-center">
-        <Button
-          onClick={onPlayPause}
-          disabled={isReciting}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all disabled:opacity-50"
-          size="icon"
-          aria-label={isPlaying ? "إيقاف الصوت" : "تشغيل الصوت"}
-        >
-          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-        </Button>
-        
-        <Button
-          onClick={isReciting ? onStopReciting : onStartReciting}
-          className={`${
-            isReciting 
-              ? 'bg-red-500 hover:bg-red-600' 
-              : 'bg-blue-600 hover:bg-blue-700'
-          } text-white rounded-full p-2 drop-shadow-lg scale-110 transition-all`}
-          size="icon"
-          aria-label={isReciting ? "إيقاف التلاوة" : "بدء التلاوة والتكرار"}
-        >
-          {isReciting ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-        </Button>
-        
-        {!isReciting && onStartTest && (
-          <Button
-            onClick={onStartTest}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 font-arabic text-base rounded-full shadow-md transition-all"
-          >
-            <Mic className="h-4 w-4 ml-2 fill-current" />
-            بدء الاختبار
-          </Button>
-        )}
-      </div>
+      {/* We hide the controls as they're handled by CurrentPhaseLearning buttons */}
     </>
   );
 };

@@ -298,14 +298,45 @@ const Index = () => {
             phaseLabel={phase.label}
             phaseDescription={phase.description}
             phaseVerseObjs={phaseVerseObjs}
-            onPlayListening={() => handlePlayPause(phase.verses)}
-            onStartPractice={() => handleStartReciting(phase.verses)}
-            onStartTest={handleStartTest}
+            onPlayListening={() => {
+              console.log('🎵 onPlayListening called with verses:', phase.verses);
+              handlePlayPause(phase.verses);
+            }}
+            onStartPractice={() => {
+              console.log('🏃 onStartPractice called with verses:', phase.verses);
+              handleStartReciting(phase.verses, 'learning');
+            }}
+            onStartTest={() => {
+              console.log('📝 onStartTest called with verses:', phase.verses);
+              handleStartReciting(phase.verses, 'testing');
+            }}
             onPreviousPhase={() => handleManualNavigation('prev')}
             onNextPhase={() => handleManualNavigation('next')}
             canGoPrevious={currentPhaseIdx > 0}
             canGoNext={currentPhaseIdx < totalPhases - 1}
-            isLoading={isLoading}
+            isLoading={false}
+            audioProps={{
+              isPlaying,
+              audioError,
+              showAudioError,
+              audioRef,
+              onAudioEnded: () => onAudioEnded(phase.verses),
+              onAudioError,
+              isLoading,
+              retryCount,
+              onRetryAudio: () => retryAudio(phase.verses),
+              isReciting,
+              isListening,
+              currentStep,
+              transcript,
+              feedback,
+              showFeedback,
+              errorDetails,
+              onStopReciting: handleStopReciting,
+              recitingMode,
+              onReadyForTesting: handleReadyForTesting,
+              onRestartLearning: handleRestartLearning
+            }}
           />
             
             {/* Completion Message */}
