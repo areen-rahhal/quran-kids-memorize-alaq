@@ -128,7 +128,7 @@ const SurahNode: React.FC<SurahNodeProps> = ({
       {surah.phases.length > 0 && surah.status !== 'locked' && (
         <div className="flex flex-col items-center gap-0.5 mb-1.5">
           {surah.phases.slice(0, 4).reverse().map((phase, phaseIndex) => (
-            <React.Fragment key={phase.id}>
+            <div key={phase.id}>
               <div className="w-0.5 h-2 bg-gray-200"></div>
               <Circle
                 status={phase.status}
@@ -137,7 +137,7 @@ const SurahNode: React.FC<SurahNodeProps> = ({
               >
                 {phase.id}
               </Circle>
-            </React.Fragment>
+            </div>
           ))}
         </div>
       )}

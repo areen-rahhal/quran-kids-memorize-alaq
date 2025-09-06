@@ -169,12 +169,17 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
   }, [hasAttemptedPlay]);
 
   const handlePlayPause = useCallback((verses: number[]) => {
+    console.log('🎵 handlePlayPause called with verses:', verses);
+    console.log('🎵 Current isPlaying state:', isPlaying);
+    
     if (isPlaying) {
+      console.log('🎵 Pausing audio');
       if (audioRef.current) {
         audioRef.current.pause();
       }
       setIsPlaying(false);
     } else {
+      console.log('🎵 Starting audio playback');
       setCurrentAyahIdx(0);
       loadAndPlayAyah(0, verses);
     }

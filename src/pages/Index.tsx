@@ -35,17 +35,7 @@ const Index = () => {
   const processingRef = useRef(false);
 
 
-  // Clear localStorage data for testing
-  useEffect(() => {
-    localStorage.removeItem('ahmad-quran-progress');
-  }, []);
-
-  // Clear localStorage data for testing
-  useEffect(() => {
-    localStorage.removeItem('ahmad-quran-progress');
-  }, []);
-
-  // Load progress from localStorage on mount and update with child data
+  // Initialize progress once on mount
   useEffect(() => {
     const savedProgress = localStorage.getItem('ahmad-quran-progress');
     if (savedProgress) {
@@ -53,31 +43,32 @@ const Index = () => {
         const progress = JSON.parse(savedProgress);
         setCompletedVerses(progress.completedVerses || []);
         setCompletedPhases(new Set(progress.completedTestingPhases || []));
-        console.log('📁 Restoring saved progress - currentPhaseIdx:', progress.currentPhaseIdx || 0);
         setCurrentPhaseIdx(progress.currentPhaseIdx || 0);
         setCurrentSurahId(progress.currentSurahId || 114);
         setCompletedSurahs(progress.completedSurahs || []);
+        console.log('📁 Restored progress from localStorage');
       } catch (error) {
         console.error('Error loading progress:', error);
       }
     }
+  }, []);
 
-    // Update with child-specific data when available
+  // Update with child-specific data when selectedChild changes
+  useEffect(() => {
     if (selectedChild) {
       const childCompletedSurahs = getCompletedSurahs();
       setCompletedSurahs(childCompletedSurahs);
       
       // Set current surah to first incomplete surah or default
       if (childCompletedSurahs.length > 0) {
-        // Find next surah to work on (first incomplete one)
-        const allSurahs = [114, 113, 112, 111, 110]; // Add more as needed
+        const allSurahs = [114, 113, 112, 111, 110];
         const nextSurah = allSurahs.find(id => !childCompletedSurahs.includes(id));
         if (nextSurah) {
           setCurrentSurahId(nextSurah);
         }
       }
     }
-  }, [selectedChild, getCompletedSurahs]);
+  }, [selectedChild]);
 
   // Save progress to localStorage whenever it changes (skip during test completion processing)
   useEffect(() => {

@@ -70,27 +70,42 @@ export const CurrentPhaseLearning = ({
       {/* Learning Mode Buttons */}
       <div className="flex gap-4 mb-6 justify-center">
         <Button
-          onClick={onPlayListening}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎵 Play button clicked');
+            onPlayListening();
+          }}
           disabled={isLoading}
-          className="h-14 w-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-14 w-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           size="icon"
         >
           <Play className="h-6 w-6" />
         </Button>
         
         <Button
-          onClick={onStartPractice}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🏃 Practice button clicked');
+            onStartPractice();
+          }}
           disabled={isLoading}
-          className="h-14 w-14 bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-14 w-14 bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           size="icon"
         >
           <Dumbbell className="h-6 w-6" />
         </Button>
         
         <Button
-          onClick={onStartTest}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📝 Test button clicked');
+            onStartTest();
+          }}
           disabled={isLoading}
-          className="h-14 w-14 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-14 w-14 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           size="icon"
         >
           <FileText className="h-6 w-6" />
