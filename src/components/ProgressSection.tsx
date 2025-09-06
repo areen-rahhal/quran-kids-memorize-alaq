@@ -183,11 +183,17 @@ const SurahNode: React.FC<SurahNodeProps> = ({
 interface LearningPathProps {
   onSurahSelect?: (surah: Surah) => void;
   onPhaseSelect?: (surah: Surah, phase: Phase) => void;
+  completedPhases?: Set<number>;
+  currentSurahId?: number;
+  currentPhaseIdx?: number;
 }
 
-export const ProgressSection: React.FC<LearningPathProps> = ({ 
-  onSurahSelect, 
-  onPhaseSelect 
+export const ProgressSection: React.FC<LearningPathProps> = ({
+  onSurahSelect,
+  onPhaseSelect,
+  completedPhases,
+  currentSurahId,
+  currentPhaseIdx,
 }) => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   
@@ -201,28 +207,45 @@ export const ProgressSection: React.FC<LearningPathProps> = ({
       });
     }
   }, []);
-  // Calculate progress based on completed surahs and phases
+  // Build display data reflecting current and completed phases
+  const displayData = React.useMemo(() => {
+    return quranData.map((s) => {
+      const isCurrent = currentSurahId === s.id;
+      const phases = s.phases.map((p) => {
+        let status = p.status;
+        if (isCurrent) {
+          const phaseId = s.id * 100 + p.id;
+          if (completedPhases?.has(phaseId)) status = 'completed';
+          else if (currentPhaseIdx !== undefined && p.id === (currentPhaseIdx + 1)) status = 'current';
+          else status = 'locked';
+        }
+        return { ...p, status };
+      });
+      const status = isCurrent ? 'current' : s.status;
+      return { ...s, phases, status };
+    });
+  }, [completedPhases, currentSurahId, currentPhaseIdx]);
+
+  // Calculate progress based on display data
   const calculateProgress = () => {
-    const totalSurahs = quranData.length;
-    const completedSurahs = quranData.filter(s => s.status === 'completed' || s.status === 'completed-errors').length;
-    
-    // For current surah, count completed phases
-    const currentSurah = quranData.find(s => s.status === 'current');
+    const totalSurahs = displayData.length;
+    const completedSurahs = displayData.filter(s => s.status === 'completed' || s.status === 'completed-errors').length;
+
+    const currentSurah = displayData.find(s => s.status === 'current');
     let completedPhasesInCurrentSurah = 0;
     let totalPhasesInCurrentSurah = 0;
-    
+
     if (currentSurah) {
       totalPhasesInCurrentSurah = currentSurah.phases.length;
-      completedPhasesInCurrentSurah = currentSurah.phases.filter(p => 
+      completedPhasesInCurrentSurah = currentSurah.phases.filter(p =>
         p.status === 'completed' || p.status === 'completed-errors'
       ).length;
     }
-    
-    // Calculate total progress
+
     const progressFromCompletedSurahs = (completedSurahs / totalSurahs) * 100;
-    const progressFromCurrentSurah = currentSurah ? 
-      (completedPhasesInCurrentSurah / totalPhasesInCurrentSurah) * (1 / totalSurahs) * 100 : 0;
-    
+    const progressFromCurrentSurah = currentSurah ?
+      (completedPhasesInCurrentSurah / Math.max(totalPhasesInCurrentSurah, 1)) * (1 / totalSurahs) * 100 : 0;
+
     return Math.round(progressFromCompletedSurahs + progressFromCurrentSurah);
   };
 
@@ -321,7 +344,7 @@ export const ProgressSection: React.FC<LearningPathProps> = ({
 
           {/* Vertical Journey Path */}
           <div className="relative flex flex-col items-center">
-            {quranData.map((surah, index) => (
+            {displayData.map((surah, index) => (
               <SurahNode
                 key={surah.id}
                 surah={surah}
