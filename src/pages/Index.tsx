@@ -131,7 +131,7 @@ const Index = () => {
 
   const handleForceNextStep = () => {
     console.log('🔧 MANUAL: Force proceeding to next step');
-    toast.info('⏭️ محاولة الانتقال للخطوة التالية...');
+    toast.info('⏭️ محاولة الانتقال للخطوة ��لتالية...');
   };
 
   // Get current surah data
@@ -298,7 +298,8 @@ const Index = () => {
             }}
             onStartTest={() => {
               console.log('📝 onStartTest called with verses:', phase.verses);
-              handleStartReciting(phase.verses, 'testing');
+              const phaseId = currentSurahId * 100 + currentPhaseIdx + 1;
+              handleStartReciting(phase.verses, 'testing', () => handleTestComplete(phaseId));
             }}
             onPreviousPhase={() => handleManualNavigation('prev')}
             onNextPhase={() => handleManualNavigation('next')}
