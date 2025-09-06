@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useSpeechRecognition } from './useSpeechRecognition';
 
@@ -29,7 +28,7 @@ export const useRecitingJourney = () => {
       .replace(/[َُِّْ]/g, '') // Remove main diacritics
       .replace(/[ًٌٍ]/g, '') // Remove tanween
       .replace(/[ۖۗۘۙۚۛۜ]/g, '') // Remove Quranic pause marks
-      .replace(/[ۣۢۤۧۨ]/g, '') // Remove other diacritics
+      .replace(/[ۣۢۤ��ۨ]/g, '') // Remove other diacritics
       // Normalize different forms of Alif
       .replace(/[آأإٱ]/g, 'ا') // All forms of Alif to basic Alif
       // Normalize different forms of Ya
@@ -285,8 +284,9 @@ export const useRecitingJourney = () => {
       
       const isCorrect = checkRecitingAccuracy(transcript, expectedText);
       setFeedback(isCorrect ? 'correct' : 'incorrect');
-      setShowFeedback(true);
-      
+      // In testing mode, do not show success feedback panel
+      setShowFeedback(!isCorrect || recitingMode !== 'testing');
+
       if (isCorrect) {
         console.log('✅ Reciting is correct, moving to next verse');
         console.log('🔄 Current mode:', recitingMode);
@@ -313,10 +313,11 @@ export const useRecitingJourney = () => {
         
         if (nextIndex < verses.length) {
           console.log('📖 More verses available, proceeding to next...');
+          const nextDelay = recitingMode === 'testing' ? 600 : 3000;
           setTimeout(() => {
             console.log('🎯 Setting verse index to:', nextIndex);
             setCurrentVerseIndex(nextIndex);
-            
+
             // In learning mode, proceed to next verse
             if (recitingMode === 'learning') {
               console.log('🎵 Learning mode: Playing next verse');
@@ -324,7 +325,7 @@ export const useRecitingJourney = () => {
               setFeedback(null);
               setShowFeedback(false);
               setErrorDetails('');
-              
+
               setTimeout(() => {
                 console.log('🔊 Playing next verse at index:', nextIndex);
                 loadAndPlayAyah(nextIndex, verses);
@@ -336,18 +337,19 @@ export const useRecitingJourney = () => {
               setFeedback(null);
               setShowFeedback(false);
               setErrorDetails('');
-              
+
               setTimeout(() => {
                 console.log('🎤 Starting listening for testing mode');
                 startListening();
-              }, 800);
+              }, 500);
             }
-          }, 3000);
+          }, nextDelay);
         } else {
           console.log('🏁 All verses in phase completed!');
+          const completeDelay = recitingMode === 'testing' ? 600 : 3000;
           setTimeout(() => {
             console.log('✨ Phase completion handling...');
-            
+
             // If learning mode and all verses completed, ask if ready for testing
             if (recitingMode === 'learning') {
               console.log('📚 Learning completed, asking for testing readiness');
