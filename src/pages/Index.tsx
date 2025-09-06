@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
@@ -335,7 +334,8 @@ const Index = () => {
               onStopReciting: handleStopReciting,
               recitingMode,
               onReadyForTesting: handleReadyForTesting,
-              onRestartLearning: handleRestartLearning
+              onRestartLearning: handleRestartLearning,
+              revealedTestingVerses
             }}
           />
             
