@@ -206,14 +206,23 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
       return;
     }
 
-    let errorMessage = 'تعذّر توليد الصوت لهذه الآيات الآن. تأكّد من اتصال الإنترنت، عطّل مانع الإعلانات/الـVPN إن وُ��د، ثم اضغط "إعادة المحاولة" أو حدّث الصفحة.';
+    let errorMessage = 'تعذّر توليد الصوت لهذه الآيات الآن. تأكّد من اتصال الإنترنت، عطّل مانع الإعلانات/الـVPN إن وُجد، ثم اضغط "إعادة المحاولة" أو حدّث الصفحة.';
 
     if (audioRef.current?.error) {
       const mediaError = audioRef.current.error;
-      console.error('Audio MediaError occurred:', {
-        code: mediaError.code,
-        message: mediaError.message
-      });
+      // Log detailed mediaError including numeric code and message if available
+      try {
+        const details = {
+          code: mediaError.code,
+          message: (mediaError as any).message || String(mediaError),
+          src: audioRef.current?.src,
+          networkState: audioRef.current?.networkState,
+          readyState: audioRef.current?.readyState
+        };
+        console.error('Audio MediaError occurred:', details);
+      } catch (logErr) {
+        console.error('Audio MediaError occurred (could not stringify):', audioRef.current.error);
+      }
 
       switch (mediaError.code) {
         case MediaError.MEDIA_ERR_ABORTED:
