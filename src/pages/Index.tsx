@@ -14,6 +14,7 @@ import { CurrentPhaseLearning } from '@/components/CurrentPhaseLearning';
 import { ProgressSection } from '@/components/ProgressSection';
 import { VerseDisplay } from '@/components/VerseDisplay';
 import { AudioControls } from '@/components/AudioControls';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 
 import { toast } from 'sonner';
 
@@ -31,6 +32,7 @@ const Index = () => {
   const [completedSurahs, setCompletedSurahs] = useState<number[]>([]);
   const [isProcessingTranscript, setIsProcessingTranscript] = useState(false);
   const [isProcessingTestCompletion, setIsProcessingTestCompletion] = useState(false);
+  const [showPhaseComplete, setShowPhaseComplete] = useState(false);
   const processingRef = useRef(false);
 
 
@@ -208,24 +210,13 @@ const Index = () => {
   const handleTestComplete = (phaseId: number) => {
     console.log('Test completed for phase:', phaseId);
     setIsProcessingTestCompletion(true);
-    
-    // Mark phase as completed (handles both new and returning users)
+    // Mark phase as completed
     setCompletedPhases(prev => new Set([...prev, phaseId]));
-    
-    // Show completion dialog after brief delay
+    // Show custom completion dialog
     setTimeout(() => {
       setIsProcessingTestCompletion(false);
-      
-      if (currentPhaseIdx < totalPhases - 1) {
-        const shouldProceed = window.confirm("تهانينا! هل تريد الانتقال للمرحلة التالية؟");
-        if (shouldProceed) {
-          console.log('🎉 Test completed, advancing to next phase:', currentPhaseIdx + 1);
-          setCurrentPhaseIdx(prev => prev + 1);
-        }
-      } else {
-        alert("مبروك! لقد أكملت جميع مراحل هذه السورة!");
-      }
-    }, 1500);
+      setShowPhaseComplete(true);
+    }, 600);
   };
   
   // Test completion is now handled directly in useRecitingJourney via callback
@@ -363,10 +354,41 @@ const Index = () => {
             onSurahSelect={(surah) => setCurrentSurahId(surah.id)}
             onPhaseSelect={(surah, phase) => {
               setCurrentSurahId(surah.id);
-              // Handle phase selection if needed
             }}
+            completedPhases={completedPhases}
+            currentSurahId={currentSurahId}
+            currentPhaseIdx={currentPhaseIdx}
           />
         </div>
+
+        {/* Phase completion dialog */}
+        <AlertDialog open={showPhaseComplete} onOpenChange={setShowPhaseComplete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-arabic text-xl">🎉 مبروك! أكملت هذه المرحلة</AlertDialogTitle>
+              <AlertDialogDescription className="font-arabic">هل تريدين إعادة الاختبار، المتابعة، أم التوقّف؟</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowPhaseComplete(false)} className="font-arabic">توقّف</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setShowPhaseComplete(false);
+                  handleStartReciting(phase.verses, 'testing');
+                }}
+                className="bg-purple-600 hover:bg-purple-700 font-arabic"
+              >إعادة الاختبار</AlertDialogAction>
+              <AlertDialogAction
+                onClick={() => {
+                  setShowPhaseComplete(false);
+                  if (currentPhaseIdx < totalPhases - 1) {
+                    setCurrentPhaseIdx((p) => p + 1);
+                  }
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 font-arabic"
+              >المتابعة</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
   );
 };
