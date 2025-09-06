@@ -34,61 +34,130 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
     handleRestartLearning
   } = useRecitingJourney();
 
+  const waitForAudioToPlay = (audioEl: HTMLAudioElement, timeout = 5000) => {
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const onPlaying = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve();
+      };
+      const onError = () => {
+        if (settled) return;
+        settled = true;
+        const err = audioEl.error;
+        cleanup();
+        reject(err || new Error('Unknown audio error'));
+      };
+      const onCanPlay = () => {
+        // canplaythrough could indicate playable
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(new Error('Audio load timeout'));
+      }, timeout);
+
+      function cleanup() {
+        clearTimeout(timer);
+        audioEl.removeEventListener('playing', onPlaying);
+        audioEl.removeEventListener('error', onError);
+        audioEl.removeEventListener('canplaythrough', onCanPlay);
+      }
+
+      audioEl.addEventListener('playing', onPlaying);
+      audioEl.addEventListener('error', onError);
+      audioEl.addEventListener('canplaythrough', onCanPlay);
+    });
+  };
+
   const loadAndPlayAyah = useCallback(async (ayahIndex: number, verses: number[]) => {
     if (!audioRef.current || ayahIndex >= verses.length) return;
-    
+
     const ayahId = verses[ayahIndex];
     const urls = getAllAudioUrls(currentSurahId, ayahId);
-    
+
     console.log(`🎵 Loading ayah ${ayahId} from Surah ${currentSurahId} at index ${ayahIndex}`);
-    
+
     setAudioError(null);
     setShowAudioError(false);
     setHasAttemptedPlay(true);
     setCurrentAyahIdx(ayahIndex);
     setIsLoading(true);
-    
+
     // Stop any current audio
     audioRef.current.pause();
     audioRef.current.currentTime = 0;
     audioRef.current.src = '';
-    
+
     let audioPlayedSuccessfully = false;
-    
+
     // Try each URL until one works
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i];
       console.log(`🎵 Trying audio source ${i + 1}/${urls.length}: ${url}`);
-      
+
       try {
-        // Test URL accessibility first
-        const isAccessible = await testAudioUrl(url);
+        // Test URL accessibility first (HEAD may be blocked on some servers)
+        let isAccessible = false;
+        try {
+          isAccessible = await testAudioUrl(url);
+        } catch (err) {
+          console.warn('HEAD check failed, will try to load directly:', err);
+          isAccessible = true; // try anyway
+        }
+
         if (!isAccessible) {
-          console.warn(`🎵 URL ${i + 1} not accessible, skipping...`);
+          console.warn(`🎵 URL ${i + 1} not accessible (HEAD failed), skipping...`);
           continue;
         }
-        
+
         audioRef.current.src = url;
         audioRef.current.load();
-        
-        // Add a small delay to let the audio load
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        await audioRef.current.play();
-        console.log(`✅ Audio playing successfully from source ${i + 1}`);
-        setIsPlaying(true);
-        setIsLoading(false);
-        setRetryCount(0);
-        audioPlayedSuccessfully = true;
-        return; // Success! Exit the function
-        
+
+        // Try to play and wait for playing / canplaythrough or error
+        try {
+          const playPromise = audioRef.current.play();
+          // Some browsers return undefined for play() when autoplay blocked; still wait for events
+          if (playPromise && typeof playPromise.then === 'function') {
+            await playPromise;
+          }
+          // Wait for audio to signal it's playing or can play
+          await waitForAudioToPlay(audioRef.current, 6000);
+
+          console.log(`✅ Audio playing successfully from source ${i + 1}`);
+          setIsPlaying(true);
+          setIsLoading(false);
+          setRetryCount(0);
+          audioPlayedSuccessfully = true;
+          return; // Success! Exit the function
+        } catch (innerErr) {
+          console.error(`❌ Audio source ${i + 1} failed during play:`, url, innerErr);
+          // continue to next source
+          if (i === urls.length - 1) {
+            // All sources failed
+            const errorMsg = retryCount > 0
+              ? `All audio sources failed after ${retryCount + 1} attempts. Please check your connection.`
+              : 'تعذّر تشغيل الصوت. الرجاء المحاولة مرة أخرى أو التحقق من اتصال الشبكة.';
+            setAudioError(errorMsg);
+            setShowAudioError(true);
+            setIsPlaying(false);
+            setIsLoading(false);
+          }
+        }
+
       } catch (error) {
-        console.error(`❌ Audio source ${i + 1} failed:`, error);
+        console.error(`❌ Audio source ${i + 1} failed:`, url, error);
         if (i === urls.length - 1) {
-          // All sources failed
-          const errorMsg = retryCount > 0 
+          const errorMsg = retryCount > 0
             ? `All audio sources failed after ${retryCount + 1} attempts. Please check your connection.`
-            : 'Failed to load audio from all sources. Click retry to try again.';
+            : 'تعذّر تشغيل الصوت. الرجاء المحاولة مرة أخرى أو التحقق من اتصال الشبكة.';
           setAudioError(errorMsg);
           setShowAudioError(true);
           setIsPlaying(false);
@@ -96,7 +165,7 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
         }
       }
     }
-    
+
     // If no audio played successfully, ensure src is cleared
     if (!audioPlayedSuccessfully && audioRef.current) {
       audioRef.current.src = '';
@@ -137,7 +206,7 @@ export const useAudioPlayer = (currentSurahId: number = 114) => {
       return;
     }
 
-    let errorMessage = 'تعذّر توليد الصوت لهذه الآيات الآن. تأكّد من اتصال الإنترنت، عطّل مانع الإعلانات/الـVPN إن وُجد، ثم اضغط "إعادة المحاولة" أو حدّث الصفحة.';
+    let errorMessage = 'تعذّر توليد الصوت لهذه الآيات الآن. تأكّد من اتصال الإنترنت، عطّل مانع الإعلانات/الـVPN إن وُ��د، ثم اضغط "إعادة المحاولة" أو حدّث الصفحة.';
 
     if (audioRef.current?.error) {
       const mediaError = audioRef.current.error;
