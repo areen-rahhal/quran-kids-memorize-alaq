@@ -1,5 +1,5 @@
-import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
+import { Progress as UiProgress } from '@/components/ui/progress';
 
 interface SurahPhasesSummaryProps {
   currentSurahName: string;
@@ -55,7 +55,7 @@ export const SurahPhasesSummary = ({
             {Math.round(progressPercentage)}%
           </span>
         </div>
-        <Progress value={progressPercentage} className="h-3 mb-4" />
+        <UiProgress value={progressPercentage} className="h-3 mb-4" />
       </div>
 
       {/* Phase circles */}

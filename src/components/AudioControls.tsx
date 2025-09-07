@@ -80,34 +80,21 @@ export const AudioControls = ({
         style={{ display: "none" }}
       />
       
-      {/* Loading indicator */}
-      {isLoading && (
-        <div className="text-center mb-2">
-          <div className="text-blue-600 text-sm font-arabic animate-pulse">
-            🔄 جاري تحميل الصوت...
-          </div>
-        </div>
-      )}
 
-      {/* Enhanced audio error with retry */}
+      {/* Final fallback friendly error (only shown if background recovery fails) */}
       {showAudioError && audioError && (
         <div className="text-center mb-2 space-y-2">
-          <div className="text-red-500 text-sm font-arabic bg-red-50 p-3 rounded border border-red-200">
-            ❌ {audioError}
-            {retryCount > 0 && (
-              <div className="text-xs mt-1 text-red-400">
-                المحاولة #{retryCount + 1}
-              </div>
-            )}
+          <div className="text-amber-700 text-sm font-arabic bg-amber-50 p-3 rounded border border-amber-200">
+            {audioError}
           </div>
           {onRetryAudio && (
             <Button
               onClick={onRetryAudio}
               variant="outline"
               size="sm"
-              className="border-red-300 text-red-600 hover:bg-red-50 font-arabic"
+              className="border-amber-300 text-amber-700 hover:bg-amber-50 font-arabic"
             >
-              🔄 إعادة المحاولة
+              إعادة المحاولة
             </Button>
           )}
         </div>
@@ -136,17 +123,17 @@ export const AudioControls = ({
           
           {showFeedback && feedback && (
             <div className={`text-sm font-arabic p-5 rounded-xl border-2 shadow-lg ${
-              feedback === 'correct' 
-                ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800' 
+              feedback === 'correct'
+                ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-800'
                 : 'bg-gradient-to-br from-red-50 to-pink-50 border-red-300 text-red-800'
             }`}>
-              {feedback === 'correct' ? (
+              {feedback === 'correct' && recitingMode !== 'testing' ? (
                 <div className="flex flex-col items-center justify-center gap-3">
                   <span className="text-4xl animate-bounce">🎉</span>
                   <span className="text-xl font-bold">ممتاز! بارك الله فيك</span>
                   <span className="text-sm">الانتقال للآية التالية...</span>
                 </div>
-              ) : (
+              ) : feedback === 'incorrect' ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-3xl">🔄</span>
@@ -168,7 +155,7 @@ export const AudioControls = ({
                      🎤 سيبدأ الاستماع مرة أخرى...
                    </div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>
